@@ -1,0 +1,34 @@
+
+
+\A
+
+#set($woo = "bar")
+
+$woo => bar
+
+The following should print 'as is' : 
+\a
+"\r"
+
+Now, test the built in directives. Note that foo if null:
+#set($foo = $foo + 1)
+#if($foo)
+#if ( $foo )
+#else
+#end
+#elseif(
+
+Set it to some value:
+$foo -> 1
+#if(1)
+#if($foo)
+
+The following two are references :
+	$provider.Title = lunatic
+	$provider.getTitle() = lunatic
+
+Now, pluggable directives:
+
+#notadirective
+#foreach
+

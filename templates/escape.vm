@@ -1,0 +1,46 @@
+#*
+
+@test escape.vm
+
+This template is used for Velocity regression testing.
+If you alter this template make sure you change the
+corresponding comparison file so that the regression 
+test doesn't fail incorrectly.
+
+*#
+
+\A
+
+#set($woo = "bar")
+\#set(\$woo = "bar")
+
+\$woo => $woo
+
+The following should print 'as is' : 
+\a
+"\r"
+
+#set($foo = $nullList[2])
+Now, test the built in directives. Note that foo if null:
+\#set(\$foo = \$foo + 1)
+\#if(\$foo)
+\#if ( \$foo )
+\#else
+\#end
+\#elseif(
+
+Set it to some value:
+#set($foo = 1)
+\$foo -> $foo
+\#if($foo)
+\#if(\$foo)
+
+The following two are references :
+	\$provider.Title = $provider.Title
+	\$provider.getTitle() = $provider.getTitle()
+
+Now, pluggable directives:
+
+\#notadirective
+\#foreach
+

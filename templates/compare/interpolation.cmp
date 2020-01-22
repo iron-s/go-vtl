@@ -1,0 +1,50 @@
+
+
+Start with simple string interpolation :
+
+it will cost you $10.00
+
+dog.jpg
+
+foobar.jpg
+
+foobar.jpg
+
+123
+1 2 3
+
+How about a directive?  Nope :
+
+
+#include('test.txt')
+
+For our next trick, lets interpolate a.... VelociMacro!
+
+
+
+#interpfoo()
+
+And now, for something completely different :
+
+
+#if(false) True #else False #end
+
+Now, non interpolated stringlits :
+
+
+#if(false) True #else False #end
+$code
+$!$\!code
+
+Now, check comments within strings. Double quotes they should not be removed.
+Single quotes, they should be kept literal.
+
+
+test##test
+test ##test
+##test
+test#* hello *#test
+test##test
+test#* hello *#test
+
+-- end --
