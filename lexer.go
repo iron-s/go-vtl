@@ -78,16 +78,16 @@ const (
 )
 
 func (l *Lexer) Lex(lval *yySymType) int {
-	l.prev = l.pos
 	if l.Peek(0) == EOF {
 		return 0
 	}
-	end := bytes.IndexByte(l.data[l.prev:], '\n')
-	if end == -1 {
-		end = len(l.data[l.prev:])
-	}
-	// fmt.Printf("%s, %d - %q\n", l.state(), l.pos, l.data[l.prev:l.prev+end])
-	defer func() { l.line += bytes.Count(l.data[l.prev:l.pos], []byte("\n")) }()
+	l.prev = l.pos
+	defer func() {
+		if l.pos > len(l.data) {
+			l.pos = len(l.data)
+		}
+		l.line += bytes.Count(l.data[l.prev:l.pos], []byte("\n"))
+	}()
 	switch l.state() {
 	case sText:
 		line := l.line
@@ -347,6 +347,9 @@ func (l *Lexer) Lex(lval *yySymType) int {
 				return TEXT
 			}
 		}
+	}
+	if l.Peek(0) == EOF {
+		return 0
 	}
 	return int(l.ScanByte())
 }
