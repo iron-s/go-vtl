@@ -1,3 +1,14 @@
+// Copyright 2011 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE-go file.
+
+// This code is heavily based on text/template. List of changes below:
+// - basicKind modified to return no error and widest kind instead of const
+// - indirect modifed to return value only
+// - gt, lt, le, eq and ne are modified to compare floats to ints/uints,
+//   use changed basicKind and not to panic
+// - eq uses fmt.Sprint as a last resort to compare values of the same type
+
 package govtl
 
 import (
@@ -23,25 +34,13 @@ func basicKind(v reflect.Value) reflect.Kind {
 	return reflect.Invalid
 }
 
-// isNumeric works only on basic kinds (widest ones, e.g. Int64 or Complex128)
-func isNumeric(k reflect.Kind) bool {
-	switch k {
-	case reflect.Int64, reflect.Uint64, reflect.Float64, reflect.Complex128:
-		return true
-	default:
-		return false
+func indirect(v reflect.Value) reflect.Value {
+	for ; v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface; v = v.Elem() {
+		if v.IsNil() {
+			return v
+		}
 	}
-}
-
-func comparable(k1, k2 reflect.Kind) bool {
-	switch {
-	case k1 == k2:
-		return true
-	case isNumeric(k1) && isNumeric(k2):
-		return true
-	default:
-		return false
-	}
+	return v
 }
 
 func lt(v1, v2 reflect.Value) bool {
@@ -123,7 +122,7 @@ func le(v1, v2 reflect.Value) bool { return lt(v1, v2) || eq(v1, v2) }
 func ge(v1, v2 reflect.Value) bool { return gt(v1, v2) || eq(v1, v2) }
 func gt(v1, v2 reflect.Value) bool {
 	v1, v2 = indirect(v1), indirect(v2)
-	if !v1.IsValid() || !v2.IsValid() || !comparable(basicKind(v1), basicKind(v2)) {
+	if !v1.IsValid() || !v2.IsValid() || !comparable(v1, v2) {
 		return false
 	}
 	return !le(v1, v2)

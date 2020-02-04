@@ -748,19 +748,21 @@ func isNumber(v reflect.Value) bool {
 	return isInt(v) || isFloat(v)
 }
 
-func indirect(v reflect.Value) reflect.Value {
-	for ; v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface; v = v.Elem() {
-		if v.IsNil() {
-			return v
-		}
-	}
-	return v
-}
-
 func isDirective(n Node) bool {
 	switch n.(type) {
 	case TextNode, *VarNode:
 		return false
 	}
 	return true
+}
+
+func comparable(k1, k2 reflect.Value) bool {
+	switch {
+	case k1.Kind() == k2.Kind():
+		return true
+	case isNumber(k1) && isNumber(k2):
+		return true
+	default:
+		return false
+	}
 }
