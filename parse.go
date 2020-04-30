@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strings"
-	// "github.com/davecgh/go-spew/spew"
 )
 
 type Template struct {
@@ -74,13 +73,6 @@ func gobble(ast []Node, nested bool) {
 	//    [ dir cur ]
 	//    [ nl spaces dir cur ]
 	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
 	//    if prev is none and cur starts with newLineAndSpaces or is justWS and next is directive before the end of line or at the very end
 	//       gobble start
 	//    if prev is directive at the very beginning and cur starts with newLineAndSpaces
@@ -94,11 +86,7 @@ func gobble(ast []Node, nested bool) {
 	//    if next is directive before the end of line and cur ends with spacesAndNewLine
 	//       gobble end
 
-	// var prev, next Node
 	changes := make(map[int][]func(t TextNode) string)
-	// if !nested {
-	// 	fmt.Println("START:", ast[0])
-	// }
 	for i := range ast {
 		switch cur := ast[i].(type) {
 		case NestedNode:
@@ -123,7 +111,6 @@ func gobble(ast []Node, nested bool) {
 		if !ok {
 			continue
 		}
-		// fmt.Printf("%q\n", ast[i])
 
 		switch {
 		// if first node and there is a node after
@@ -140,29 +127,12 @@ func gobble(ast []Node, nested bool) {
 		case i > 0 && i == len(ast)-1 && directiveAtNewline(ast, i-1) && endsWithNewlineAndSpace(cur):
 			changes[i] = append(changes[i], trimBefore)
 		}
-
-		// if directiveAtNewline(ast, i) && directiveBeforeNewline(ast, i) {
-		// 	if i > 0 {
-		// 		fmt.Println(i-1, "after")
-		// 		changes[i-1] = append(changes[i-1], trimAfter)
-		// 	}
-		// 	if i > 1 && directiveAtNewline(ast, i-2) {
-		// 		fmt.Println(i-1, "before")
-		// 		changes[i-1] = append(changes[i-1], trimBefore)
-		// 	}
-		// 	if i == len(ast)-2 {
-		// 		fmt.Println(i+1, "before")
-		// 		changes[i+1] = append(changes[i+1], trimBefore)
-		// 	}
-		// }
 	}
 	for i, v := range changes {
 		n := ast[i].(TextNode)
-		// fmt.Printf("before %d: %q\n", i, n)
 		for _, f := range v {
 			n = TextNode(f(n))
 		}
-		// fmt.Printf("after %d: %q\n", i, n)
 		ast[i] = n
 	}
 }

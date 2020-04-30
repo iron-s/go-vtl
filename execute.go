@@ -9,7 +9,6 @@ import (
 	"log"
 	"path/filepath"
 	"reflect"
-	"sort"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -26,10 +25,41 @@ type nilError struct {
 func (t *Template) Execute(w io.Writer, val map[string]interface{}) error {
 	ctx := make(Ctx)
 	for k, v := range val {
-		ctx.Push(k, reflect.ValueOf(v))
+		vv := reflect.ValueOf(v)
+		ctx.Push(k, wrapTypes(vv))
 	}
 	_, err := t._execute(w, t.tree, ctx)
 	return err
+}
+
+func wrapTypes(v reflect.Value) reflect.Value {
+	switch v.Kind() {
+	case reflect.Slice:
+		s := &Slice{}
+		for i := 0; i < v.Len(); i++ {
+			s.S = append(s.S, v.Index(i).Interface())
+		}
+		return reflect.ValueOf(s)
+	case reflect.Map:
+		m := &Map{M: make(map[string]interface{})}
+		it := v.MapRange()
+		for it.Next() {
+			k, v := it.Key(), it.Value()
+			m.M[k.String()] = v.Interface()
+		}
+		return reflect.ValueOf(m)
+		// case reflect.String:
+	case reflect.Interface:
+		return wrapTypes(v.Elem())
+	case reflect.Ptr:
+		vv := wrapTypes(v.Elem())
+		if vv == v.Elem() {
+			return v
+		}
+		return vv
+	default:
+		return v
+	}
 }
 
 func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
@@ -89,9 +119,9 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			}
 			if v.IsValid() {
 				fmt.Fprint(w, vtlPrint(v))
-			} else if !n.Silent {
-				val, _ := ctx.Get(n.Name)
-				fmt.Printf("%s %#v %v\n", n.Name, n.Items, val)
+				// } else if !n.Silent {
+				// val, _ := ctx.Get(n.Name)
+				// fmt.Printf("%s %#v %v %v\n", n.Name, n.Items, val, err)
 			}
 		case *MacroNode:
 			if _, ok := t.macros[n.Name]; !ok {
@@ -124,41 +154,27 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			if !iter.IsValid() {
 				break
 			}
-			iter = indirect(iter)
 			vdepth := ctx.Push(n.Var.Name, reflect.ValueOf(nil))
 			f := &foreach{}
 			fdepth := ctx.Push("foreach", reflect.ValueOf(f))
-			if iter.Kind() == reflect.Map {
-				f.c = iter.Len()
-				i := 0
-				keys := iter.MapKeys()
-				sort.Slice(keys, func(i, j int) bool { return lt(keys[i], keys[j]) })
-				for _, k := range keys {
-					ctx.Set(vdepth, n.Var.Name, iter.MapIndex(k))
-					i++
-					f.i = i
-					_, err := t._execute(w, n.Items, ctx)
-					if err != nil {
-						return true, err
-					}
-				}
-			} else {
-				var it iterator = iter
-				if iter.Kind() == reflect.Struct && iter.Type().Name() == "iter" {
-					it = iter.Interface().(iterator)
-				}
-				l := it.Len()
-				f.c = l
-				for i := 0; i < l; i++ {
-					ctx.Set(vdepth, n.Var.Name, it.Index(i))
-					f.i = i
-					_, err := t._execute(w, n.Items, ctx)
-					if err != nil {
-						return true, err
-					}
+			switch iter.Type() {
+			case sliceType:
+				f.it = iter.Interface().(*Slice).Iterator()
+			case mapType:
+				f.it = iter.Interface().(*Map).Values().Iterator()
+			case iteratorType:
+				f.it = iter.Interface().(*Iterator)
+			}
+			empty := true
+			for f.it.HasNext() {
+				empty = false
+				ctx.Set(vdepth, n.Var.Name, f.it.Next())
+				_, err := t._execute(w, n.Items, ctx)
+				if err != nil {
+					return true, err
 				}
 			}
-			if f.c == 0 && n.Else != nil {
+			if empty && n.Else != nil {
 				_, err := t._execute(w, n.Else, ctx)
 				if err != nil {
 					return true, err
@@ -166,9 +182,6 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			}
 			ctx.Pop(vdepth, n.Var.Name)
 			ctx.Pop(fdepth, "foreach")
-		// case nil:
-		// case string:
-		// 	fmt.Fprint(w, n)
 		case *StopNode:
 			return true, nil
 		case *BreakNode:
@@ -215,13 +228,10 @@ func (t *Template) evalStep(v reflect.Value, m *AccessNode, ctx Ctx) (reflect.Va
 		}
 		args = append(args, a)
 	}
-	switch {
-	case m.Name == "":
-		return idx(v, args[0])
-	case m.IsCall:
+	if m.IsCall {
 		v, err = call(v, m.Name, args...)
-	default:
-		v, err = idx(v, reflect.ValueOf(m.Name))
+	} else {
+		v, err = property(v, reflect.ValueOf(m.Name))
 	}
 	if err != nil {
 		return reflect.Value{}, err
@@ -259,12 +269,22 @@ func (t *Template) setVar(n *VarNode, val reflect.Value, ctx Ctx) error {
 		}
 	}
 	switch v.Kind() {
-	case reflect.Chan, reflect.Func, reflect.Ptr, reflect.Interface:
+	case reflect.Chan, reflect.Func:
 		if v.IsNil() {
 			return fmt.Errorf("nil resul $%s", n.Name)
 		}
 	}
 	switch {
+	case !v.CanSet() && prev.Kind() == reflect.Ptr:
+		k := reflect.ValueOf(n.Items[len(n.Items)-1].Name)
+		if v.IsValid() && v.MethodByName("Set").IsValid() {
+			_, err := call(v, "Set", k, val)
+			return err
+		} else if prev.MethodByName("Put").IsValid() {
+			_, err := call(prev, "Put", k, val)
+			return err
+		}
+		return fmt.Errorf("cannot set %s in $%s", k, n.Name)
 	case prev.Kind() == reflect.Map:
 		prev.SetMapIndex(reflect.ValueOf(n.Items[len(n.Items)-1].Name), val)
 	case v.CanSet() && val.Type().ConvertibleTo(v.Type()):
@@ -289,12 +309,10 @@ func (t *Template) eval(e *OpNode, ctx Ctx, undefOk bool) (reflect.Value, error)
 		if err != nil && !(undefOk && errors.As(err, &undefinedError{})) {
 			return l, err
 		}
-		l = indirect(l)
 		r, err := t.eval(e.Right, ctx, undefOk)
 		if err != nil && !(undefOk && errors.As(err, &undefinedError{})) {
 			return r, err
 		}
-		r = indirect(r)
 		ret := f.Call([]reflect.Value{reflect.ValueOf(l), reflect.ValueOf(r)})
 		if ret[0].Type() == reflectValueType {
 			return ret[0].Interface().(reflect.Value), nil
@@ -314,41 +332,18 @@ func (t *Template) eval(e *OpNode, ctx Ctx, undefOk bool) (reflect.Value, error)
 	case nil:
 	case int64, float64, bool, string:
 		return reflect.ValueOf(val), nil
-	case []interface{}:
-		vv := make([]interface{}, len(val))
-		var err error
-		for i := range val {
-			if op, ok := val[i].(*OpNode); ok {
-				vv[i], err = t.eval(op, ctx, false)
-				if err != nil {
-					return reflect.Value{}, err
-				}
-			}
-		}
-		return reflect.ValueOf(vv), nil
 	case *RefNode:
 		return ctx.Get(val.Name)
 	case []*OpNode:
-		m := make(map[string]interface{}, len(val)/2)
-		for i := 0; i < len(val); i += 2 {
-			k, v := val[i], val[i+1]
-			kk, err := t.eval(k, ctx, false)
+		vv := make([]interface{}, len(val))
+		for i := range val {
+			e, err := t.eval(val[i], ctx, false)
 			if err != nil {
-				return kk, err
+				return reflect.Value{}, err
 			}
-			var s string
-			if isInt(kk) {
-				s = fmt.Sprint(kk.Int())
-			} else {
-				s = kk.String()
-			}
-			e, err := t.eval(v, ctx, false)
-			if err != nil {
-				return e, err
-			}
-			m[s] = e.Interface()
+			vv[i] = e.Interface()
 		}
-		return reflect.ValueOf(m), nil
+		return reflect.ValueOf(&Slice{vv}), nil
 	default:
 		log.Printf("unsupported type %T: %v", val, val)
 		return reflect.ValueOf(val), nil
@@ -471,21 +466,33 @@ var funcs = map[string]interface{}{
 	"and": func(v1, v2 reflect.Value) bool { return (isTrue(v1) && isTrue(v2)) },
 	"not": func(v1 reflect.Value, v2 interface{}) bool { return !isTrue(v1) },
 
-	"range": func(v1, v2 reflect.Value) ([]interface{}, error) {
+	"map": func(v1, v2 reflect.Value) (reflect.Value, error) {
+		val := v1.Interface().(*Slice).S
+		m := make(map[string]interface{}, len(val)/2)
+		for i := 0; i < len(val); i += 2 {
+			k, v := val[i], val[i+1]
+			s := vtlPrint(reflect.ValueOf(k))
+			m[s] = v
+		}
+		return reflect.ValueOf(&Map{m}), nil
+	},
+	"list": func(v1, v2 reflect.Value) reflect.Value { return v1 },
+
+	"range": func(v1, v2 reflect.Value) (reflect.Value, error) {
 		var ret []interface{}
 		var diff int64 = 1
 		cmp := func(i1, i2 int64) bool { return i1 <= i2 }
 		if v1.Kind() == reflect.String {
 			i, err := strconv.Atoi(v1.String())
 			if err != nil {
-				return nil, errors.New("NaN")
+				return reflect.Value{}, errors.New("NaN")
 			}
 			v1 = reflect.ValueOf(i)
 		}
 		if v2.Kind() == reflect.String {
 			i, err := strconv.Atoi(v2.String())
 			if err != nil {
-				return nil, errors.New("NaN")
+				return reflect.Value{}, errors.New("NaN")
 			}
 			v2 = reflect.ValueOf(i)
 		}
@@ -496,38 +503,30 @@ var funcs = map[string]interface{}{
 		for i := v1.Int(); cmp(i, v2.Int()); i += diff {
 			ret = append(ret, int64(i))
 		}
-		return ret, nil
+		return wrapTypes(reflect.ValueOf(ret)), nil
 	},
 }
 
 type foreach struct {
-	i, c int
+	it *Iterator
 }
 
-func (f *foreach) HasNext() bool { return f.c < f.i }
-func (f *foreach) First() bool   { return f.i == 0 }
-func (f *foreach) Last() bool    { return f.i == f.c }
-func (f *foreach) Count() int    { return f.i + 1 }
-func (f *foreach) Index() int    { return f.i }
+func (f *foreach) HasNext() bool { return f.it.HasNext() }
+func (f *foreach) First() bool   { return f.it.i == 0 }
+func (f *foreach) Last() bool    { return f.it.i == f.it.s.Size()-1 }
+func (f *foreach) Count() int    { return f.it.i }
+func (f *foreach) Index() int    { return f.it.i - 1 }
 
-type iterator interface {
-	Len() int
-	Index(int) reflect.Value
-}
-
-type iter struct {
-	reflect.Value
-	i int
-}
-
-func (i *iter) Next() reflect.Value {
-	var ret reflect.Value
-	if i.i < i.Len() {
-		ret = i.Index(i.i)
-		i.i++
-	}
-	return ret
-}
+var (
+	sliceType     = reflect.TypeOf((*Slice)(nil))
+	mapType       = reflect.TypeOf((*Map)(nil))
+	entryType     = reflect.TypeOf((*MapEntry)(nil))
+	viewType      = reflect.TypeOf((*View)(nil))
+	keyViewType   = reflect.TypeOf((*KeyView)(nil))
+	entryViewType = reflect.TypeOf((*EntryView)(nil))
+	valViewType   = reflect.TypeOf((*ValView)(nil))
+	iteratorType  = reflect.TypeOf((*Iterator)(nil))
+)
 
 func vtlPrint(v reflect.Value) string {
 	var ret string
@@ -542,23 +541,49 @@ func vtlPrint(v reflect.Value) string {
 		return fmt.Sprintf("%d", v.Int())
 	case reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uint:
 		return fmt.Sprintf("%d", v.Uint())
-	case reflect.Map:
-		ret := "{"
-		for _, key := range v.MapKeys() {
-			ret += fmt.Sprintf("%s=%s", key, vtlPrint(v.MapIndex(key)))
-		}
-		ret += "}"
-		return ret
-	case reflect.Slice:
-		ret := "["
-		for i := 0; i < v.Len(); i++ {
-			if i > 0 {
-				ret += ", "
+	case reflect.Ptr:
+		var b bytes.Buffer
+		switch v.Type() {
+		case mapType:
+			m := v.Interface().(*Map)
+			b.WriteByte('{')
+			entries := m.EntrySet().Slice.S
+			for i, e := range entries {
+				if i > 0 {
+					b.WriteString(", ")
+				}
+				b.WriteString(vtlPrint(reflect.ValueOf(e)))
 			}
-			ret += fmt.Sprintf("%s", vtlPrint(v.Index(i)))
+			b.WriteByte('}')
+		case entryType:
+			e := v.Interface().(*MapEntry)
+			b.WriteString(e.k)
+			b.WriteByte('=')
+			b.WriteString(vtlPrint(reflect.ValueOf(e.v)))
+		case viewType, keyViewType, entryViewType, valViewType:
+			s := v.Elem().FieldByName("Slice")
+			return vtlPrint(s)
+		case sliceType:
+			s := v.Interface().(*Slice).S
+			b.WriteByte('[')
+			for i := range s {
+				if i > 0 {
+					b.WriteString(", ")
+				}
+				b.WriteString(vtlPrint(reflect.ValueOf(s[i])))
+			}
+			b.WriteByte(']')
+		default:
+			if v.Type().Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem()) {
+				return fmt.Sprintf("%v", v.Interface())
+			}
+			return vtlPrint(indirect(v))
 		}
-		ret += "]"
-		return ret
+		return b.String()
+	case reflect.Map:
+		return "use of naked map"
+	case reflect.Slice:
+		return "use of naked slice"
 	case reflect.Interface:
 		return vtlPrint(v.Elem())
 	default:
@@ -566,77 +591,32 @@ func vtlPrint(v reflect.Value) string {
 	}
 }
 
-func idx(v1, v2 reflect.Value) (reflect.Value, error) {
-	vv1 := indirect(v1)
-	v2 = indirect(v2)
-	switch vv1.Kind() {
-	case reflect.Array, reflect.Slice, reflect.String:
-		var x int64
-		switch v2.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			x = v2.Int()
-		case reflect.Float32, reflect.Float64:
-			x = int64(v2.Float())
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			x = int64(v2.Uint())
-		default:
-			return reflect.Value{}, fmt.Errorf("invalid array index: %q %T", v2, v2)
-		}
-		if x < 0 || x >= int64(vv1.Len()) {
-			return reflect.Value{}, fmt.Errorf("index out of range")
-		}
-		return vv1.Index(int(x)), nil
-	case reflect.Map:
-		if !v2.Type().AssignableTo(vv1.Type().Key()) {
-			return reflect.Value{}, fmt.Errorf("invalid map key: %q %T", v2, v2)
-		}
-		if x := vv1.MapIndex(v2); x.IsValid() {
-			return x, nil
-		} else {
-			return reflect.Zero(vv1.Type().Elem()), nil
-		}
-	default:
-		return property(v1, v2)
-	}
-}
-
 func property(v1, v2 reflect.Value) (reflect.Value, error) {
 	vv1 := indirect(v1)
-	var err error
-	if vv1.Kind() == reflect.Struct && v2.Kind() == reflect.String {
-		ret := vv1.FieldByName(v2.String())
+	var (
+		ret reflect.Value
+		err error
+	)
+	if v2.Kind() == reflect.String {
+		if vv1.Kind() == reflect.Struct {
+			ret = vv1.FieldByName(v2.String())
+		}
 		if !ret.IsValid() {
 			ret, err = call(v1, v2.String())
 		}
-		if !ret.IsValid() && err == nil && v1.MethodByName("Get").IsValid() {
-			ret, err = call(v1, "Get", v2)
-		}
-		return ret, err
 	}
-
-	if v2.Kind() == reflect.String {
-		return call(v1, v2.String())
+	if !ret.IsValid() && v1.MethodByName("Get").IsValid() {
+		ret, err = call(v1, "Get", v2)
+	}
+	if err == nil {
+		return ret, err
 	}
 	return reflect.Value{}, fmt.Errorf("cannot get property %s of %s value", v2, v1.Kind())
 }
 
-func index(v reflect.Value, indices ...reflect.Value) (reflect.Value, error) {
-	if !v.IsValid() {
-		return reflect.Value{}, nil
-	}
-	var err error
-	for _, i := range indices {
-		v, err = idx(v, i)
-		if err != nil {
-			return v, err
-		}
-	}
-	return v, nil
-}
-
 func call(v reflect.Value, meth string, args ...reflect.Value) (reflect.Value, error) {
 	if !v.IsValid() {
-		return reflect.Value{}, nil
+		return reflect.Value{}, fmt.Errorf("cannot call %s on nil value", meth)
 	}
 	trimm := strings.Title(strings.TrimPrefix(meth, "get"))
 	var m reflect.Value
@@ -649,58 +629,17 @@ func call(v reflect.Value, meth string, args ...reflect.Value) (reflect.Value, e
 	vv := indirect(v)
 	switch {
 	case m.IsValid():
-		for i, val := range args {
-			var argType reflect.Type
-			if m.Type().IsVariadic() {
-				argType = m.Type().In(m.Type().NumIn() - 1).Elem()
-			} else {
-				argType = m.Type().In(i)
-			}
-			if !val.IsValid() {
-				return reflect.Value{}, fmt.Errorf("arg %d not valid", i)
-			}
-			if !val.Type().AssignableTo(argType) {
-				if !val.Type().ConvertibleTo(argType) {
-					return reflect.Value{}, fmt.Errorf("arg %d: %s %s -> %s", i, "not assignable", val.Type(), m.Type().In(i))
-				} else {
-					args[i] = val.Convert(argType)
-				}
-			}
+		if err := compatible(m, args...); err != nil {
+			return reflect.Value{}, err
 		}
 		ret := m.Call(args)
 		if len(ret) != 0 {
-			return ret[0], nil
+			return wrapTypes(ret[0]), nil
 		}
 	case vv.Kind() == reflect.Struct:
 		f := vv.FieldByName(trimm)
 		if f.IsValid() {
-			return f, nil
-		}
-	case vv.Kind() == reflect.Map:
-		kType, vType := vv.Type().Key(), vv.Type().Elem()
-		switch meth {
-		case "size":
-			return reflect.ValueOf(v.Len()), nil
-		case "get":
-			if len(args) != 1 {
-				return reflect.Value{}, errors.New("no argument for map index specified")
-			}
-			switch {
-			case args[0].Type().AssignableTo(kType):
-				val := vv.MapIndex(args[0])
-				if !val.IsValid() {
-					return reflect.ValueOf(""), nil
-				}
-				return val, nil
-			case isInt(args[0]):
-				return vv.MapIndex(reflect.ValueOf(vtlPrint(args[0]))), nil
-			}
-		case "put":
-			if len(args) == 2 && args[0].Type().AssignableTo(kType) && args[1].Type().AssignableTo(vType) {
-				prev := vv.MapIndex(args[0])
-				vv.SetMapIndex(args[0], args[1])
-				return prev, nil
-			}
+			return wrapTypes(f), nil
 		}
 	case vv.Kind() == reflect.String:
 		switch meth {
@@ -711,15 +650,10 @@ func call(v reflect.Value, meth string, args ...reflect.Value) (reflect.Value, e
 				return reflect.ValueOf(vv.String() == args[0].String()), nil
 			}
 		}
+	case vv.Kind() == reflect.Map:
+		return reflect.Value{}, errors.New("naked map is not supported")
 	case vv.Kind() == reflect.Slice:
-		switch meth {
-		case "length":
-			return reflect.ValueOf(v.Len()), nil
-		case "iterator":
-			if len(args) == 0 {
-				return reflect.ValueOf(&iter{vv, 0}), nil
-			}
-		}
+		return reflect.Value{}, errors.New("naked map is not supported")
 	}
 
 	return reflect.Value{}, nil
@@ -765,4 +699,27 @@ func comparable(k1, k2 reflect.Value) bool {
 	default:
 		return false
 	}
+}
+
+func compatible(f reflect.Value, args ...reflect.Value) error {
+	for i, val := range args {
+		var argType reflect.Type
+		if f.Type().IsVariadic() {
+			argType = f.Type().In(f.Type().NumIn() - 1).Elem()
+		} else {
+			argType = f.Type().In(i)
+		}
+		if !val.IsValid() {
+			return fmt.Errorf("arg %d not valid", i)
+		}
+		valType := val.Type()
+		if !valType.AssignableTo(argType) {
+			if valType.ConvertibleTo(argType) {
+				args[i] = val.Convert(argType)
+			} else {
+				return fmt.Errorf("arg %d: %s %s -> %s", i, "not assignable", valType, f.Type().In(i))
+			}
+		}
+	}
+	return nil
 }

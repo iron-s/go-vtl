@@ -151,7 +151,7 @@ reference:      IDENTIFIER
         |       reference '[' bool_expr ']'
                 {
                     v := $1.(*VarNode)
-                    v.Items = append(v.Items, &AccessNode{Args: []*OpNode{$3.(*OpNode)}})
+                    v.Items = append(v.Items, &AccessNode{Name: "get", IsCall: true, Args: []*OpNode{$3.(*OpNode)}})
                     $$ = $1
                 }
         |       reference '.' method
@@ -163,16 +163,9 @@ reference:      IDENTIFIER
                 ;
 
 array:          '[' ']'
-                { $$ = &OpNode{Val: []interface{}{}} }
+                { $$ = &OpNode{Op: "list", Left: &OpNode{Val: []*OpNode{}}} }
         |       '[' list ']'
-                {
-                    l := $2.([]*OpNode)
-                    arr := make([]interface{}, len(l))
-                    for i := range l {
-                        arr[i] = l[i]
-                    }
-                    $$ = &OpNode{Val: arr}
-                }
+                { $$ = &OpNode{Op: "list", Left: &OpNode{Val: $2.([]*OpNode)}} }
         |       '[' range ']'
                 { $$ = $2 }
                 ;
@@ -182,9 +175,9 @@ range:          bool_expr RANGE bool_expr
                 ;
 
 map:            '{' '}'
-                { $$ = &OpNode{Val: []*OpNode{}} }
+                { $$ = &OpNode{Op: "map", Left: &OpNode{Val: []*OpNode{}}} }
         |       '{' kvpairs '}'
-                { $$ = $2 }
+                { $$ = &OpNode{Op: "map", Left: $2.(*OpNode) } }
                 ;
 
 kvpairs:        bool_expr ':' setarg

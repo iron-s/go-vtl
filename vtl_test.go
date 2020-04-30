@@ -72,7 +72,7 @@ func DiffPrettyTextWS(diffs []diffmatchpatch.Diff) string {
 }
 
 func SetupTest() map[string]interface{} {
-	p := &provider{"lunatic"}
+	p := &provider{"lunatic", false}
 	h := map[string]string{"Bar": "this is from a hashtable!", "Foo": "this is from a hashtable too!"}
 	v := &vec{"string1", "string2"}
 	var n *nullToString
@@ -100,7 +100,7 @@ func SetupTest() map[string]interface{} {
 		"intarr":          []int{10, 20, 30, 40, 50},
 		"map":             h,
 		"collection":      v,
-		"iterator":        v,
+		"iterator":        govtl.NewIterator(v),
 		"enumerator":      v,
 		"nullList":        []interface{}{"a", "b", nil, "d"},
 		"emptyarr":        []interface{}{},
@@ -110,6 +110,7 @@ func SetupTest() map[string]interface{} {
 
 type provider struct {
 	Title string
+	State bool
 }
 
 func (p *provider) Get(k string) string {
@@ -134,9 +135,9 @@ func (p *provider) GetHashtable() map[string]string {
 
 func (p *provider) Concat(s ...interface{}) string {
 	var ret, space string
-	slice, ok := s[0].([]interface{})
+	slice, ok := s[0].(*govtl.Slice)
 	if len(s) == 1 && ok {
-		s = slice
+		s = slice.S
 		// quirk: if we concat array - we need space, if it's just strings - no need for space
 		space = " "
 	}
@@ -146,9 +147,9 @@ func (p *provider) Concat(s ...interface{}) string {
 	return ret
 }
 
-func (p *provider) ObjConcat(s []interface{}) string {
+func (p *provider) ObjConcat(s *govtl.Slice) string {
 	var ret string
-	for _, v := range s {
+	for _, v := range s.S {
 		ret += fmt.Sprintf("%v", v) + " "
 	}
 	return ret

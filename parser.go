@@ -144,8 +144,8 @@ var (
 		57394: 69, // iterable (1x)
 		57395: 70, // kvpairs (1x)
 		57397: 71, // literal (1x)
-		57399: 72, // method (1x)
-		57347: 73, // METHOD (1x)
+		57347: 72, // METHOD (1x)
+		57399: 73, // method (1x)
 		57401: 74, // range (1x)
 		57405: 75, // vtl (1x)
 		57378: 76, // $default (0x)
@@ -227,8 +227,8 @@ var (
 		"iterable",
 		"kvpairs",
 		"literal",
-		"method",
 		"METHOD",
+		"method",
 		"range",
 		"vtl",
 		"$default",
@@ -276,8 +276,8 @@ var (
 		33: {21, 4},
 		34: {21, 3},
 		35: {21, 5},
-		36: {72, 3},
-		37: {72, 4},
+		36: {73, 3},
+		37: {73, 4},
 		38: {59, 1},
 		39: {59, 3},
 		40: {59, 4},
@@ -554,7 +554,7 @@ var (
 		{5: 117, 41: 119, 50: 118},
 		// 25
 		{57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 22: 57, 57, 25: 57, 57, 57, 57, 34: 57, 57, 57, 57, 57, 47: 57, 53: 57},
-		{52: 165, 72: 166, 164},
+		{52: 165, 72: 164, 166},
 		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 42: 130, 128, 131, 129, 48: 127, 120},
 		{4: 163, 17: 148},
 		{1: 25, 25, 152, 25, 25, 17: 25, 22: 25, 25, 25: 25, 34: 155, 153, 151, 154, 161},
@@ -1128,7 +1128,7 @@ yynewstate:
 	case 40:
 		{
 			v := yyS[yypt-3].n.(*VarNode)
-			v.Items = append(v.Items, &AccessNode{Args: []*OpNode{yyS[yypt-1].n.(*OpNode)}})
+			v.Items = append(v.Items, &AccessNode{Name: "get", IsCall: true, Args: []*OpNode{yyS[yypt-1].n.(*OpNode)}})
 			yyVAL.n = yyS[yypt-3].n
 		}
 	case 41:
@@ -1139,16 +1139,11 @@ yynewstate:
 		}
 	case 42:
 		{
-			yyVAL.n = &OpNode{Val: []interface{}{}}
+			yyVAL.n = &OpNode{Op: "list", Left: &OpNode{Val: []*OpNode{}}}
 		}
 	case 43:
 		{
-			l := yyS[yypt-1].n.([]*OpNode)
-			arr := make([]interface{}, len(l))
-			for i := range l {
-				arr[i] = l[i]
-			}
-			yyVAL.n = &OpNode{Val: arr}
+			yyVAL.n = &OpNode{Op: "list", Left: &OpNode{Val: yyS[yypt-1].n.([]*OpNode)}}
 		}
 	case 44:
 		{
@@ -1160,11 +1155,11 @@ yynewstate:
 		}
 	case 46:
 		{
-			yyVAL.n = &OpNode{Val: []*OpNode{}}
+			yyVAL.n = &OpNode{Op: "map", Left: &OpNode{Val: []*OpNode{}}}
 		}
 	case 47:
 		{
-			yyVAL.n = yyS[yypt-1].n
+			yyVAL.n = &OpNode{Op: "map", Left: yyS[yypt-1].n.(*OpNode)}
 		}
 	case 48:
 		{

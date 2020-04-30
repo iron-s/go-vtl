@@ -181,22 +181,22 @@ func TestParse(t *testing.T) {
 			`#set( $monkey.Say = ["Not", $my, "fault"] )`,
 			[]Node{&SetNode{
 				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Say", nil, false}}, false},
-				&OpNode{Val: []interface{}{
-					&OpNode{Val: &InterpolatedNode{Items: []Node{TextNode("Not")}}},
-					&OpNode{Val: &VarNode{&RefNode{"my"}, nil, false}},
-					&OpNode{Val: &InterpolatedNode{Items: []Node{TextNode("fault")}}}}},
-			}},
+				&OpNode{Op: "list", Left: &OpNode{Val: []*OpNode{
+					{Val: &InterpolatedNode{Items: []Node{TextNode("Not")}}},
+					{Val: &VarNode{&RefNode{"my"}, nil, false}},
+					{Val: &InterpolatedNode{Items: []Node{TextNode("fault")}}}}},
+				}}},
 		},
 		{"set directive with object map",
 			`#set( $monkey.Map = {"banana" : "good", "roast beef" : "bad"})`,
 			[]Node{&SetNode{
 				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Map", nil, false}}, false},
-				&OpNode{Val: []*OpNode{
+				&OpNode{Op: "map", Left: &OpNode{Val: []*OpNode{
 					{Val: &InterpolatedNode{Items: []Node{TextNode("banana")}}},
 					{Val: &InterpolatedNode{Items: []Node{TextNode("good")}}},
 					{Val: &InterpolatedNode{Items: []Node{TextNode("roast beef")}}},
 					{Val: &InterpolatedNode{Items: []Node{TextNode("bad")}}}}},
-			}},
+				}}},
 		},
 		{"set directive with arithmetic RHS",
 			`#set( $value = $foo + 1 )`,
