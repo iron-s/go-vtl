@@ -4,7 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"sort"
+	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 type Map struct {
@@ -370,6 +374,110 @@ func (i *Iterator) Next() reflect.Value {
 }
 
 func (i *Iterator) HasNext() bool { return i.i < i.s.Size() }
+
+var errNotImplemented = errors.New("not implemented")
+
+type Str string
+
+func (s Str) CharAt(i int) rune                   { return []rune(s)[i] }
+func (s Str) CodePointAt(i int) error             { return errNotImplemented }
+func (s Str) CodePointBefore(i int) error         { return errNotImplemented }
+func (s Str) CodePointCount(start, end int) error { return errNotImplemented }
+
+func (s Str) compare(o string, tr func(rune) rune) int {
+	rs, ro := []rune(s), []rune(o)
+	diff := len(rs) - len(ro)
+	if diff != 0 {
+		return diff
+	}
+	for i := range rs {
+		diff = int(tr(rs[i])) - int(tr(ro[i]))
+		if diff != 0 {
+			return diff
+		}
+	}
+	return 0
+}
+
+func (s Str) CompareTo(o string) int {
+	return s.compare(o, func(r rune) rune { return r })
+}
+
+func (s Str) CompareToIgnoreCase(o string) int {
+	return s.compare(o, func(r rune) rune { return unicode.ToLower(unicode.ToUpper(r)) })
+}
+
+func (s Str) Concat(o string) string      { return string(s) + o }
+func (s Str) Contains(o string) bool      { return strings.Contains(string(s), o) }
+func (s Str) ContentEquals(o string) bool { return string(s) == o }
+func (s Str) EndsWith(suffix string) bool { return strings.HasSuffix(string(s), suffix) }
+func (s Str) Equals(o string) bool        { return string(s) == o }
+func (s Str) EqualsIgnoreCase(o string) bool {
+	return strings.ToLower(strings.ToUpper(string(s))) == strings.ToLower(strings.ToUpper(o))
+}
+func (s Str) GetBytes() []byte { return []byte(s) }
+func (s Str) IndexOf(o string) int {
+	i := strings.Index(string(s), o)
+	if i > 0 {
+		i = utf8.RuneCountInString(string(s[:i+1]))
+	}
+	return i
+}
+func (s Str) IsEmpty() bool { return s == "" }
+func (s Str) LastIndexOf(o string) int {
+	i := strings.LastIndex(string(s), o)
+	if i > 0 {
+		i = utf8.RuneCountInString(string(s[:i+1]))
+	}
+	return i
+}
+func (s Str) Length() int                        { return utf8.RuneCountInString(string(s)) }
+func (s Str) Matches(regex string) (bool, error) { return regexp.MatchString(regex, string(s)) }
+func (s Str) Replace(old, new string) string     { return strings.ReplaceAll(string(s), old, new) }
+
+func (s Str) ReplaceAll(regex, replacement string) (string, error) {
+	r, err := regexp.Compile(regex)
+	if err != nil {
+		return "", err
+	}
+	return string(r.ReplaceAllString(string(s), replacement)), nil
+}
+
+func (s Str) ReplaceFirst(regex, replacement string) (string, error) {
+	r, err := regexp.Compile(regex)
+	if err != nil {
+		return "", err
+	}
+	loc := r.FindStringIndex(string(s))
+	if loc == nil {
+		return string(s), nil
+	}
+	return string(s[:loc[0]]) + replacement + string(s[loc[1]:]), nil
+}
+
+func (s Str) Split(regex string) ([]string, error) {
+	r, err := regexp.Compile(regex)
+	if err != nil {
+		return nil, err
+	}
+	return r.Split(string(s), -1), nil
+}
+
+func (s Str) StartsWith(prefix string) bool { return strings.HasPrefix(string(s), prefix) }
+
+func (s Str) SubSequence(start, end int) (string, error) {
+	if start < 0 || end < 0 || end > s.Length() || start > end {
+		return "", fmt.Errorf("start or end index out of range %d:%d with length %d", start, end, len(s))
+	}
+	return string([]rune(s)[start:end]), nil
+}
+
+func (s Str) Substring(start, end int) (string, error) { return s.SubSequence(start, end) }
+
+func (s Str) ToLowerCase() string { return strings.ToLower(string(s)) }
+func (s Str) ToString() string    { return string(s) }
+func (s Str) ToUpperCase() string { return strings.ToUpper(string(s)) }
+func (s Str) Trim() string        { return strings.TrimSpace(string(s)) }
 
 // TODO add implementation based on the vtl's
 type Range struct {

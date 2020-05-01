@@ -13,6 +13,13 @@ type Template struct {
 	macros    map[string]*MacroNode
 }
 
+func Must(t *Template, err error) *Template {
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
 func ParseFile(f, root, lib string) (*Template, error) {
 	data, err := ioutil.ReadFile(f)
 	if err != nil {

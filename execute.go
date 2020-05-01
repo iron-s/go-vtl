@@ -11,7 +11,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 	// "github.com/davecgh/go-spew/spew"
 )
 
@@ -48,7 +47,8 @@ func wrapTypes(v reflect.Value) reflect.Value {
 			m.M[k.String()] = v.Interface()
 		}
 		return reflect.ValueOf(m)
-		// case reflect.String:
+	case reflect.String:
+		return v.Convert(reflect.TypeOf(Str("")))
 	case reflect.Interface:
 		return wrapTypes(v.Elem())
 	case reflect.Ptr:
@@ -92,21 +92,16 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 				return true, err
 			}
 		case *SetNode:
-			set, err := t.eval(n.Expr, ctx, false)
+			val, err := t.eval(n.Expr, ctx, false)
 			if errors.As(err, &nilError{}) {
-				// do nothing
-				// set = reflect.Value{}
 			} else if err != nil {
 				return false, err
 			}
-			if set.IsValid() {
-				set = reflect.ValueOf(set.Interface())
-			}
 			if len(n.Var.Items) == 0 {
-				depth := ctx.Push(n.Var.Name, set)
+				depth := ctx.Push(n.Var.Name, val)
 				defer ctx.Pop(depth, n.Var.Name)
-			} else if set.IsValid() {
-				if err := t.setVar(n.Var, set, ctx); err != nil {
+			} else if val.IsValid() {
+				if err := t.setVar(n.Var, val, ctx); err != nil {
 					return false, err
 				}
 			}
@@ -288,7 +283,7 @@ func (t *Template) setVar(n *VarNode, val reflect.Value, ctx Ctx) error {
 	case prev.Kind() == reflect.Map:
 		prev.SetMapIndex(reflect.ValueOf(n.Items[len(n.Items)-1].Name), val)
 	case v.CanSet() && val.Type().ConvertibleTo(v.Type()):
-		v.Set(val)
+		v.Set(val.Convert(v.Type()))
 	}
 	return nil
 }
@@ -315,9 +310,9 @@ func (t *Template) eval(e *OpNode, ctx Ctx, undefOk bool) (reflect.Value, error)
 		}
 		ret := f.Call([]reflect.Value{reflect.ValueOf(l), reflect.ValueOf(r)})
 		if ret[0].Type() == reflectValueType {
-			return ret[0].Interface().(reflect.Value), nil
+			ret[0] = ret[0].Interface().(reflect.Value)
 		}
-		return ret[0], nil
+		return wrapTypes(ret[0]), nil
 	}
 	switch val := e.Val.(type) {
 	case *InterpolatedNode:
@@ -326,12 +321,14 @@ func (t *Template) eval(e *OpNode, ctx Ctx, undefOk bool) (reflect.Value, error)
 		if err != nil {
 			return reflect.Value{}, err
 		}
-		return reflect.ValueOf(b.String()), nil
+		return wrapTypes(reflect.ValueOf(b.String())), nil
 	case *VarNode:
 		return t.evalVar(val, ctx)
 	case nil:
-	case int64, float64, bool, string:
+	case int64, float64, bool:
 		return reflect.ValueOf(val), nil
+	case string:
+		return reflect.ValueOf(Str(val)), nil
 	case *RefNode:
 		return ctx.Get(val.Name)
 	case []*OpNode:
@@ -346,7 +343,7 @@ func (t *Template) eval(e *OpNode, ctx Ctx, undefOk bool) (reflect.Value, error)
 		return reflect.ValueOf(&Slice{vv}), nil
 	default:
 		log.Printf("unsupported type %T: %v", val, val)
-		return reflect.ValueOf(val), nil
+		return wrapTypes(reflect.ValueOf(val)), nil
 	}
 	return reflect.Value{}, nil
 }
@@ -512,7 +509,7 @@ type foreach struct {
 }
 
 func (f *foreach) HasNext() bool { return f.it.HasNext() }
-func (f *foreach) First() bool   { return f.it.i == 0 }
+func (f *foreach) First() bool   { return f.it.i == 1 }
 func (f *foreach) Last() bool    { return f.it.i == f.it.s.Size()-1 }
 func (f *foreach) Count() int    { return f.it.i }
 func (f *foreach) Index() int    { return f.it.i - 1 }
@@ -641,15 +638,8 @@ func call(v reflect.Value, meth string, args ...reflect.Value) (reflect.Value, e
 		if f.IsValid() {
 			return wrapTypes(f), nil
 		}
-	case vv.Kind() == reflect.String:
-		switch meth {
-		case "length":
-			return reflect.ValueOf(utf8.RuneCountInString(vv.String())), nil
-		case "equals":
-			if len(args) == 1 && args[0].Kind() == reflect.String {
-				return reflect.ValueOf(vv.String() == args[0].String()), nil
-			}
-		}
+	case vv.Type() == reflect.TypeOf(""):
+		return reflect.Value{}, errors.New("naked string is not supported")
 	case vv.Kind() == reflect.Map:
 		return reflect.Value{}, errors.New("naked map is not supported")
 	case vv.Kind() == reflect.Slice:
