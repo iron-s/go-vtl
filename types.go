@@ -9,6 +9,9 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type Map struct {
@@ -28,7 +31,7 @@ func (m *Map) ContainsKey(key string) bool {
 
 func (m *Map) ContainsValue(val interface{}) bool {
 	for _, v := range m.M {
-		if val == v {
+		if reflect.DeepEqual(v, val) {
 			return true
 		}
 	}
@@ -47,7 +50,7 @@ func (m *Map) EntrySet() *EntryView {
 func (m *Map) Equals(v interface{}) (bool, error) {
 	vv, ok := v.(*Map)
 	if !ok {
-		return false, errArrayExpected
+		return false, errMapExpected
 	}
 	if len(m.M) != len(vv.M) {
 		return false, nil
@@ -56,7 +59,7 @@ func (m *Map) Equals(v interface{}) (bool, error) {
 		if _, ok := m.M[k]; !ok {
 			return false, nil
 		}
-		if vv.M[k] != m.M[k] {
+		if !reflect.DeepEqual(vv.M[k], m.M[k]) {
 			return false, nil
 		}
 	}
@@ -138,6 +141,7 @@ func (m *Map) Size() int {
 
 func (m *Map) Values() *ValView {
 	s := &Slice{}
+	// TODO shouldn't I keep this nil?
 	keys := make([]string, 0, len(m.M))
 	for k := range m.M {
 		keys = append(keys, k)
@@ -204,6 +208,38 @@ func (view *KeyView) Remove(k string) bool {
 	return ok
 }
 
+func (view *KeyView) RemoveAll(v interface{}) (bool, error) {
+	vv, ok := v.(*Slice)
+	if !ok {
+		return false, errArrayExpected
+	}
+	var found bool
+	for i := range vv.S {
+		if view.Slice.Remove(vv.S[i]) {
+			found = true
+			view.m.Remove(vv.S[i].(string))
+		}
+	}
+	return found, nil
+}
+
+func (view *KeyView) RetainAll(v interface{}) (bool, error) {
+	vv, ok := v.(*Slice)
+	if !ok {
+		return false, errArrayExpected
+	}
+	var found bool
+	for i := 0; i < len(view.Slice.S); i++ {
+		if vv.Contains(view.Slice.S[i]) {
+			continue
+		}
+		view.Remove(view.Slice.S[i].(string))
+		i--
+		found = true
+	}
+	return found, nil
+}
+
 type ValView struct {
 	*View
 	k []string
@@ -213,7 +249,7 @@ func (view *ValView) Remove(val interface{}) bool {
 	ok := view.Slice.Remove(val)
 	if ok {
 		for i, k := range view.k {
-			if view.m.Get(k) == val {
+			if reflect.DeepEqual(view.m.Get(k), val) {
 				view.m.Remove(k)
 				view.k = append(view.k[:i], view.k[i+1:]...)
 				break
@@ -223,15 +259,80 @@ func (view *ValView) Remove(val interface{}) bool {
 	return ok
 }
 
+func (view *ValView) RemoveAll(v interface{}) (bool, error) {
+	vv, ok := v.(*Slice)
+	if !ok {
+		return false, errArrayExpected
+	}
+	var found bool
+	for i := range vv.S {
+		found = view.Remove(vv.S[i]) || found
+	}
+	return found, nil
+}
+
+func (view *ValView) RetainAll(v interface{}) (bool, error) {
+	vv, ok := v.(*Slice)
+	if !ok {
+		return false, errArrayExpected
+	}
+	var found bool
+	for i := 0; i < len(view.Slice.S); i++ {
+		if vv.Contains(view.Slice.S[i]) {
+			continue
+		}
+		view.Remove(view.Slice.S[i])
+		i--
+		found = true
+	}
+	return found, nil
+}
+
 type EntryView View
 
-func (view *EntryView) Remove(entry interface{}) bool {
-	ok := view.Slice.Remove(entry)
-	if ok {
-		k := entry.(*MapEntry).k
-		view.m.Remove(k)
+func (view *EntryView) Remove(v *MapEntry) bool {
+	// cannot use Slice.Equals as it uses reflect.DeepEqual, and MapEntry should ignore map pointer
+	// during comparison
+	for i := range view.Slice.S {
+		if view.Slice.S[i].(*MapEntry).k == v.k && reflect.DeepEqual(view.Slice.S[i].(*MapEntry).v, v.v) {
+			view.Slice.S = append(view.Slice.S[:i], view.Slice.S[i+1:]...)
+			view.m.Remove(v.k)
+			return true
+		}
 	}
-	return ok
+	return false
+}
+
+func (view *EntryView) RemoveAll(v interface{}) (bool, error) {
+	vv, ok := v.(*Slice)
+	if !ok {
+		return false, errArrayExpected
+	}
+	var found bool
+	for i := range vv.S {
+		if view.Slice.Remove(vv.S[i]) {
+			found = true
+			view.m.Remove(vv.S[i].(*MapEntry).k)
+		}
+	}
+	return found, nil
+}
+
+func (view *EntryView) RetainAll(v interface{}) (bool, error) {
+	vv, ok := v.(*Slice)
+	if !ok {
+		return false, errArrayExpected
+	}
+	var found bool
+	for i := 0; i < len(view.Slice.S); i++ {
+		if vv.Contains(view.Slice.S[i]) {
+			continue
+		}
+		view.Remove(view.Slice.S[i].(*MapEntry))
+		i--
+		found = true
+	}
+	return found, nil
 }
 
 var errArrayExpected = errors.New("array expected")
@@ -260,7 +361,7 @@ func (s *Slice) Clear() {
 
 func (s *Slice) Contains(v interface{}) bool {
 	for i := range s.S {
-		if s.S[i] == v {
+		if reflect.DeepEqual(s.S[i], v) {
 			return true
 		}
 	}
@@ -289,7 +390,7 @@ func (s *Slice) Equals(v interface{}) (bool, error) {
 		return false, nil
 	}
 	for i := range vv.S {
-		if vv.S[i] != s.S[i] {
+		if !reflect.DeepEqual(vv.S[i], s.S[i]) {
 			return false, nil
 		}
 	}
@@ -309,7 +410,7 @@ func (s *Slice) Iterator() *Iterator { return &Iterator{s: s} }
 
 func (s *Slice) Remove(v interface{}) bool {
 	for i := range s.S {
-		if s.S[i] == v {
+		if reflect.DeepEqual(s.S[i], v) {
 			s.S = append(s.S[:i], s.S[i+1:]...)
 			return true
 		}
@@ -340,6 +441,7 @@ func (s *Slice) RetainAll(v interface{}) (bool, error) {
 			continue
 		}
 		s.Remove(s.S[i])
+		i--
 		found = true
 	}
 	return found, nil
@@ -347,6 +449,15 @@ func (s *Slice) RetainAll(v interface{}) (bool, error) {
 
 func (s *Slice) Size() int {
 	return len(s.S)
+}
+
+func (s *Slice) ToArray() *Slice {
+	if s.S == nil {
+		return &Slice{}
+	}
+	ss := make([]interface{}, len(s.S))
+	copy(ss, s.S)
+	return &Slice{ss}
 }
 
 type Iterator struct {
@@ -364,39 +475,48 @@ func NewIterator(v interface{}) *Iterator {
 	}
 }
 
-func (i *Iterator) Next() reflect.Value {
-	var ret reflect.Value
+func (i *Iterator) Next() interface{} {
 	if i.i < i.s.Size() {
-		ret = reflect.ValueOf(i.s.S[i.i])
 		i.i++
+		return i.s.S[i.i-1]
 	}
-	return ret
+	return nil
 }
 
 func (i *Iterator) HasNext() bool { return i.i < i.s.Size() }
 
 var errNotImplemented = errors.New("not implemented")
 
+var lower = cases.Lower(language.Und)
+var upper = cases.Upper(language.Und)
+
 type Str string
 
-func (s Str) CharAt(i int) rune                   { return []rune(s)[i] }
+func (s Str) CharAt(i int) (rune, error) {
+	r := []rune(s)
+	if i < 0 || i >= len(r) {
+		return 0, fmt.Errorf("index out of range %d with length %d", i, len(r))
+	}
+	return r[i], nil
+}
 func (s Str) CodePointAt(i int) error             { return errNotImplemented }
 func (s Str) CodePointBefore(i int) error         { return errNotImplemented }
 func (s Str) CodePointCount(start, end int) error { return errNotImplemented }
 
 func (s Str) compare(o string, tr func(rune) rune) int {
 	rs, ro := []rune(s), []rune(o)
-	diff := len(rs) - len(ro)
-	if diff != 0 {
-		return diff
+	l := len(rs)
+	if len(ro) < l {
+		l = len(ro)
 	}
-	for i := range rs {
-		diff = int(tr(rs[i])) - int(tr(ro[i]))
+	for i := 0; i < l; i++ {
+		diff := int(tr(rs[i])) - int(tr(ro[i]))
 		if diff != 0 {
 			return diff
 		}
 	}
-	return 0
+	diff := len(rs) - len(ro)
+	return diff
 }
 
 func (s Str) CompareTo(o string) int {
@@ -407,19 +527,17 @@ func (s Str) CompareToIgnoreCase(o string) int {
 	return s.compare(o, func(r rune) rune { return unicode.ToLower(unicode.ToUpper(r)) })
 }
 
-func (s Str) Concat(o string) string      { return string(s) + o }
-func (s Str) Contains(o string) bool      { return strings.Contains(string(s), o) }
-func (s Str) ContentEquals(o string) bool { return string(s) == o }
-func (s Str) EndsWith(suffix string) bool { return strings.HasSuffix(string(s), suffix) }
-func (s Str) Equals(o string) bool        { return string(s) == o }
-func (s Str) EqualsIgnoreCase(o string) bool {
-	return strings.ToLower(strings.ToUpper(string(s))) == strings.ToLower(strings.ToUpper(o))
-}
-func (s Str) GetBytes() []byte { return []byte(s) }
+func (s Str) Concat(o string) string         { return string(s) + o }
+func (s Str) Contains(o string) bool         { return strings.Contains(string(s), o) }
+func (s Str) ContentEquals(o string) bool    { return string(s) == o }
+func (s Str) EndsWith(suffix string) bool    { return strings.HasSuffix(string(s), suffix) }
+func (s Str) Equals(o string) bool           { return string(s) == o }
+func (s Str) EqualsIgnoreCase(o string) bool { return s.CompareToIgnoreCase(o) == 0 }
+func (s Str) GetBytes() []byte               { return []byte(s) }
 func (s Str) IndexOf(o string) int {
 	i := strings.Index(string(s), o)
 	if i > 0 {
-		i = utf8.RuneCountInString(string(s[:i+1]))
+		i = utf8.RuneCountInString(string(s[:i]))
 	}
 	return i
 }
@@ -427,7 +545,7 @@ func (s Str) IsEmpty() bool { return s == "" }
 func (s Str) LastIndexOf(o string) int {
 	i := strings.LastIndex(string(s), o)
 	if i > 0 {
-		i = utf8.RuneCountInString(string(s[:i+1]))
+		i = utf8.RuneCountInString(string(s[:i]))
 	}
 	return i
 }
@@ -448,11 +566,12 @@ func (s Str) ReplaceFirst(regex, replacement string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	loc := r.FindStringIndex(string(s))
-	if loc == nil {
-		return string(s), nil
+	ss := string(s)
+	match := r.FindStringSubmatchIndex(ss)
+	if match == nil {
+		return ss, nil
 	}
-	return string(s[:loc[0]]) + replacement + string(s[loc[1]:]), nil
+	return string(s[:match[0]]) + string(r.ExpandString(nil, replacement, ss, match)) + string(s[match[1]:]), nil
 }
 
 func (s Str) Split(regex string) ([]string, error) {
@@ -460,7 +579,14 @@ func (s Str) Split(regex string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return r.Split(string(s), -1), nil
+	result := r.Split(string(s), -1)
+	i := len(result) - 1
+	for ; i >= 0; i-- {
+		if result[i] != "" {
+			break
+		}
+	}
+	return result[:i+1], nil
 }
 
 func (s Str) StartsWith(prefix string) bool { return strings.HasPrefix(string(s), prefix) }
@@ -474,9 +600,9 @@ func (s Str) SubSequence(start, end int) (string, error) {
 
 func (s Str) Substring(start, end int) (string, error) { return s.SubSequence(start, end) }
 
-func (s Str) ToLowerCase() string { return strings.ToLower(string(s)) }
+func (s Str) ToLowerCase() string { return lower.String(string(s)) }
 func (s Str) ToString() string    { return string(s) }
-func (s Str) ToUpperCase() string { return strings.ToUpper(string(s)) }
+func (s Str) ToUpperCase() string { return upper.String(string(s)) }
 func (s Str) Trim() string        { return strings.TrimSpace(string(s)) }
 
 // TODO add implementation based on the vtl's

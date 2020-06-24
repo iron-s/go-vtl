@@ -163,7 +163,7 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			empty := true
 			for f.it.HasNext() {
 				empty = false
-				ctx.Set(vdepth, n.Var.Name, f.it.Next())
+				ctx.Set(vdepth, n.Var.Name, reflect.ValueOf(f.it.Next()))
 				_, err := t._execute(w, n.Items, ctx)
 				if err != nil {
 					return true, err

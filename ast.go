@@ -4,18 +4,6 @@ type Node interface {
 	// Orig() string
 }
 
-// type ListNode struct {
-// 	Nodes []Node
-// }
-
-// func (l *ListNode) Orig() string {
-// 	var ret string
-// 	for _, n := range l.Nodes {
-// 		ret += n.Orig()
-// 	}
-// 	return ret
-// }
-
 type NestedNode interface {
 	Nested() [][]Node
 }
