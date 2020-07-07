@@ -1370,6 +1370,43 @@ func TestSlice_Size(t *testing.T) {
 	}
 }
 
+func TestSlice_Set(t *testing.T) {
+	type fields struct {
+		S []interface{}
+	}
+	type args struct {
+		i int
+		v interface{}
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		want      interface{}
+		assertion assert.ErrorAssertionFunc
+		wantS     []interface{}
+	}{
+		{"empty", fields{[]interface{}{}}, args{0, "a"}, nil, assert.Error, []interface{}{}},
+		{"negative index", fields{[]interface{}{1}}, args{-1, "a"}, nil, assert.Error, []interface{}{1}},
+		{"past end", fields{[]interface{}{1}}, args{1, "a"}, nil, assert.Error, []interface{}{1}},
+		{"single element", fields{[]interface{}{1}}, args{0, "a"}, interface{}(1), assert.NoError, []interface{}{"a"}},
+		{"last element", fields{[]interface{}{1, "x", "y"}}, args{2, 3}, interface{}("y"), assert.NoError, []interface{}{1, "x", 3}},
+		{"first element", fields{[]interface{}{1, "x", "y"}}, args{0, 3}, interface{}(1), assert.NoError, []interface{}{3, "x", "y"}},
+		{"middle element", fields{[]interface{}{1, "x", "y"}}, args{1, 3}, interface{}("x"), assert.NoError, []interface{}{1, 3, "y"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Slice{
+				S: tt.fields.S,
+			}
+			got, err := s.Set(tt.args.i, tt.args.v)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantS, s.S)
+		})
+	}
+}
+
 func TestSlice_ToArray(t *testing.T) {
 	type fields struct {
 		S []interface{}
@@ -1421,7 +1458,7 @@ func TestNewIterator(t *testing.T) {
 
 func TestIterator_Next(t *testing.T) {
 	type fields struct {
-		s *Slice
+		s Addressable
 		i int
 	}
 	tests := []struct {
@@ -1429,10 +1466,14 @@ func TestIterator_Next(t *testing.T) {
 		fields fields
 		want   interface{}
 	}{
-		{"from the beginning", fields{&Slice{[]interface{}{1, 2, 3}}, 0}, 1},
-		{"middle", fields{&Slice{[]interface{}{1, 2, 3}}, 1}, 2},
-		{"last", fields{&Slice{[]interface{}{1, 2, 3}}, 2}, 3},
-		{"after last", fields{&Slice{[]interface{}{1, 2, 3}}, 3}, nil},
+		{"slice from the beginning", fields{&Slice{[]interface{}{1, 2, 3}}, 0}, 1},
+		{"slice middle", fields{&Slice{[]interface{}{1, 2, 3}}, 1}, 2},
+		{"slice last", fields{&Slice{[]interface{}{1, 2, 3}}, 2}, 3},
+		{"slice after last", fields{&Slice{[]interface{}{1, 2, 3}}, 3}, nil},
+		{"range from the beginning", fields{NewRange(1, 3), 0}, 1},
+		{"range middle", fields{NewRange(1, 3), 1}, 2},
+		{"range last", fields{NewRange(1, 3), 2}, 3},
+		{"range after last", fields{NewRange(1, 3), 3}, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1447,7 +1488,7 @@ func TestIterator_Next(t *testing.T) {
 
 func TestIterator_HasNext(t *testing.T) {
 	type fields struct {
-		s *Slice
+		s Addressable
 		i int
 	}
 	tests := []struct {
@@ -1455,10 +1496,14 @@ func TestIterator_HasNext(t *testing.T) {
 		fields fields
 		want   bool
 	}{
-		{"in the beginning", fields{&Slice{[]interface{}{1, 2, 3}}, 0}, true},
-		{"middle", fields{&Slice{[]interface{}{1, 2, 3}}, 1}, true},
-		{"last", fields{&Slice{[]interface{}{1, 2, 3}}, 2}, true},
-		{"after last", fields{&Slice{[]interface{}{1, 2, 3}}, 3}, false},
+		{"slice in the beginning", fields{&Slice{[]interface{}{1, 2, 3}}, 0}, true},
+		{"slice middle", fields{&Slice{[]interface{}{1, 2, 3}}, 1}, true},
+		{"slice last", fields{&Slice{[]interface{}{1, 2, 3}}, 2}, true},
+		{"slice after last", fields{&Slice{[]interface{}{1, 2, 3}}, 3}, false},
+		{"range in the beginning", fields{NewRange(1, 3), 0}, true},
+		{"range middle", fields{NewRange(1, 3), 1}, true},
+		{"range last", fields{NewRange(1, 3), 2}, true},
+		{"range after last", fields{NewRange(1, 3), 3}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2149,6 +2194,209 @@ func TestStr_Trim(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.want, tt.s.Trim())
+		})
+	}
+}
+
+func TestNewRange(t *testing.T) {
+	type args struct {
+		start int
+		end   int
+	}
+	tests := []struct {
+		name string
+		args args
+		want *Range
+	}{
+		{"single element", args{0, 0}, &Range{0, 0, 1}},
+		{"up positive", args{0, 5}, &Range{0, 5, 1}},
+		{"down positive", args{5, 0}, &Range{5, 0, -1}},
+		{"up negative", args{-5, -3}, &Range{-5, -3, 1}},
+		{"down negative", args{-3, -5}, &Range{-3, -5, -1}},
+		{"up cross", args{-3, 5}, &Range{-3, 5, 1}},
+		{"down cross", args{3, -5}, &Range{3, -5, -1}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, NewRange(tt.args.start, tt.args.end))
+		})
+	}
+}
+
+func TestRange_Get(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	type args struct {
+		i int
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		want      interface{}
+		assertion assert.ErrorAssertionFunc
+	}{
+		{"negative index", fields{0, 3, 1}, args{-1}, nil, assert.Error},
+		{"after last", fields{0, 3, 1}, args{5}, nil, assert.Error},
+		{"single element", fields{2, 2, 1}, args{0}, 2, assert.NoError},
+		{"first up", fields{1, 3, 1}, args{0}, 1, assert.NoError},
+		{"middle up", fields{1, 3, 1}, args{1}, 2, assert.NoError},
+		{"last up", fields{1, 3, 1}, args{2}, 3, assert.NoError},
+		{"first down", fields{3, 1, -1}, args{0}, 3, assert.NoError},
+		{"middle down", fields{3, 1, -1}, args{1}, 2, assert.NoError},
+		{"last down", fields{3, 1, -1}, args{2}, 1, assert.NoError},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			got, err := r.Get(tt.args.i)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestRange_IndexOf(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	type args struct {
+		i int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   int
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			assert.Equal(t, tt.want, r.IndexOf(tt.args.i))
+		})
+	}
+}
+
+func TestRange_Iterator(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   *Iterator
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			assert.Equal(t, tt.want, r.Iterator())
+		})
+	}
+}
+
+func TestRange_LastIndexOf(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	type args struct {
+		i int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   int
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			assert.Equal(t, tt.want, r.LastIndexOf(tt.args.i))
+		})
+	}
+}
+
+func TestRange_Set(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	type args struct {
+		i int
+		v interface{}
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		assertion assert.ErrorAssertionFunc
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			tt.assertion(t, r.Set(tt.args.i, tt.args.v))
+		})
+	}
+}
+
+func TestRange_Size(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   int
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			assert.Equal(t, tt.want, r.Size())
 		})
 	}
 }

@@ -447,6 +447,15 @@ func (s *Slice) RetainAll(v interface{}) (bool, error) {
 	return found, nil
 }
 
+func (s *Slice) Set(i int, v interface{}) (interface{}, error) {
+	if i >= 0 && i < len(s.S) {
+		r := s.S[i]
+		s.S[i] = v
+		return r, nil
+	}
+	return nil, fmt.Errorf("index out of range %d with length %d", i, len(s.S))
+}
+
 func (s *Slice) Size() int {
 	return len(s.S)
 }
@@ -461,8 +470,13 @@ func (s *Slice) ToArray() *Slice {
 }
 
 type Iterator struct {
-	s *Slice
+	s Addressable
 	i int
+}
+
+type Addressable interface {
+	Get(i int) (interface{}, error)
+	Size() int
 }
 
 func NewIterator(v interface{}) *Iterator {
@@ -478,7 +492,8 @@ func NewIterator(v interface{}) *Iterator {
 func (i *Iterator) Next() interface{} {
 	if i.i < i.s.Size() {
 		i.i++
-		return i.s.S[i.i-1]
+		r, _ := i.s.Get(i.i - 1)
+		return r
 	}
 	return nil
 }
@@ -605,6 +620,45 @@ func (s Str) ToString() string    { return string(s) }
 func (s Str) ToUpperCase() string { return upper.String(string(s)) }
 func (s Str) Trim() string        { return strings.TrimSpace(string(s)) }
 
-// TODO add implementation based on the vtl's
 type Range struct {
+	start, end, diff int
+}
+
+func NewRange(start, end int) *Range {
+	r := &Range{start, end, 1}
+	if start > end {
+		r.diff = -1
+	}
+	return r
+}
+
+func (r *Range) Get(i int) (interface{}, error) {
+	if i < 0 || i >= r.Size() {
+		return nil, fmt.Errorf("index out of range %d with length %d", i, r.Size())
+	}
+	return r.start + i*r.diff, nil
+}
+
+func (r *Range) IndexOf(i int) int {
+	ret := (i - r.start) * r.diff
+	if ret < 0 || ret >= r.Size() {
+		return -1
+	}
+	return ret
+}
+
+func (r *Range) Iterator() *Iterator {
+	return &Iterator{s: r}
+}
+
+func (r *Range) LastIndexOf(i int) int {
+	return r.IndexOf(i)
+}
+
+func (r *Range) Set(i int, v interface{}) error {
+	return errUnsupported
+}
+
+func (r *Range) Size() int {
+	return (r.end-r.start)*r.diff + 1
 }

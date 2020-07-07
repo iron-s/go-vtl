@@ -476,9 +476,6 @@ var funcs = map[string]interface{}{
 	"list": func(v1, v2 reflect.Value) reflect.Value { return v1 },
 
 	"range": func(v1, v2 reflect.Value) (reflect.Value, error) {
-		var ret []interface{}
-		var diff int64 = 1
-		cmp := func(i1, i2 int64) bool { return i1 <= i2 }
 		if v1.Kind() == reflect.String {
 			i, err := strconv.Atoi(v1.String())
 			if err != nil {
@@ -493,14 +490,7 @@ var funcs = map[string]interface{}{
 			}
 			v2 = reflect.ValueOf(i)
 		}
-		if v1.Int() > v2.Int() {
-			diff = -1
-			cmp = func(i1, i2 int64) bool { return i2 <= i1 }
-		}
-		for i := v1.Int(); cmp(i, v2.Int()); i += diff {
-			ret = append(ret, int64(i))
-		}
-		return wrapTypes(reflect.ValueOf(ret)), nil
+		return reflect.ValueOf(NewRange(int(v1.Int()), int(v2.Int()))), nil
 	},
 }
 
