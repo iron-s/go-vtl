@@ -620,7 +620,11 @@ func call(v reflect.Value, meth string, args ...reflect.Value) (reflect.Value, e
 			return reflect.Value{}, err
 		}
 		ret := m.Call(args)
-		if len(ret) != 0 {
+		if len(ret) > 0 {
+			err := asError(ret[len(ret)-1].Interface())
+			if err != nil {
+				return reflect.Value{}, err
+			}
 			return wrapTypes(ret[0]), nil
 		}
 	case vv.Kind() == reflect.Struct:
@@ -637,6 +641,14 @@ func call(v reflect.Value, meth string, args ...reflect.Value) (reflect.Value, e
 	}
 
 	return reflect.Value{}, nil
+}
+
+func asError(v interface{}) error {
+	err, ok := v.(error)
+	if ok {
+		return err
+	}
+	return nil
 }
 
 func isInt(v reflect.Value) bool {
