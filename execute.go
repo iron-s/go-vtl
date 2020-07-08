@@ -155,6 +155,8 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			switch iter.Type() {
 			case sliceType:
 				f.it = iter.Interface().(*Slice).Iterator()
+			case rangeType:
+				f.it = iter.Interface().(*Range).Iterator()
 			case mapType:
 				f.it = iter.Interface().(*Map).Values().Iterator()
 			case iteratorType:
@@ -516,6 +518,7 @@ func (f *foreach) Index() int    { return f.it.i - 1 }
 
 var (
 	sliceType     = reflect.TypeOf((*Slice)(nil))
+	rangeType     = reflect.TypeOf((*Range)(nil))
 	mapType       = reflect.TypeOf((*Map)(nil))
 	entryType     = reflect.TypeOf((*MapEntry)(nil))
 	viewType      = reflect.TypeOf((*View)(nil))
@@ -560,14 +563,15 @@ func vtlPrint(v reflect.Value) string {
 		case viewType, keyViewType, entryViewType, valViewType:
 			s := v.Elem().FieldByName("Slice")
 			return vtlPrint(s)
-		case sliceType:
-			s := v.Interface().(*Slice).S
+		case sliceType, rangeType:
+			s := v.Interface().(Collection)
 			b.WriteByte('[')
-			for i := range s {
-				if i > 0 {
+			it := s.Iterator()
+			for it.HasNext() {
+				b.WriteString(vtlPrint(reflect.ValueOf(it.Next())))
+				if it.HasNext() {
 					b.WriteString(", ")
 				}
-				b.WriteString(vtlPrint(reflect.ValueOf(s[i])))
 			}
 			b.WriteByte(']')
 		default:

@@ -147,9 +147,10 @@ func (p *provider) Concat(s ...interface{}) string {
 	return ret
 }
 
-func (p *provider) ObjConcat(s *govtl.Slice) string {
+func (p *provider) ObjConcat(s govtl.Collection) string {
 	var ret string
-	for _, v := range s.S {
+	for i := 0; i < s.Size(); i++ {
+		v, _ := s.Get(i)
 		ret += fmt.Sprintf("%v", v) + " "
 	}
 	return ret
