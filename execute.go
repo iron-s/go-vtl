@@ -304,6 +304,16 @@ func (t *Template) eval(e *OpNode, ctx Ctx, undefOk bool) (reflect.Value, error)
 		if err != nil && !(undefOk && errors.As(err, &undefinedError{})) {
 			return l, err
 		}
+		switch e.Op {
+		case "or":
+			if isTrue(l) {
+				return reflect.ValueOf(true), nil
+			}
+		case "and":
+			if !isTrue(l) {
+				return reflect.ValueOf(false), nil
+			}
+		}
 		r, err := t.eval(e.Right, ctx, undefOk)
 		if err != nil && !(undefOk && errors.As(err, &undefinedError{})) {
 			return r, err

@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const result = `
@@ -111,6 +113,44 @@ func TestExecuteVtl(t *testing.T) {
 	}
 	if b.String() != result {
 		t.Error("expect correct output", result, ", got", b.String(), ".")
+	}
+}
+
+func TestExecuteShortCircuit(t *testing.T) {
+	tests := []struct {
+		name      string
+		tmpl      string
+		want      string
+		assertion assert.ErrorAssertionFunc
+	}{
+		{"no short circuit with false in or",
+			"#if(false or 1/0)true#{else}false#end",
+			"false", assert.NoError},
+		{"no short circuit with true in and",
+			"#if(true and 1/0)true#{else}false#end",
+			"false", assert.NoError},
+		{"short circuit naked bool in or",
+			"#if(true or 1/0)true#end",
+			"true", assert.NoError},
+		{"short circuit naked bool in and",
+			"#if(false and 1/0)true#{else}false#end",
+			"false", assert.NoError},
+		{"short circuit bool result in or",
+			"#if(5 > 3 or 1/0)true#end",
+			"true", assert.NoError},
+		{"short circuit bool result in and",
+			"#if(5 == 3 and 1/0)true#{else}false#end",
+			"false", assert.NoError},
+	}
+	var b strings.Builder
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vtl := Must(Parse(tt.tmpl, "", ""))
+			err := vtl.Execute(&b, nil)
+			assert.Equal(t, tt.want, b.String())
+			tt.assertion(t, err)
+			b.Reset()
+		})
 	}
 }
 
