@@ -1253,25 +1253,28 @@ func TestSlice_Remove(t *testing.T) {
 		v interface{}
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
-		wantS  []interface{}
+		name      string
+		fields    fields
+		args      args
+		want      bool
+		assertion assert.ErrorAssertionFunc
+		wantS     []interface{}
 	}{
-		{"works with nil", fields{nil}, args{1}, false, nil},
-		{"works with empty", fields{[]interface{}{}}, args{1}, false, []interface{}{}},
-		{"does nothing for non-existant", fields{[]interface{}{1}}, args{2}, false, []interface{}{1}},
-		{"removes comparable", fields{[]interface{}{1, 2}}, args{2}, true, []interface{}{1}},
-		{"removes non comparable", fields{[]interface{}{1, []int{2}}}, args{[]int{2}}, true, []interface{}{1}},
+		{"works with nil", fields{nil}, args{1}, false, assert.NoError, nil},
+		{"works with empty", fields{[]interface{}{}}, args{1}, false, assert.NoError, []interface{}{}},
+		{"does nothing for non-existant", fields{[]interface{}{1}}, args{2}, false, assert.NoError, []interface{}{1}},
+		{"removes comparable", fields{[]interface{}{1, 2}}, args{2}, true, assert.NoError, []interface{}{1}},
+		{"removes non comparable", fields{[]interface{}{1, []int{2}}}, args{[]int{2}}, true, assert.NoError, []interface{}{1}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
 				S: tt.fields.S,
 			}
-			assert.Equal(t, tt.want, s.Remove(tt.args.v))
+			removed, err := s.Remove(tt.args.v)
+			assert.Equal(t, tt.want, removed)
 			assert.Equal(t, tt.wantS, s.S)
+			tt.assertion(t, err)
 		})
 	}
 }
@@ -1458,7 +1461,7 @@ func TestNewIterator(t *testing.T) {
 
 func TestIterator_Next(t *testing.T) {
 	type fields struct {
-		s Addressable
+		s Collection
 		i int
 	}
 	tests := []struct {
@@ -1488,7 +1491,7 @@ func TestIterator_Next(t *testing.T) {
 
 func TestIterator_HasNext(t *testing.T) {
 	type fields struct {
-		s Addressable
+		s Collection
 		i int
 	}
 	tests := []struct {
@@ -2375,10 +2378,11 @@ func TestRange_Set(t *testing.T) {
 		name      string
 		fields    fields
 		args      args
+		want      interface{}
 		assertion assert.ErrorAssertionFunc
 	}{
-		{"index in range", fields{-2, 2, 1}, args{0, 2}, assert.Error},
-		{"index outside range", fields{-2, 2, 1}, args{8, 1}, assert.Error},
+		{"index in range", fields{-2, 2, 1}, args{0, 2}, nil, assert.Error},
+		{"index outside range", fields{-2, 2, 1}, args{8, 1}, nil, assert.Error},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2387,7 +2391,9 @@ func TestRange_Set(t *testing.T) {
 				end:   tt.fields.end,
 				diff:  tt.fields.diff,
 			}
-			tt.assertion(t, r.Set(tt.args.i, tt.args.v))
+			prev, err := r.Set(tt.args.i, tt.args.v)
+			assert.Equal(t, tt.want, prev)
+			tt.assertion(t, err)
 		})
 	}
 }

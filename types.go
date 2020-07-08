@@ -201,7 +201,7 @@ func (v *View) Clear() {
 type KeyView View
 
 func (view *KeyView) Remove(k string) bool {
-	ok := view.Slice.Remove(k)
+	ok, _ := view.Slice.Remove(k)
 	if ok {
 		view.m.Remove(k)
 	}
@@ -215,7 +215,8 @@ func (view *KeyView) RemoveAll(v interface{}) (bool, error) {
 	}
 	var found bool
 	for i := range vv.S {
-		if view.Slice.Remove(vv.S[i]) {
+		removed, _ := view.Slice.Remove(vv.S[i])
+		if removed {
 			found = true
 			view.m.Remove(vv.S[i].(string))
 		}
@@ -246,7 +247,7 @@ type ValView struct {
 }
 
 func (view *ValView) Remove(val interface{}) bool {
-	ok := view.Slice.Remove(val)
+	ok, _ := view.Slice.Remove(val)
 	if ok {
 		for i, k := range view.k {
 			if reflect.DeepEqual(view.m.Get(k), val) {
@@ -310,7 +311,8 @@ func (view *EntryView) RemoveAll(v interface{}) (bool, error) {
 	}
 	var found bool
 	for i := range vv.S {
-		if view.Slice.Remove(vv.S[i]) {
+		removed, _ := view.Slice.Remove(vv.S[i])
+		if removed {
 			found = true
 			view.m.Remove(vv.S[i].(*MapEntry).k)
 		}
@@ -355,8 +357,9 @@ func (s *Slice) AddAll(v interface{}) (bool, error) {
 	return true, nil
 }
 
-func (s *Slice) Clear() {
+func (s *Slice) Clear() error {
 	s.S = nil
+	return nil
 }
 
 func (s *Slice) Contains(v interface{}) bool {
@@ -369,32 +372,11 @@ func (s *Slice) Contains(v interface{}) bool {
 }
 
 func (s *Slice) ContainsAll(v interface{}) (bool, error) {
-	vv, ok := v.(*Slice)
-	if !ok {
-		return false, errArrayExpected
-	}
-	for i := range vv.S {
-		if !s.Contains(vv.S[i]) {
-			return false, nil
-		}
-	}
-	return true, nil
+	return containsAll(s, v)
 }
 
 func (s *Slice) Equals(v interface{}) (bool, error) {
-	vv, ok := v.(*Slice)
-	if !ok {
-		return false, errArrayExpected
-	}
-	if len(s.S) != len(vv.S) {
-		return false, nil
-	}
-	for i := range vv.S {
-		if !reflect.DeepEqual(vv.S[i], s.S[i]) {
-			return false, nil
-		}
-	}
-	return true, nil
+	return equals(s, v)
 }
 
 func (s *Slice) Get(i int) (interface{}, error) {
@@ -408,24 +390,26 @@ func (s *Slice) IsEmpty() bool { return len(s.S) == 0 }
 
 func (s *Slice) Iterator() *Iterator { return &Iterator{s: s} }
 
-func (s *Slice) Remove(v interface{}) bool {
+func (s *Slice) Remove(v interface{}) (bool, error) {
 	for i := range s.S {
 		if reflect.DeepEqual(s.S[i], v) {
 			s.S = append(s.S[:i], s.S[i+1:]...)
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 func (s *Slice) RemoveAll(v interface{}) (bool, error) {
-	vv, ok := v.(*Slice)
+	vv, ok := v.(Collection)
 	if !ok {
 		return false, errArrayExpected
 	}
 	var found bool
-	for i := range vv.S {
-		found = s.Remove(vv.S[i]) || found
+	for i := 0; i < vv.Size(); i++ {
+		o, _ := vv.Get(i)
+		removed, _ := s.Remove(o)
+		found = removed || found
 	}
 	return found, nil
 }
@@ -470,13 +454,58 @@ func (s *Slice) ToArray() *Slice {
 }
 
 type Iterator struct {
-	s Addressable
+	s Collection
 	i int
 }
 
-type Addressable interface {
+type Collection interface {
+	Add(v interface{}) (bool, error)
+	AddAll(interface{}) (bool, error)
+	Clear() error
+	Contains(interface{}) bool
+	ContainsAll(interface{}) (bool, error)
+	Equals(v interface{}) (bool, error)
 	Get(i int) (interface{}, error)
+	IsEmpty() bool
+	Iterator() *Iterator
+	Remove(interface{}) (bool, error)
+	RemoveAll(interface{}) (bool, error)
+	RetainAll(interface{}) (bool, error)
+	Set(int, interface{}) (interface{}, error)
 	Size() int
+	ToArray() *Slice
+}
+
+func containsAll(c Collection, v interface{}) (bool, error) {
+	vv, ok := v.(Collection)
+	if !ok {
+		return false, errArrayExpected
+	}
+	for i := 0; i < vv.Size(); i++ {
+		o, _ := vv.Get(i)
+		if !c.Contains(o) {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func equals(c Collection, v interface{}) (bool, error) {
+	vv, ok := v.(Collection)
+	if !ok {
+		return false, errArrayExpected
+	}
+	if c.Size() != vv.Size() {
+		return false, nil
+	}
+	for i := 0; i < vv.Size(); i++ {
+		o, _ := vv.Get(i)
+		t, _ := c.Get(i)
+		if !reflect.DeepEqual(o, t) {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func NewIterator(v interface{}) *Iterator {
@@ -632,6 +661,27 @@ func NewRange(start, end int) *Range {
 	return r
 }
 
+func (r *Range) Add(v interface{}) (bool, error)    { return false, errUnsupported }
+func (r *Range) AddAll(v interface{}) (bool, error) { return false, errUnsupported }
+func (r *Range) Clear() error                       { return errUnsupported }
+
+func (r *Range) Contains(v interface{}) bool {
+	switch v.(type) {
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32:
+		vv := int(reflect.ValueOf(v).Int())
+		return r.start <= vv && vv <= r.end
+	}
+	return false
+}
+
+func (r *Range) ContainsAll(v interface{}) (bool, error) {
+	return containsAll(r, v)
+}
+
+func (r *Range) Equals(v interface{}) (bool, error) {
+	return equals(r, v)
+}
+
 func (r *Range) Get(i int) (interface{}, error) {
 	if i < 0 || i >= r.Size() {
 		return nil, fmt.Errorf("index out of range %d with length %d", i, r.Size())
@@ -647,6 +697,8 @@ func (r *Range) IndexOf(i int) int {
 	return ret
 }
 
+func (r *Range) IsEmpty() bool { return r.Size() > 0 }
+
 func (r *Range) Iterator() *Iterator {
 	return &Iterator{s: r}
 }
@@ -655,10 +707,23 @@ func (r *Range) LastIndexOf(i int) int {
 	return r.IndexOf(i)
 }
 
-func (r *Range) Set(i int, v interface{}) error {
-	return errUnsupported
-}
+func (r *Range) Remove(interface{}) (bool, error)    { return false, errUnsupported }
+func (r *Range) RemoveAll(interface{}) (bool, error) { return false, errUnsupported }
+func (r *Range) RetainAll(interface{}) (bool, error) { return false, errUnsupported }
+
+func (r *Range) Set(int, interface{}) (interface{}, error) { return nil, errUnsupported }
 
 func (r *Range) Size() int {
 	return (r.end-r.start)*r.diff + 1
+}
+
+func (r *Range) ToArray() *Slice {
+	s := make([]interface{}, r.Size())
+	it := r.Iterator()
+	var i int
+	for it.HasNext() {
+		s[i] = it.Next()
+		i++
+	}
+	return &Slice{s}
 }
