@@ -22,6 +22,3 @@ These are deliberate decisions to make syntax less confusing
 
    Any arguments should be separated by comma, be it method call, include, macro signature or macro call
 9. Maps are iterated in sorted key order
-
-## Deficiencies
-1. Huge ranges will trigger OOM, e.g. [1 .. 67000000]
