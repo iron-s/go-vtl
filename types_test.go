@@ -2278,7 +2278,14 @@ func TestRange_IndexOf(t *testing.T) {
 		args   args
 		want   int
 	}{
-		// TODO: Add test cases.
+		{"single element no match", fields{2, 2, 1}, args{0}, -1},
+		{"single element match", fields{2, 2, 1}, args{2}, 0},
+		{"first up", fields{1, 3, 1}, args{1}, 0},
+		{"middle up", fields{1, 3, 1}, args{2}, 1},
+		{"last up", fields{1, 3, 1}, args{3}, 2},
+		{"first down", fields{3, 1, -1}, args{3}, 0},
+		{"middle down", fields{3, 1, -1}, args{2}, 1},
+		{"last down", fields{3, 1, -1}, args{1}, 2},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2303,7 +2310,7 @@ func TestRange_Iterator(t *testing.T) {
 		fields fields
 		want   *Iterator
 	}{
-		// TODO: Add test cases.
+		{"just a range", fields{-5, 2, 1}, &Iterator{&Range{-5, 2, 1}, 0}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2332,7 +2339,15 @@ func TestRange_LastIndexOf(t *testing.T) {
 		args   args
 		want   int
 	}{
-		// TODO: Add test cases.
+		// same as IndexOf
+		{"single element no match", fields{2, 2, 1}, args{0}, -1},
+		{"single element match", fields{2, 2, 1}, args{2}, 0},
+		{"first up", fields{1, 3, 1}, args{1}, 0},
+		{"middle up", fields{1, 3, 1}, args{2}, 1},
+		{"last up", fields{1, 3, 1}, args{3}, 2},
+		{"first down", fields{3, 1, -1}, args{3}, 0},
+		{"middle down", fields{3, 1, -1}, args{2}, 1},
+		{"last down", fields{3, 1, -1}, args{1}, 2},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2362,7 +2377,8 @@ func TestRange_Set(t *testing.T) {
 		args      args
 		assertion assert.ErrorAssertionFunc
 	}{
-		// TODO: Add test cases.
+		{"index in range", fields{-2, 2, 1}, args{0, 2}, assert.Error},
+		{"index outside range", fields{-2, 2, 1}, args{8, 1}, assert.Error},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2387,7 +2403,13 @@ func TestRange_Size(t *testing.T) {
 		fields fields
 		want   int
 	}{
-		// TODO: Add test cases.
+		{"single element", fields{0, 0, 1}, 1},
+		{"up positive", fields{0, 5, 1}, 6},
+		{"down positive", fields{5, 0, -1}, 6},
+		{"up negative", fields{-5, -3, 1}, 3},
+		{"down negative", fields{-3, -5, -1}, 3},
+		{"up cross", fields{-3, 5, 1}, 9},
+		{"down cross", fields{3, -5, -1}, 9},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
