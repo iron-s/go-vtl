@@ -324,6 +324,10 @@ func (t *Template) eval(e *OpNode, ctx Ctx, undefOk bool) (reflect.Value, error)
 		if ret[0].Type() == reflectValueType {
 			ret[0] = ret[0].Interface().(reflect.Value)
 		}
+		err = asError(ret[len(ret)-1].Interface())
+		if err != nil {
+			return reflect.Value{}, err
+		}
 		return wrapTypes(ret[0]), nil
 	}
 	switch val := e.Val.(type) {

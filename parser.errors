@@ -2,7 +2,7 @@
 1
 error "expected $end"
 
-178 // SET '('
+176 // SET '('
 error "expected '$'"
 
 7 // SET
@@ -13,146 +13,145 @@ error "expected '$'"
 12 // EVALUATE
 13 // MACRO
 14 // MACROCALL
-72 // '$' IDENTIFIER '.' METHOD
-171 // IF '(' BOOLEAN ')' ELSEIF
+70 // '$' IDENTIFIER '.' METHOD
+169 // IF '(' BOOLEAN ')' ELSEIF
 error "expected '('"
 
-120 // MACRO '(' IDENTIFIER
-133 // MACRO '(' IDENTIFIER '$' IDENTIFIER
-143 // EVALUATE '(' STRING
-146 // PARSE '(' BOOLEAN
-154 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER
-155 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER
-156 // FOREACH '(' '$' IDENTIFIER IN '[' ']'
-157 // FOREACH '(' '$' IDENTIFIER IN '{' '}'
-182 // SET '(' '$' IDENTIFIER '=' BOOLEAN
+118 // MACRO '(' IDENTIFIER
+131 // MACRO '(' IDENTIFIER '$' IDENTIFIER
+141 // EVALUATE '(' STRING
+144 // PARSE '(' BOOLEAN
+152 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER
+153 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER
+154 // FOREACH '(' '$' IDENTIFIER IN '[' ']'
+155 // FOREACH '(' '$' IDENTIFIER IN '{' '}'
+180 // SET '(' '$' IDENTIFIER '=' BOOLEAN
 error "expected ')'"
 
-97 // INCLUDE '(' '[' BOOLEAN RANGE BOOLEAN
+95 // INCLUDE '(' '[' BOOLEAN RANGE BOOLEAN
 error "expected ']'"
 
-129 // MACRO '(' IDENTIFIER '$' '!' '{' IDENTIFIER
-131 // MACRO '(' IDENTIFIER '$' '{' IDENTIFIER
+127 // MACRO '(' IDENTIFIER '$' '!' '{' IDENTIFIER
+129 // MACRO '(' IDENTIFIER '$' '{' IDENTIFIER
 error "expected '}'"
 
-168 // IF '(' BOOLEAN ')'
+166 // IF '(' BOOLEAN ')'
 error "expected END"
 
-118 // MACRO '('
-125 // MACRO '(' IDENTIFIER '$' '{'
-128 // MACRO '(' IDENTIFIER '$' '!' '{'
+116 // MACRO '('
+123 // MACRO '(' IDENTIFIER '$' '{'
+126 // MACRO '(' IDENTIFIER '$' '!' '{'
 error "expected IDENTIFIER"
 
-152 // FOREACH '(' '$' IDENTIFIER
+150 // FOREACH '(' '$' IDENTIFIER
 error "expected IN"
 
-142 // EVALUATE '('
+140 // EVALUATE '('
 error "expected STRING"
 
-116 // MACROCALL '(' BOOLEAN ','
-145 // PARSE '('
+114 // MACROCALL '(' BOOLEAN ','
+143 // PARSE '('
 error "expected arg or one of ['\"', '$', '[', '{', BOOLEAN, FLOAT, INT, STRING]"
 
-107 // MACROCALL '('
+105 // MACROCALL '('
 error "expected args or one of ['\"', '$', ')', '[', '{', BOOLEAN, FLOAT, INT, STRING]"
 
-148 // INCLUDE '('
+146 // INCLUDE '('
 error "expected args or one of ['\"', '$', '[', '{', BOOLEAN, FLOAT, INT, STRING]"
 
-56 // IF '(' BOOLEAN OR
-error "expected bool_and or one of ['!', '\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]"
+54 // IF '(' BOOLEAN OR
+error "expected bool_and or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]"
 
 27 // '$' IDENTIFIER '['
 34 // IF '(' '('
-90 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN ','
-102 // INCLUDE '(' '[' BOOLEAN RANGE
-164 // IF '('
-172 // IF '(' BOOLEAN ')' ELSEIF '('
-error "expected bool_expr or one of ['!', '\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]"
+88 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN ','
+100 // INCLUDE '(' '[' BOOLEAN RANGE
+162 // IF '('
+170 // IF '(' BOOLEAN ')' ELSEIF '('
+error "expected bool_expr or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]"
 
 37 // IF '(' NOT
-38 // IF '(' '!'
-52 // IF '(' BOOLEAN AND
-error "expected bool_not or one of ['!', '\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]"
+50 // IF '(' BOOLEAN AND
+error "expected bool_not or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]"
 
-167 // IF '(' BOOLEAN ')'
+165 // IF '(' BOOLEAN ')'
 error "expected directive or else or interpolated or one of ['$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]"
 
 2
 error "expected directive or interpolated or one of [$end, '$', BREAK, COMMENT, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]"
 
-175 // IF '(' BOOLEAN ')' ELSEIF '(' BOOLEAN ')'
+173 // IF '(' BOOLEAN ')' ELSEIF '(' BOOLEAN ')'
 error "expected directive or interpolated or one of ['$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]"
 
-159 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER ')'
+157 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER ')'
 error "expected directive or interpolated or one of ['$', BREAK, COMMENT, ELSE, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]"
 
-137 // MACRO '(' IDENTIFIER '$' IDENTIFIER ')'
-140 // MACRO '(' IDENTIFIER ')'
-162 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER ')' ELSE
-176 // IF '(' BOOLEAN ')' ELSE
+135 // MACRO '(' IDENTIFIER '$' IDENTIFIER ')'
+138 // MACRO '(' IDENTIFIER ')'
+160 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER ')' ELSE
+174 // IF '(' BOOLEAN ')' ELSE
 error "expected directive or interpolated or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]"
 
-166 // IF '(' BOOLEAN ')'
+164 // IF '(' BOOLEAN ')'
 error "expected directives or else or one of ['$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]"
 
-174 // IF '(' BOOLEAN ')' ELSEIF '(' BOOLEAN ')'
+172 // IF '(' BOOLEAN ')' ELSEIF '(' BOOLEAN ')'
 error "expected directives or one of ['$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]"
 
-158 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER ')'
+156 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER ')'
 error "expected directives or one of ['$', BREAK, COMMENT, ELSE, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]"
 
-136 // MACRO '(' IDENTIFIER '$' IDENTIFIER ')'
-139 // MACRO '(' IDENTIFIER ')'
-161 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER ')' ELSE
-170 // IF '(' BOOLEAN ')' ELSE
+134 // MACRO '(' IDENTIFIER '$' IDENTIFIER ')'
+137 // MACRO '(' IDENTIFIER ')'
+159 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER ')' ELSE
+168 // IF '(' BOOLEAN ')' ELSE
 error "expected directives or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]"
 
 30 // IF '(' '-'
-59 // IF '(' BOOLEAN '+'
-60 // IF '(' BOOLEAN '-'
-61 // IF '(' BOOLEAN '*'
-62 // IF '(' BOOLEAN '/'
-63 // IF '(' BOOLEAN '%'
-69 // IF '(' BOOLEAN CMP
+57 // IF '(' BOOLEAN '+'
+58 // IF '(' BOOLEAN '-'
+59 // IF '(' BOOLEAN '*'
+60 // IF '(' BOOLEAN '/'
+61 // IF '(' BOOLEAN '%'
+67 // IF '(' BOOLEAN CMP
 error "expected expression or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, STRING]"
 
-134 // MACRO '(' IDENTIFIER '$' IDENTIFIER ','
+132 // MACRO '(' IDENTIFIER '$' IDENTIFIER ','
 error "expected identifier or '$'"
 
-119 // MACRO '(' IDENTIFIER
+117 // MACRO '(' IDENTIFIER
 error "expected identifiers or one of ['$', ')']"
 
-151 // FOREACH '('
+149 // FOREACH '('
 error "expected interpolated or '$'"
 
-45 // PARSE '(' '"'
+44 // PARSE '(' '"'
 error "expected interpolated or one of ['\"', '$', TEXT, WS]"
 
-153 // FOREACH '(' '$' IDENTIFIER IN
+151 // FOREACH '(' '$' IDENTIFIER IN
 error "expected iterable or one of ['$', '[', '{']"
 
-82 // INCLUDE '(' '{'
-error "expected kvpairs or one of ['!', '\"', '$', '(', '-', '}', BOOLEAN, FLOAT, INT, NOT, STRING]"
+80 // INCLUDE '(' '{'
+error "expected kvpairs or one of ['\"', '$', '(', '-', '}', BOOLEAN, FLOAT, INT, NOT, STRING]"
 
-75 // '$' IDENTIFIER '.' METHOD '('
-error "expected list or one of ['!', '\"', '$', '(', ')', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]"
+73 // '$' IDENTIFIER '.' METHOD '('
+error "expected list or one of ['\"', '$', '(', ')', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]"
 
-81 // INCLUDE '(' '['
-error "expected list or range or one of ['!', '\"', '$', '(', '-', '[', ']', '{', BOOLEAN, FLOAT, INT, NOT, STRING]"
+79 // INCLUDE '(' '['
+error "expected list or range or one of ['\"', '$', '(', '-', '[', ']', '{', BOOLEAN, FLOAT, INT, NOT, STRING]"
 
-41 // PARSE '(' '"'
+40 // PARSE '(' '"'
 error "expected literal or one of ['\"', '$', TEXT, WS]"
 
 26 // '$' IDENTIFIER '.'
 error "expected method or one of [IDENTIFIER, METHOD]"
 
 21 // '$' IDENTIFIER
-71 // '$' IDENTIFIER '[' BOOLEAN ']'
-73 // '$' IDENTIFIER '.' IDENTIFIER
-74 // '$' IDENTIFIER '.' METHOD '(' ')'
-79 // '$' IDENTIFIER '.' METHOD '(' ')'
-104 // '$' IDENTIFIER '.' METHOD '(' BOOLEAN ')'
+69 // '$' IDENTIFIER '[' BOOLEAN ']'
+71 // '$' IDENTIFIER '.' IDENTIFIER
+72 // '$' IDENTIFIER '.' METHOD '(' ')'
+77 // '$' IDENTIFIER '.' METHOD '(' ')'
+102 // '$' IDENTIFIER '.' METHOD '(' BOOLEAN ')'
 error "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/', ':', '=', '[', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]"
 
 18 // '$' IDENTIFIER
@@ -160,7 +159,7 @@ error "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/',
 error "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/', ':', '[', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]"
 
 25 // '$' '!' '{' IDENTIFIER '}'
-106 // '$' '{' IDENTIFIER '}'
+104 // '$' '{' IDENTIFIER '}'
 error "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]"
 
 3 // COMMENT
@@ -169,131 +168,130 @@ error "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '/', ':',
 6 // TEXT
 15 // STOP
 16 // BREAK
-108 // MACROCALL '(' ')'
-115 // MACROCALL '(' BOOLEAN ')'
-138 // MACRO '(' IDENTIFIER '$' IDENTIFIER ')' END
-141 // MACRO '(' IDENTIFIER ')' END
-144 // EVALUATE '(' STRING ')'
-147 // PARSE '(' BOOLEAN ')'
-150 // INCLUDE '(' BOOLEAN ')'
-160 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER ')' END
-163 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER ')' ELSE END
-177 // IF '(' BOOLEAN ')' END
-183 // SET '(' '$' IDENTIFIER '=' BOOLEAN ')'
+106 // MACROCALL '(' ')'
+113 // MACROCALL '(' BOOLEAN ')'
+136 // MACRO '(' IDENTIFIER '$' IDENTIFIER ')' END
+139 // MACRO '(' IDENTIFIER ')' END
+142 // EVALUATE '(' STRING ')'
+145 // PARSE '(' BOOLEAN ')'
+148 // INCLUDE '(' BOOLEAN ')'
+158 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER ')' END
+161 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER ')' ELSE END
+175 // IF '(' BOOLEAN ')' END
+181 // SET '(' '$' IDENTIFIER '=' BOOLEAN ')'
 error "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]"
 
-122 // MACRO '(' IDENTIFIER '$'
+120 // MACRO '(' IDENTIFIER '$'
 error "expected one of ['!', '{', IDENTIFIER]"
 
-47 // PARSE '(' '"' TEXT
-48 // PARSE '(' '"' '$' IDENTIFIER
-49 // PARSE '(' '"' WS
+46 // PARSE '(' '"' TEXT
+47 // PARSE '(' '"' '$' IDENTIFIER
+48 // PARSE '(' '"' WS
 error "expected one of ['\"', '$', TEXT, WS]"
 
 29 // IF '(' BOOLEAN
 31 // IF '(' BOOLEAN
 32 // IF '(' '$' IDENTIFIER
 33 // IF '(' BOOLEAN
-40 // MACROCALL '(' STRING
-42 // MACROCALL '(' FLOAT
-43 // IF '(' INT
-44 // IF '(' BOOLEAN
-46 // PARSE '(' '"' '"'
-55 // IF '(' '(' BOOLEAN ')'
-58 // IF '(' '-' BOOLEAN
-64 // IF '(' BOOLEAN '%' BOOLEAN
-65 // IF '(' BOOLEAN '/' BOOLEAN
-66 // IF '(' BOOLEAN '*' BOOLEAN
-67 // IF '(' BOOLEAN '-' BOOLEAN
-68 // IF '(' BOOLEAN '+' BOOLEAN
+39 // IF '(' STRING
+41 // INCLUDE '(' FLOAT
+42 // INCLUDE '(' INT
+43 // IF '(' BOOLEAN
+45 // PARSE '(' '"' '"'
+53 // IF '(' '(' BOOLEAN ')'
+56 // IF '(' '-' BOOLEAN
+62 // IF '(' BOOLEAN '%' BOOLEAN
+63 // IF '(' BOOLEAN '/' BOOLEAN
+64 // IF '(' BOOLEAN '*' BOOLEAN
+65 // IF '(' BOOLEAN '-' BOOLEAN
+66 // IF '(' BOOLEAN '+' BOOLEAN
 error "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]"
 
-70 // IF '(' BOOLEAN CMP BOOLEAN
+68 // IF '(' BOOLEAN CMP BOOLEAN
 error "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, OR, RANGE]"
 
 35 // IF '(' BOOLEAN
 36 // IF '(' BOOLEAN
-39 // IF '(' BOOLEAN
-50 // IF '(' '!' BOOLEAN
-51 // IF '(' NOT BOOLEAN
-53 // IF '(' BOOLEAN AND BOOLEAN
-57 // IF '(' BOOLEAN OR BOOLEAN
+38 // IF '(' BOOLEAN
+49 // IF '(' NOT BOOLEAN
+51 // IF '(' BOOLEAN AND BOOLEAN
+55 // IF '(' BOOLEAN OR BOOLEAN
 error "expected one of [')', ',', ':', ']', '}', AND, OR, RANGE]"
 
-76 // '$' IDENTIFIER '.' METHOD '(' BOOLEAN
+74 // '$' IDENTIFIER '.' METHOD '(' BOOLEAN
 error "expected one of [')', ',', ']', '}', OR]"
 
-77 // INCLUDE '(' '[' '[' ']'
-78 // INCLUDE '(' '[' '{' '}'
-84 // INCLUDE '(' '{' '}'
-89 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN '}'
-95 // INCLUDE '(' '[' ']'
-98 // INCLUDE '(' '[' BOOLEAN RANGE BOOLEAN ']'
-99 // INCLUDE '(' '[' BOOLEAN ']'
+75 // INCLUDE '(' '[' '[' ']'
+76 // INCLUDE '(' '[' '{' '}'
+82 // INCLUDE '(' '{' '}'
+87 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN '}'
+93 // INCLUDE '(' '[' ']'
+96 // INCLUDE '(' '[' BOOLEAN RANGE BOOLEAN ']'
+97 // INCLUDE '(' '[' BOOLEAN ']'
 error "expected one of [')', ',', ']', '}']"
 
-83 // INCLUDE '(' '[' BOOLEAN
-101 // INCLUDE '(' '[' BOOLEAN ',' BOOLEAN
+81 // INCLUDE '(' '[' BOOLEAN
+99 // INCLUDE '(' '[' BOOLEAN ',' BOOLEAN
 error "expected one of [')', ',', ']']"
 
-80 // '$' IDENTIFIER '.' METHOD '(' BOOLEAN
+78 // '$' IDENTIFIER '.' METHOD '(' BOOLEAN
+107 // MACROCALL '(' BOOLEAN
+108 // MACROCALL '(' '$' IDENTIFIER
 109 // MACROCALL '(' BOOLEAN
-110 // MACROCALL '(' '$' IDENTIFIER
-111 // MACROCALL '(' BOOLEAN
-112 // MACROCALL '(' '[' ']'
-113 // MACROCALL '(' '{' '}'
-114 // MACROCALL '(' BOOLEAN
-117 // MACROCALL '(' BOOLEAN ',' BOOLEAN
+110 // MACROCALL '(' '[' ']'
+111 // MACROCALL '(' '{' '}'
+112 // MACROCALL '(' BOOLEAN
+115 // MACROCALL '(' BOOLEAN ',' BOOLEAN
+119 // MACRO '(' IDENTIFIER '$' IDENTIFIER
 121 // MACRO '(' IDENTIFIER '$' IDENTIFIER
-123 // MACRO '(' IDENTIFIER '$' IDENTIFIER
-124 // MACRO '(' IDENTIFIER '$' IDENTIFIER
-127 // MACRO '(' IDENTIFIER '$' '!' IDENTIFIER
-130 // MACRO '(' IDENTIFIER '$' '!' '{' IDENTIFIER '}'
-132 // MACRO '(' IDENTIFIER '$' '{' IDENTIFIER '}'
-135 // MACRO '(' IDENTIFIER '$' IDENTIFIER ',' '$' IDENTIFIER
-149 // INCLUDE '(' BOOLEAN
+122 // MACRO '(' IDENTIFIER '$' IDENTIFIER
+125 // MACRO '(' IDENTIFIER '$' '!' IDENTIFIER
+128 // MACRO '(' IDENTIFIER '$' '!' '{' IDENTIFIER '}'
+130 // MACRO '(' IDENTIFIER '$' '{' IDENTIFIER '}'
+133 // MACRO '(' IDENTIFIER '$' IDENTIFIER ',' '$' IDENTIFIER
+147 // INCLUDE '(' BOOLEAN
 error "expected one of [')', ',']"
 
-54 // IF '(' '(' BOOLEAN
-165 // IF '(' BOOLEAN
-173 // IF '(' BOOLEAN ')' ELSEIF '(' BOOLEAN
+52 // IF '(' '(' BOOLEAN
+163 // IF '(' BOOLEAN
+171 // IF '(' BOOLEAN ')' ELSEIF '(' BOOLEAN
 error "expected one of [')', OR]"
 
-94 // INCLUDE '(' '[' BOOLEAN
+92 // INCLUDE '(' '[' BOOLEAN
 error "expected one of [',', ']', OR, RANGE]"
 
-96 // INCLUDE '(' '[' BOOLEAN
+94 // INCLUDE '(' '[' BOOLEAN
 error "expected one of [',', ']']"
 
-85 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN
-88 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN
-93 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN ',' BOOLEAN ':' BOOLEAN
+83 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN
+86 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN
+91 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN ',' BOOLEAN ':' BOOLEAN
 error "expected one of [',', '}']"
 
-180 // SET '(' '$' IDENTIFIER
+178 // SET '(' '$' IDENTIFIER
 error "expected one of ['.', '=', '[']"
 
 24 // '$' '!' '{' IDENTIFIER
-105 // '$' '{' IDENTIFIER
+103 // '$' '{' IDENTIFIER
 error "expected one of ['.', '[', '}']"
 
-86 // INCLUDE '(' '{' BOOLEAN
-91 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN ',' BOOLEAN
+84 // INCLUDE '(' '{' BOOLEAN
+89 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN ',' BOOLEAN
 error "expected one of [':', OR]"
 
 28 // '$' IDENTIFIER '[' BOOLEAN
-103 // INCLUDE '(' '[' BOOLEAN RANGE BOOLEAN
+101 // INCLUDE '(' '[' BOOLEAN RANGE BOOLEAN
 error "expected one of [']', OR]"
 
-126 // MACRO '(' IDENTIFIER '$' '!'
+124 // MACRO '(' IDENTIFIER '$' '!'
 error "expected one of ['{', IDENTIFIER]"
 
-169 // IF '(' BOOLEAN ')'
+167 // IF '(' BOOLEAN ')'
 error "expected one of [ELSE, ELSEIF, END]"
 
 19 // '$' '{'
 23 // '$' '!' '{'
-179 // SET '(' '$'
+177 // SET '(' '$'
 error "expected reference or IDENTIFIER"
 
 17 // '$'
@@ -302,11 +300,11 @@ error "expected reference or one of ['!', '{', IDENTIFIER]"
 20 // '$' '!'
 error "expected reference or one of ['{', IDENTIFIER]"
 
-87 // INCLUDE '(' '{' BOOLEAN ':'
-92 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN ',' BOOLEAN ':'
-100 // INCLUDE '(' '[' BOOLEAN ','
-181 // SET '(' '$' IDENTIFIER '='
-error "expected setarg or one of ['!', '\"', '$', '(', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]"
+85 // INCLUDE '(' '{' BOOLEAN ':'
+90 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN ',' BOOLEAN ':'
+98 // INCLUDE '(' '[' BOOLEAN ','
+179 // SET '(' '$' IDENTIFIER '='
+error "expected setarg or one of ['\"', '$', '(', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]"
 
 0
 error "expected vtl or one of [$end, '$', BREAK, COMMENT, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]"

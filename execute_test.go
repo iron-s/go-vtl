@@ -117,6 +117,9 @@ func TestExecuteVtl(t *testing.T) {
 }
 
 func TestExecuteShortCircuit(t *testing.T) {
+	divByZero := assert.ErrorAssertionFunc(func(t assert.TestingT, err error, msg ...interface{}) bool {
+		return assert.EqualError(t, err, "division by zero", msg)
+	})
 	tests := []struct {
 		name      string
 		tmpl      string
@@ -125,10 +128,10 @@ func TestExecuteShortCircuit(t *testing.T) {
 	}{
 		{"no short circuit with false in or",
 			"#if(false or 1/0)true#{else}false#end",
-			"false", assert.NoError},
+			"", divByZero},
 		{"no short circuit with true in and",
 			"#if(true and 1/0)true#{else}false#end",
-			"false", assert.NoError},
+			"", divByZero},
 		{"short circuit naked bool in or",
 			"#if(true or 1/0)true#end",
 			"true", assert.NoError},

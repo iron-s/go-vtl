@@ -20,15 +20,11 @@ $foo - 1 = #set($foo = $foo - 1 )$foo
 Multiplication, division, and modulus :
 #set($bar = 5)
 #set($rem = $bar % 2)
-#set($rem2 = $bar % 0)
 #set($rem3 = 7%2)
 $bar % 2 = $rem
-#if( $rem2 )
-$bar % 0 is not null: $rem2
-#end
 7 % 2 = $rem3
 $bar / 2 = #set($rem = $bar / 2 )$rem
-$bar / 0 = #set($rem4 = $bar / 0 )#if($rem4)is not null: $rem4#end
+$bar / 0 = will return error#if($rem4)is not null: $rem4#end
 $bar * 2 = #set($rem = $bar * 2 )$rem
 
 $bar * -1 = #set($rem = $bar * -1)$rem

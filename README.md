@@ -22,3 +22,6 @@ These are deliberate decisions to make syntax less confusing
 
    Any arguments should be separated by comma, be it method call, include, macro signature or macro call
 9. Maps are iterated in sorted key order
+10. [Math](https://velocity.apache.org/engine/devel/configuration.html#math) is always strict
+
+   If any evaluated arith expression contains nil, NaN or division by zero error is returned

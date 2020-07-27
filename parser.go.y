@@ -52,32 +52,32 @@ directives:     /*empty */
                 ;
 
 directive:      SET '(' '$' reference '=' setarg ')'
-                { $$ = &SetNode{Var: $4.(*VarNode), Expr: $6.(*OpNode)} }
+                { $$ = &SetNode{Var: $4.(*VarNode), Expr: $6.(*OpNode), Pos: Pos{$1.line}} }
         |       IF '(' bool_expr ')' directives else END
                 {
                     elseNode, _ := $6.(*IfNode)
-                    $$ = &IfNode{Cond: $3.(*OpNode), Items: $5, Else: elseNode }
+                    $$ = &IfNode{Cond: $3.(*OpNode), Items: $5, Else: elseNode, Pos: Pos{$1.line} }
                 }
         |       FOREACH '(' interpolated IN iterable ')' directives END
-                { $$ = &ForeachNode{Var: $3.(*VarNode).RefNode, Iter: $5.(*OpNode), Items: $7} }
+                { $$ = &ForeachNode{Var: $3.(*VarNode).RefNode, Iter: $5.(*OpNode), Items: $7, Pos: Pos{$1.line}} }
         |       FOREACH '(' interpolated IN iterable ')' directives ELSE directives END
-                { $$ = &ForeachNode{Var: $3.(*VarNode).RefNode, Iter: $5.(*OpNode), Items: $7, Else: $9} }
+                { $$ = &ForeachNode{Var: $3.(*VarNode).RefNode, Iter: $5.(*OpNode), Items: $7, Else: $9, Pos: Pos{$1.line}} }
         |       INCLUDE '(' args ')'
-                { $$ = &IncludeNode{$3.([]*OpNode)} }
+                { $$ = &IncludeNode{Names: $3.([]*OpNode), Pos: Pos{$1.line}} }
         |       PARSE '(' arg ')'
-                { $$ = &ParseNode{$3.(*OpNode)} }
+                { $$ = &ParseNode{Name: $3.(*OpNode), Pos: Pos{$1.line}} }
         |       EVALUATE '(' STRING ')'
-                { $$ = &EvalNode{$3.literal} }
+                { $$ = &EvalNode{Content: $3.literal, Pos: Pos{$1.line}} }
         |       MACRO '(' IDENTIFIER
                 {addMacro(yylex, $3.literal) } ')' directives END
-                { $$ = &MacroNode{$3.literal, nil, $6} }
+                { $$ = &MacroNode{Name: $3.literal, Assign: nil, Items: $6, Pos: Pos{$1.line}} }
         |       MACRO '(' IDENTIFIER identifiers
                 {addMacro(yylex, $3.literal) } ')' directives END
-                { $$ = &MacroNode{$3.literal, $4.([]*RefNode), $7} }
+                { $$ = &MacroNode{Name: $3.literal, Assign: $4.([]*RefNode), Items: $7, Pos: Pos{$1.line}} }
         |       MACROCALL '(' ')'
-                { $$ = &MacroCall{ $1.literal, nil } }
+                { $$ = &MacroCall{ Name: $1.literal, Vals: nil, Pos: Pos{$1.line} } }
         |       MACROCALL '(' args ')'
-                { $$ = &MacroCall{ $1.literal, $3.([]*OpNode) } }
+                { $$ = &MacroCall{ Name: $1.literal, Vals: $3.([]*OpNode), Pos: Pos{$1.line} } }
         |       STOP
                 { $$ = &StopNode{} }
         |       BREAK
@@ -100,12 +100,12 @@ else:           elseifs
                 {
                     ifNode, _ := $1.(*IfNode)
                     if ifNode == nil {
-                        $$ = &IfNode{Items: $3}
+                        $$ = &IfNode{Items: $3, Pos: Pos{$2.line}}
                     } else {
                         for ifNode.Else != nil {
                             ifNode = ifNode.Else
                         }
-                        ifNode.Else = &IfNode{Items: $3}
+                        ifNode.Else = &IfNode{Items: $3, Pos: Pos{$2.line}}
                     }
                 }
                 ;
@@ -114,7 +114,7 @@ elseifs:        /* nothing */
                 { $$ = nil }
         |       elseifs ELSEIF '(' bool_expr ')' directives
                 {
-                    elseifNode := &IfNode{Cond: $4.(*OpNode), Items: $6}
+                    elseifNode := &IfNode{Cond: $4.(*OpNode), Items: $6, Pos: Pos{$2.line}}
                     ifNode, _ := $1.(*IfNode)
                     if ifNode == nil {
                         $$ = elseifNode
@@ -135,17 +135,17 @@ interpolated:   '$' reference
                 ;
 
 method:         METHOD '(' ')'
-                { $$ = &AccessNode{Name: $1.literal, IsCall: true} }
+                { $$ = &AccessNode{Name: $1.literal, IsCall: true, Pos: Pos{$1.line}} }
         |       METHOD '(' list ')'
-                { $$ = &AccessNode{Name: $1.literal, IsCall: true, Args: $3.([]*OpNode)} }
+                { $$ = &AccessNode{Name: $1.literal, IsCall: true, Args: $3.([]*OpNode), Pos: Pos{$1.line}} }
                 ;
 
 reference:      IDENTIFIER
-                { $$ = &VarNode{RefNode: &RefNode{Name: $1.literal}} }
+                { $$ = &VarNode{RefNode: &RefNode{Name: $1.literal}, Pos: Pos{$1.line}} }
         |       reference '.' IDENTIFIER
                 {
                     v := $1.(*VarNode)
-                    v.Items = append(v.Items, &AccessNode{Name: $3.literal})
+                    v.Items = append(v.Items, &AccessNode{Name: $3.literal, Pos: Pos{$3.line}})
                     $$ = $1
                 }
         |       reference '[' bool_expr ']'
@@ -171,7 +171,7 @@ array:          '[' ']'
                 ;
 
 range:          bool_expr RANGE bool_expr
-                { $$ = &OpNode{Op: "range", Left: $1.(*OpNode), Right: $3.(*OpNode)} }
+                { $$ = &OpNode{Op: "range", Left: $1.(*OpNode), Right: $3.(*OpNode), Pos: Pos{$2.line}} }
                 ;
 
 map:            '{' '}'
@@ -215,39 +215,37 @@ term:           interpolated
 
 bool_expr:      bool_and
         |       bool_expr OR bool_and
-                { $$ = &OpNode{Op: $2.literal, Left: $1.(*OpNode), Right: $3.(*OpNode)} }
+                { $$ = &OpNode{Op: $2.literal, Left: $1.(*OpNode), Right: $3.(*OpNode), Pos: Pos{$2.line}} }
                 ;
 
 bool_and:       bool_not
         |       bool_and AND bool_not
-                { $$ = &OpNode{Op: $2.literal, Left: $1.(*OpNode), Right: $3.(*OpNode)} }
+                { $$ = &OpNode{Op: $2.literal, Left: $1.(*OpNode), Right: $3.(*OpNode), Pos: Pos{$2.line}} }
                 ;
 
 bool_not:       NOT bool_not
-                { $$ = &OpNode{Op: "not", Left: $2.(*OpNode)} }
-        |       '!' bool_not
-                { $$ = &OpNode{Op: "not", Left: $2.(*OpNode)} }
+                { $$ = &OpNode{Op: "not", Left: $2.(*OpNode), Pos: Pos{$1.line}} }
         |       bool_term
                 ;
 
 bool_term:      expression
         |       expression CMP expression
-                { $$ = &OpNode{Op: $2.literal, Left: $1.(*OpNode), Right: $3.(*OpNode)} }
+                { $$ = &OpNode{Op: $2.literal, Left: $1.(*OpNode), Right: $3.(*OpNode), Pos: Pos{$2.line}} }
         ;
 
 primary:        STRING
-                { $$ = &OpNode{Val: $1.literal} }
+                { $$ = &OpNode{Val: $1.literal, Pos: Pos{$1.line}} }
         |       '"' literal '"'
                 { $$ = &OpNode{Val: $2} }
         |       FLOAT
                 {
                     f, _ := strconv.ParseFloat($1.literal, 64)
-                    $$ = &OpNode{Val: f}
+                    $$ = &OpNode{Val: f, Pos: Pos{$1.line}}
                 }
         |       INT
                 {
                     i, _ := strconv.ParseInt($1.literal, 10, 64)
-                    $$ = &OpNode{Val: i}
+                    $$ = &OpNode{Val: i, Pos: Pos{$1.line}}
                 }
         |       BOOLEAN
                 {
@@ -255,7 +253,7 @@ primary:        STRING
                     if $1.literal == "true" {
                         b = true
                     }
-                    $$ = &OpNode{Val: b}
+                    $$ = &OpNode{Val: b, Pos: Pos{$1.line}}
                 }
                 ;
 
@@ -295,13 +293,13 @@ args:           arg
                 ;
 
 identifier:     '$' IDENTIFIER
-                { $$ = &VarNode{RefNode: &RefNode{Name: $2.literal}} }
+                { $$ = &VarNode{RefNode: &RefNode{Name: $2.literal}, Pos: Pos{$2.line}} }
         |       '$' '{' IDENTIFIER '}'
-                { $$ = &VarNode{RefNode: &RefNode{Name: $3.literal}} }
+                { $$ = &VarNode{RefNode: &RefNode{Name: $3.literal}, Pos: Pos{$3.line}} }
         |       '$' '!' IDENTIFIER
-                { $$ = &VarNode{RefNode: &RefNode{Name: $3.literal}} }
+                { $$ = &VarNode{RefNode: &RefNode{Name: $3.literal}, Pos: Pos{$3.line}} }
         |       '$' '!' '{' IDENTIFIER '}'
-                { $$ = &VarNode{RefNode: &RefNode{Name: $4.literal}} }
+                { $$ = &VarNode{RefNode: &RefNode{Name: $4.literal}, Pos: Pos{$4.line}} }
                 ;
 
 identifiers:    identifier

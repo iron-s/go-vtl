@@ -19,6 +19,7 @@ type Lexer struct {
 	states    []lexState
 	macros    map[string]bool
 	result    []Node
+	err       error
 }
 
 var directives = map[string]int{
@@ -138,6 +139,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 				d := l.ScanIdentifier()
 				if directive, ok := directives[d]; ok && l.Peek(0) == '}' {
 					l.Skip(1)
+					lval.t = Token{token: directive, line: l.line}
 					if directive != END && directive != ELSE {
 						l.SkipWhitespace()
 						pushState(l, sDir)
@@ -165,6 +167,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 			d := l.ScanIdentifier()
 			if directive, ok := directives[d]; ok {
 				// fmt.Println("directive", d)
+				lval.t = Token{token: directive, line: l.line}
 				if directive != END && directive != ELSE {
 					l.SkipWhitespace()
 					pushState(l, sDir)
@@ -371,7 +374,7 @@ func (l *Lexer) Error(s string) {
 	if pos > len(l.data) {
 		pos = len(l.data)
 	}
-	fmt.Printf("%s: line %d (byte %d) (%s|%s)\n", s, l.line, l.prev, l.data[start:pos], l.data[pos:end])
+	l.err = fmt.Errorf("%s: line %d (byte %d) (%s|%s)\n", s, l.line, l.prev, l.data[start:pos], l.data[pos:end])
 }
 
 func (l *Lexer) state() lexState {
@@ -578,6 +581,7 @@ var ops = map[string]int{
 	"and": AND,
 	"&&":  AND,
 	"not": NOT,
+	"!":   NOT,
 }
 
 var altOps = map[string]string{

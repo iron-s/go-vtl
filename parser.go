@@ -55,7 +55,7 @@ const (
 	yyErrCode  = 57345
 
 	yyMaxDepth = 200
-	yyTabOfs   = -92
+	yyTabOfs   = -91
 )
 
 var (
@@ -72,67 +72,67 @@ var (
 	}
 
 	yyXLAT = map[int]int{
-		36:    0,  // '$' (81x)
-		41:    1,  // ')' (75x)
-		44:    2,  // ',' (65x)
-		45:    3,  // '-' (51x)
-		93:    4,  // ']' (50x)
-		125:   5,  // '}' (50x)
+		36:    0,  // '$' (80x)
+		41:    1,  // ')' (74x)
+		44:    2,  // ',' (64x)
+		45:    3,  // '-' (50x)
+		93:    4,  // ']' (49x)
+		125:   5,  // '}' (49x)
 		57349: 6,  // TEXT (48x)
-		34:    7,  // '"' (43x)
-		57363: 8,  // BREAK (43x)
-		57350: 9,  // COMMENT (43x)
-		57368: 10, // END (43x)
-		57364: 11, // EVALUATE (43x)
-		57359: 12, // FOREACH (43x)
-		57356: 13, // IF (43x)
-		57360: 14, // INCLUDE (43x)
-		57366: 15, // MACRO (43x)
-		57367: 16, // MACROCALL (43x)
-		57372: 17, // OR (43x)
-		57361: 18, // PARSE (43x)
-		57355: 19, // SET (43x)
-		57362: 20, // STOP (43x)
-		57393: 21, // interpolated (39x)
-		58:    22, // ':' (36x)
-		57370: 23, // RANGE (35x)
-		40:    24, // '(' (34x)
-		57373: 25, // AND (34x)
-		57358: 26, // ELSE (34x)
+		57363: 7,  // BREAK (43x)
+		57350: 8,  // COMMENT (43x)
+		57368: 9,  // END (43x)
+		57364: 10, // EVALUATE (43x)
+		57359: 11, // FOREACH (43x)
+		57356: 12, // IF (43x)
+		57360: 13, // INCLUDE (43x)
+		57366: 14, // MACRO (43x)
+		57367: 15, // MACROCALL (43x)
+		57361: 16, // PARSE (43x)
+		57355: 17, // SET (43x)
+		57362: 18, // STOP (43x)
+		34:    19, // '"' (42x)
+		57372: 20, // OR (42x)
+		57393: 21, // interpolated (38x)
+		58:    22, // ':' (35x)
+		57358: 23, // ELSE (34x)
+		57370: 24, // RANGE (34x)
+		40:    25, // '(' (33x)
+		57373: 26, // AND (33x)
 		57357: 27, // ELSEIF (32x)
 		57344: 28, // $end (30x)
-		57351: 29, // STRING (29x)
-		57354: 30, // BOOLEAN (28x)
-		57352: 31, // FLOAT (28x)
-		57353: 32, // INT (28x)
-		57400: 33, // primary (28x)
-		37:    34, // '%' (27x)
-		42:    35, // '*' (27x)
-		43:    36, // '+' (27x)
-		47:    37, // '/' (27x)
+		57351: 29, // STRING (28x)
+		37:    30, // '%' (27x)
+		42:    31, // '*' (27x)
+		43:    32, // '+' (27x)
+		47:    33, // '/' (27x)
+		57354: 34, // BOOLEAN (27x)
+		57352: 35, // FLOAT (27x)
+		57353: 36, // INT (27x)
+		57400: 37, // primary (27x)
 		57375: 38, // CMP (26x)
-		57390: 39, // expression (24x)
-		57404: 40, // term (24x)
+		57390: 39, // expression (23x)
+		57404: 40, // term (23x)
 		91:    41, // '[' (22x)
-		33:    42, // '!' (19x)
-		57384: 43, // bool_not (17x)
-		57385: 44, // bool_term (17x)
-		57374: 45, // NOT (17x)
-		123:   46, // '{' (15x)
-		57371: 47, // WS (15x)
-		57382: 48, // bool_and (14x)
-		57383: 49, // bool_expr (13x)
-		46:    50, // '.' (11x)
-		57381: 51, // array (11x)
-		57346: 52, // IDENTIFIER (11x)
-		57369: 53, // IN (11x)
-		57398: 54, // map (11x)
-		57386: 55, // directive (8x)
-		57387: 56, // directives (8x)
-		61:    57, // '=' (7x)
-		57403: 58, // setarg (6x)
-		57402: 59, // reference (5x)
-		57379: 60, // arg (4x)
+		57384: 42, // bool_not (16x)
+		57385: 43, // bool_term (16x)
+		57374: 44, // NOT (16x)
+		123:   45, // '{' (15x)
+		57371: 46, // WS (15x)
+		57382: 47, // bool_and (14x)
+		57383: 48, // bool_expr (13x)
+		46:    49, // '.' (11x)
+		57381: 50, // array (11x)
+		57346: 51, // IDENTIFIER (11x)
+		57369: 52, // IN (11x)
+		57398: 53, // map (11x)
+		57386: 54, // directive (8x)
+		57387: 55, // directives (8x)
+		61:    56, // '=' (7x)
+		57403: 57, // setarg (6x)
+		57402: 58, // reference (5x)
+		57379: 59, // arg (4x)
+		33:    60, // '!' (2x)
 		57380: 61, // args (2x)
 		57391: 62, // identifier (2x)
 		57396: 63, // list (2x)
@@ -162,7 +162,6 @@ var (
 		"']'",
 		"'}'",
 		"TEXT",
-		"'\"'",
 		"BREAK",
 		"COMMENT",
 		"END",
@@ -172,32 +171,32 @@ var (
 		"INCLUDE",
 		"MACRO",
 		"MACROCALL",
-		"OR",
 		"PARSE",
 		"SET",
 		"STOP",
+		"'\"'",
+		"OR",
 		"interpolated",
 		"':'",
+		"ELSE",
 		"RANGE",
 		"'('",
 		"AND",
-		"ELSE",
 		"ELSEIF",
 		"$end",
 		"STRING",
-		"BOOLEAN",
-		"FLOAT",
-		"INT",
-		"primary",
 		"'%'",
 		"'*'",
 		"'+'",
 		"'/'",
+		"BOOLEAN",
+		"FLOAT",
+		"INT",
+		"primary",
 		"CMP",
 		"expression",
 		"term",
 		"'['",
-		"'!'",
 		"bool_not",
 		"bool_term",
 		"NOT",
@@ -216,6 +215,7 @@ var (
 		"setarg",
 		"reference",
 		"arg",
+		"'!'",
 		"args",
 		"identifier",
 		"list",
@@ -242,29 +242,29 @@ var (
 	yyReductions = map[int]struct{ xsym, components int }{
 		0:  {0, 1},
 		1:  {75, 1},
-		2:  {56, 0},
-		3:  {56, 2},
-		4:  {56, 2},
-		5:  {56, 2},
-		6:  {56, 2},
-		7:  {55, 7},
-		8:  {55, 7},
-		9:  {55, 8},
-		10: {55, 10},
-		11: {55, 4},
-		12: {55, 4},
-		13: {55, 4},
+		2:  {55, 0},
+		3:  {55, 2},
+		4:  {55, 2},
+		5:  {55, 2},
+		6:  {55, 2},
+		7:  {54, 7},
+		8:  {54, 7},
+		9:  {54, 8},
+		10: {54, 10},
+		11: {54, 4},
+		12: {54, 4},
+		13: {54, 4},
 		14: {64, 0},
-		15: {55, 7},
+		15: {54, 7},
 		16: {65, 0},
-		17: {55, 8},
-		18: {55, 3},
-		19: {55, 4},
-		20: {55, 1},
-		21: {55, 1},
-		22: {58, 1},
-		23: {58, 1},
-		24: {58, 1},
+		17: {54, 8},
+		18: {54, 3},
+		19: {54, 4},
+		20: {54, 1},
+		21: {54, 1},
+		22: {57, 1},
+		23: {57, 1},
+		24: {57, 1},
 		25: {69, 1},
 		26: {69, 1},
 		27: {69, 1},
@@ -278,16 +278,16 @@ var (
 		35: {21, 5},
 		36: {73, 3},
 		37: {73, 4},
-		38: {59, 1},
-		39: {59, 3},
-		40: {59, 4},
-		41: {59, 3},
-		42: {51, 2},
-		43: {51, 3},
-		44: {51, 3},
+		38: {58, 1},
+		39: {58, 3},
+		40: {58, 4},
+		41: {58, 3},
+		42: {50, 2},
+		43: {50, 3},
+		44: {50, 3},
 		45: {74, 3},
-		46: {54, 2},
-		47: {54, 3},
+		46: {53, 2},
+		47: {53, 3},
 		48: {70, 3},
 		49: {70, 5},
 		50: {39, 3},
@@ -300,43 +300,42 @@ var (
 		57: {40, 1},
 		58: {40, 1},
 		59: {40, 3},
-		60: {49, 1},
-		61: {49, 3},
-		62: {48, 1},
-		63: {48, 3},
-		64: {43, 2},
-		65: {43, 2},
+		60: {48, 1},
+		61: {48, 3},
+		62: {47, 1},
+		63: {47, 3},
+		64: {42, 2},
+		65: {42, 1},
 		66: {43, 1},
-		67: {44, 1},
-		68: {44, 3},
-		69: {33, 1},
-		70: {33, 3},
-		71: {33, 1},
-		72: {33, 1},
-		73: {33, 1},
-		74: {71, 0},
+		67: {43, 3},
+		68: {37, 1},
+		69: {37, 3},
+		70: {37, 1},
+		71: {37, 1},
+		72: {37, 1},
+		73: {71, 0},
+		74: {71, 2},
 		75: {71, 2},
 		76: {71, 2},
-		77: {71, 2},
-		78: {60, 1},
-		79: {60, 1},
-		80: {60, 1},
-		81: {60, 1},
-		82: {61, 1},
-		83: {61, 3},
-		84: {62, 2},
-		85: {62, 4},
-		86: {62, 3},
-		87: {62, 5},
-		88: {68, 1},
-		89: {68, 3},
-		90: {63, 1},
-		91: {63, 3},
+		77: {59, 1},
+		78: {59, 1},
+		79: {59, 1},
+		80: {59, 1},
+		81: {61, 1},
+		82: {61, 3},
+		83: {62, 2},
+		84: {62, 4},
+		85: {62, 3},
+		86: {62, 5},
+		87: {68, 1},
+		88: {68, 3},
+		89: {63, 1},
+		90: {63, 3},
 	}
 
 	yyXErrors = map[yyXError]string{
 		yyXError{1, -1}:   "expected $end",
-		yyXError{178, -1}: "expected '$'",
+		yyXError{176, -1}: "expected '$'",
 		yyXError{7, -1}:   "expected '('",
 		yyXError{8, -1}:   "expected '('",
 		yyXError{9, -1}:   "expected '('",
@@ -345,404 +344,400 @@ var (
 		yyXError{12, -1}:  "expected '('",
 		yyXError{13, -1}:  "expected '('",
 		yyXError{14, -1}:  "expected '('",
-		yyXError{72, -1}:  "expected '('",
-		yyXError{171, -1}: "expected '('",
-		yyXError{120, -1}: "expected ')'",
-		yyXError{133, -1}: "expected ')'",
-		yyXError{143, -1}: "expected ')'",
-		yyXError{146, -1}: "expected ')'",
+		yyXError{70, -1}:  "expected '('",
+		yyXError{169, -1}: "expected '('",
+		yyXError{118, -1}: "expected ')'",
+		yyXError{131, -1}: "expected ')'",
+		yyXError{141, -1}: "expected ')'",
+		yyXError{144, -1}: "expected ')'",
+		yyXError{152, -1}: "expected ')'",
+		yyXError{153, -1}: "expected ')'",
 		yyXError{154, -1}: "expected ')'",
 		yyXError{155, -1}: "expected ')'",
-		yyXError{156, -1}: "expected ')'",
-		yyXError{157, -1}: "expected ')'",
-		yyXError{182, -1}: "expected ')'",
-		yyXError{97, -1}:  "expected ']'",
+		yyXError{180, -1}: "expected ')'",
+		yyXError{95, -1}:  "expected ']'",
+		yyXError{127, -1}: "expected '}'",
 		yyXError{129, -1}: "expected '}'",
-		yyXError{131, -1}: "expected '}'",
-		yyXError{168, -1}: "expected END",
-		yyXError{118, -1}: "expected IDENTIFIER",
-		yyXError{125, -1}: "expected IDENTIFIER",
-		yyXError{128, -1}: "expected IDENTIFIER",
-		yyXError{152, -1}: "expected IN",
-		yyXError{142, -1}: "expected STRING",
-		yyXError{116, -1}: "expected arg or one of ['\"', '$', '[', '{', BOOLEAN, FLOAT, INT, STRING]",
-		yyXError{145, -1}: "expected arg or one of ['\"', '$', '[', '{', BOOLEAN, FLOAT, INT, STRING]",
-		yyXError{107, -1}: "expected args or one of ['\"', '$', ')', '[', '{', BOOLEAN, FLOAT, INT, STRING]",
-		yyXError{148, -1}: "expected args or one of ['\"', '$', '[', '{', BOOLEAN, FLOAT, INT, STRING]",
-		yyXError{56, -1}:  "expected bool_and or one of ['!', '\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{27, -1}:  "expected bool_expr or one of ['!', '\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{34, -1}:  "expected bool_expr or one of ['!', '\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{90, -1}:  "expected bool_expr or one of ['!', '\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{102, -1}: "expected bool_expr or one of ['!', '\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{164, -1}: "expected bool_expr or one of ['!', '\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{172, -1}: "expected bool_expr or one of ['!', '\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{37, -1}:  "expected bool_not or one of ['!', '\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{38, -1}:  "expected bool_not or one of ['!', '\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{52, -1}:  "expected bool_not or one of ['!', '\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{167, -1}: "expected directive or else or interpolated or one of ['$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{166, -1}: "expected END",
+		yyXError{116, -1}: "expected IDENTIFIER",
+		yyXError{123, -1}: "expected IDENTIFIER",
+		yyXError{126, -1}: "expected IDENTIFIER",
+		yyXError{150, -1}: "expected IN",
+		yyXError{140, -1}: "expected STRING",
+		yyXError{114, -1}: "expected arg or one of ['\"', '$', '[', '{', BOOLEAN, FLOAT, INT, STRING]",
+		yyXError{143, -1}: "expected arg or one of ['\"', '$', '[', '{', BOOLEAN, FLOAT, INT, STRING]",
+		yyXError{105, -1}: "expected args or one of ['\"', '$', ')', '[', '{', BOOLEAN, FLOAT, INT, STRING]",
+		yyXError{146, -1}: "expected args or one of ['\"', '$', '[', '{', BOOLEAN, FLOAT, INT, STRING]",
+		yyXError{54, -1}:  "expected bool_and or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{27, -1}:  "expected bool_expr or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{34, -1}:  "expected bool_expr or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{88, -1}:  "expected bool_expr or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{100, -1}: "expected bool_expr or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{162, -1}: "expected bool_expr or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{170, -1}: "expected bool_expr or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{37, -1}:  "expected bool_not or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{50, -1}:  "expected bool_not or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{165, -1}: "expected directive or else or interpolated or one of ['$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
 		yyXError{2, -1}:   "expected directive or interpolated or one of [$end, '$', BREAK, COMMENT, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{175, -1}: "expected directive or interpolated or one of ['$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{159, -1}: "expected directive or interpolated or one of ['$', BREAK, COMMENT, ELSE, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{137, -1}: "expected directive or interpolated or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{140, -1}: "expected directive or interpolated or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{162, -1}: "expected directive or interpolated or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{176, -1}: "expected directive or interpolated or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{166, -1}: "expected directives or else or one of ['$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{174, -1}: "expected directives or one of ['$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{158, -1}: "expected directives or one of ['$', BREAK, COMMENT, ELSE, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{136, -1}: "expected directives or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{139, -1}: "expected directives or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{161, -1}: "expected directives or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{170, -1}: "expected directives or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{173, -1}: "expected directive or interpolated or one of ['$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{157, -1}: "expected directive or interpolated or one of ['$', BREAK, COMMENT, ELSE, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{135, -1}: "expected directive or interpolated or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{138, -1}: "expected directive or interpolated or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{160, -1}: "expected directive or interpolated or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{174, -1}: "expected directive or interpolated or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{164, -1}: "expected directives or else or one of ['$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{172, -1}: "expected directives or one of ['$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{156, -1}: "expected directives or one of ['$', BREAK, COMMENT, ELSE, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{134, -1}: "expected directives or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{137, -1}: "expected directives or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{159, -1}: "expected directives or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{168, -1}: "expected directives or one of ['$', BREAK, COMMENT, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
 		yyXError{30, -1}:  "expected expression or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, STRING]",
+		yyXError{57, -1}:  "expected expression or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, STRING]",
+		yyXError{58, -1}:  "expected expression or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, STRING]",
 		yyXError{59, -1}:  "expected expression or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, STRING]",
 		yyXError{60, -1}:  "expected expression or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, STRING]",
 		yyXError{61, -1}:  "expected expression or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, STRING]",
-		yyXError{62, -1}:  "expected expression or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, STRING]",
-		yyXError{63, -1}:  "expected expression or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, STRING]",
-		yyXError{69, -1}:  "expected expression or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, STRING]",
-		yyXError{134, -1}: "expected identifier or '$'",
-		yyXError{119, -1}: "expected identifiers or one of ['$', ')']",
-		yyXError{151, -1}: "expected interpolated or '$'",
-		yyXError{45, -1}:  "expected interpolated or one of ['\"', '$', TEXT, WS]",
-		yyXError{153, -1}: "expected iterable or one of ['$', '[', '{']",
-		yyXError{82, -1}:  "expected kvpairs or one of ['!', '\"', '$', '(', '-', '}', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{75, -1}:  "expected list or one of ['!', '\"', '$', '(', ')', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{81, -1}:  "expected list or range or one of ['!', '\"', '$', '(', '-', '[', ']', '{', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{41, -1}:  "expected literal or one of ['\"', '$', TEXT, WS]",
+		yyXError{67, -1}:  "expected expression or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, STRING]",
+		yyXError{132, -1}: "expected identifier or '$'",
+		yyXError{117, -1}: "expected identifiers or one of ['$', ')']",
+		yyXError{149, -1}: "expected interpolated or '$'",
+		yyXError{44, -1}:  "expected interpolated or one of ['\"', '$', TEXT, WS]",
+		yyXError{151, -1}: "expected iterable or one of ['$', '[', '{']",
+		yyXError{80, -1}:  "expected kvpairs or one of ['\"', '$', '(', '-', '}', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{73, -1}:  "expected list or one of ['\"', '$', '(', ')', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{79, -1}:  "expected list or range or one of ['\"', '$', '(', '-', '[', ']', '{', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{40, -1}:  "expected literal or one of ['\"', '$', TEXT, WS]",
 		yyXError{26, -1}:  "expected method or one of [IDENTIFIER, METHOD]",
 		yyXError{21, -1}:  "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/', ':', '=', '[', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
+		yyXError{69, -1}:  "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/', ':', '=', '[', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
 		yyXError{71, -1}:  "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/', ':', '=', '[', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
-		yyXError{73, -1}:  "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/', ':', '=', '[', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
-		yyXError{74, -1}:  "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/', ':', '=', '[', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
-		yyXError{79, -1}:  "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/', ':', '=', '[', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
-		yyXError{104, -1}: "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/', ':', '=', '[', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
+		yyXError{72, -1}:  "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/', ':', '=', '[', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
+		yyXError{77, -1}:  "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/', ':', '=', '[', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
+		yyXError{102, -1}: "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/', ':', '=', '[', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
 		yyXError{18, -1}:  "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/', ':', '[', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
 		yyXError{22, -1}:  "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '.', '/', ':', '[', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
 		yyXError{25, -1}:  "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
-		yyXError{106, -1}: "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
+		yyXError{104, -1}: "expected one of [$end, '\"', '$', '%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, BREAK, CMP, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, IN, INCLUDE, MACRO, MACROCALL, OR, PARSE, RANGE, SET, STOP, TEXT, WS]",
 		yyXError{3, -1}:   "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
 		yyXError{4, -1}:   "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
 		yyXError{5, -1}:   "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
 		yyXError{6, -1}:   "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
 		yyXError{15, -1}:  "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
 		yyXError{16, -1}:  "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{108, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{115, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{138, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{141, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{144, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{147, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{150, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{160, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{163, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{177, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{183, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
-		yyXError{122, -1}: "expected one of ['!', '{', IDENTIFIER]",
+		yyXError{106, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{113, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{136, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{139, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{142, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{145, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{148, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{158, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{161, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{175, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{181, -1}: "expected one of [$end, '$', BREAK, COMMENT, ELSE, ELSEIF, END, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
+		yyXError{120, -1}: "expected one of ['!', '{', IDENTIFIER]",
+		yyXError{46, -1}:  "expected one of ['\"', '$', TEXT, WS]",
 		yyXError{47, -1}:  "expected one of ['\"', '$', TEXT, WS]",
 		yyXError{48, -1}:  "expected one of ['\"', '$', TEXT, WS]",
-		yyXError{49, -1}:  "expected one of ['\"', '$', TEXT, WS]",
 		yyXError{29, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
 		yyXError{31, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
 		yyXError{32, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
 		yyXError{33, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
-		yyXError{40, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
+		yyXError{39, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
+		yyXError{41, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
 		yyXError{42, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
 		yyXError{43, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
-		yyXError{44, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
-		yyXError{46, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
-		yyXError{55, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
-		yyXError{58, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
+		yyXError{45, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
+		yyXError{53, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
+		yyXError{56, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
+		yyXError{62, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
+		yyXError{63, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
 		yyXError{64, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
 		yyXError{65, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
 		yyXError{66, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
-		yyXError{67, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
-		yyXError{68, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, CMP, OR, RANGE]",
-		yyXError{70, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, OR, RANGE]",
+		yyXError{68, -1}:  "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, OR, RANGE]",
 		yyXError{35, -1}:  "expected one of [')', ',', ':', ']', '}', AND, OR, RANGE]",
 		yyXError{36, -1}:  "expected one of [')', ',', ':', ']', '}', AND, OR, RANGE]",
-		yyXError{39, -1}:  "expected one of [')', ',', ':', ']', '}', AND, OR, RANGE]",
-		yyXError{50, -1}:  "expected one of [')', ',', ':', ']', '}', AND, OR, RANGE]",
+		yyXError{38, -1}:  "expected one of [')', ',', ':', ']', '}', AND, OR, RANGE]",
+		yyXError{49, -1}:  "expected one of [')', ',', ':', ']', '}', AND, OR, RANGE]",
 		yyXError{51, -1}:  "expected one of [')', ',', ':', ']', '}', AND, OR, RANGE]",
-		yyXError{53, -1}:  "expected one of [')', ',', ':', ']', '}', AND, OR, RANGE]",
-		yyXError{57, -1}:  "expected one of [')', ',', ':', ']', '}', AND, OR, RANGE]",
-		yyXError{76, -1}:  "expected one of [')', ',', ']', '}', OR]",
-		yyXError{77, -1}:  "expected one of [')', ',', ']', '}']",
-		yyXError{78, -1}:  "expected one of [')', ',', ']', '}']",
-		yyXError{84, -1}:  "expected one of [')', ',', ']', '}']",
-		yyXError{89, -1}:  "expected one of [')', ',', ']', '}']",
-		yyXError{95, -1}:  "expected one of [')', ',', ']', '}']",
-		yyXError{98, -1}:  "expected one of [')', ',', ']', '}']",
-		yyXError{99, -1}:  "expected one of [')', ',', ']', '}']",
-		yyXError{83, -1}:  "expected one of [')', ',', ']']",
-		yyXError{101, -1}: "expected one of [')', ',', ']']",
-		yyXError{80, -1}:  "expected one of [')', ',']",
+		yyXError{55, -1}:  "expected one of [')', ',', ':', ']', '}', AND, OR, RANGE]",
+		yyXError{74, -1}:  "expected one of [')', ',', ']', '}', OR]",
+		yyXError{75, -1}:  "expected one of [')', ',', ']', '}']",
+		yyXError{76, -1}:  "expected one of [')', ',', ']', '}']",
+		yyXError{82, -1}:  "expected one of [')', ',', ']', '}']",
+		yyXError{87, -1}:  "expected one of [')', ',', ']', '}']",
+		yyXError{93, -1}:  "expected one of [')', ',', ']', '}']",
+		yyXError{96, -1}:  "expected one of [')', ',', ']', '}']",
+		yyXError{97, -1}:  "expected one of [')', ',', ']', '}']",
+		yyXError{81, -1}:  "expected one of [')', ',', ']']",
+		yyXError{99, -1}:  "expected one of [')', ',', ']']",
+		yyXError{78, -1}:  "expected one of [')', ',']",
+		yyXError{107, -1}: "expected one of [')', ',']",
+		yyXError{108, -1}: "expected one of [')', ',']",
 		yyXError{109, -1}: "expected one of [')', ',']",
 		yyXError{110, -1}: "expected one of [')', ',']",
 		yyXError{111, -1}: "expected one of [')', ',']",
 		yyXError{112, -1}: "expected one of [')', ',']",
-		yyXError{113, -1}: "expected one of [')', ',']",
-		yyXError{114, -1}: "expected one of [')', ',']",
-		yyXError{117, -1}: "expected one of [')', ',']",
+		yyXError{115, -1}: "expected one of [')', ',']",
+		yyXError{119, -1}: "expected one of [')', ',']",
 		yyXError{121, -1}: "expected one of [')', ',']",
-		yyXError{123, -1}: "expected one of [')', ',']",
-		yyXError{124, -1}: "expected one of [')', ',']",
-		yyXError{127, -1}: "expected one of [')', ',']",
+		yyXError{122, -1}: "expected one of [')', ',']",
+		yyXError{125, -1}: "expected one of [')', ',']",
+		yyXError{128, -1}: "expected one of [')', ',']",
 		yyXError{130, -1}: "expected one of [')', ',']",
-		yyXError{132, -1}: "expected one of [')', ',']",
-		yyXError{135, -1}: "expected one of [')', ',']",
-		yyXError{149, -1}: "expected one of [')', ',']",
-		yyXError{54, -1}:  "expected one of [')', OR]",
-		yyXError{165, -1}: "expected one of [')', OR]",
-		yyXError{173, -1}: "expected one of [')', OR]",
-		yyXError{94, -1}:  "expected one of [',', ']', OR, RANGE]",
-		yyXError{96, -1}:  "expected one of [',', ']']",
-		yyXError{85, -1}:  "expected one of [',', '}']",
-		yyXError{88, -1}:  "expected one of [',', '}']",
-		yyXError{93, -1}:  "expected one of [',', '}']",
-		yyXError{180, -1}: "expected one of ['.', '=', '[']",
+		yyXError{133, -1}: "expected one of [')', ',']",
+		yyXError{147, -1}: "expected one of [')', ',']",
+		yyXError{52, -1}:  "expected one of [')', OR]",
+		yyXError{163, -1}: "expected one of [')', OR]",
+		yyXError{171, -1}: "expected one of [')', OR]",
+		yyXError{92, -1}:  "expected one of [',', ']', OR, RANGE]",
+		yyXError{94, -1}:  "expected one of [',', ']']",
+		yyXError{83, -1}:  "expected one of [',', '}']",
+		yyXError{86, -1}:  "expected one of [',', '}']",
+		yyXError{91, -1}:  "expected one of [',', '}']",
+		yyXError{178, -1}: "expected one of ['.', '=', '[']",
 		yyXError{24, -1}:  "expected one of ['.', '[', '}']",
-		yyXError{105, -1}: "expected one of ['.', '[', '}']",
-		yyXError{86, -1}:  "expected one of [':', OR]",
-		yyXError{91, -1}:  "expected one of [':', OR]",
+		yyXError{103, -1}: "expected one of ['.', '[', '}']",
+		yyXError{84, -1}:  "expected one of [':', OR]",
+		yyXError{89, -1}:  "expected one of [':', OR]",
 		yyXError{28, -1}:  "expected one of [']', OR]",
-		yyXError{103, -1}: "expected one of [']', OR]",
-		yyXError{126, -1}: "expected one of ['{', IDENTIFIER]",
-		yyXError{169, -1}: "expected one of [ELSE, ELSEIF, END]",
+		yyXError{101, -1}: "expected one of [']', OR]",
+		yyXError{124, -1}: "expected one of ['{', IDENTIFIER]",
+		yyXError{167, -1}: "expected one of [ELSE, ELSEIF, END]",
 		yyXError{19, -1}:  "expected reference or IDENTIFIER",
 		yyXError{23, -1}:  "expected reference or IDENTIFIER",
-		yyXError{179, -1}: "expected reference or IDENTIFIER",
+		yyXError{177, -1}: "expected reference or IDENTIFIER",
 		yyXError{17, -1}:  "expected reference or one of ['!', '{', IDENTIFIER]",
 		yyXError{20, -1}:  "expected reference or one of ['{', IDENTIFIER]",
-		yyXError{87, -1}:  "expected setarg or one of ['!', '\"', '$', '(', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{92, -1}:  "expected setarg or one of ['!', '\"', '$', '(', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{100, -1}: "expected setarg or one of ['!', '\"', '$', '(', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]",
-		yyXError{181, -1}: "expected setarg or one of ['!', '\"', '$', '(', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{85, -1}:  "expected setarg or one of ['\"', '$', '(', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{90, -1}:  "expected setarg or one of ['\"', '$', '(', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{98, -1}:  "expected setarg or one of ['\"', '$', '(', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]",
+		yyXError{179, -1}: "expected setarg or one of ['\"', '$', '(', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]",
 		yyXError{0, -1}:   "expected vtl or one of [$end, '$', BREAK, COMMENT, EVALUATE, FOREACH, IF, INCLUDE, MACRO, MACROCALL, PARSE, SET, STOP, TEXT]",
 	}
 
-	yyParseTab = [184][]uint16{
+	yyParseTab = [182][]uint16{
 		// 0
-		{90, 6: 90, 8: 90, 90, 11: 90, 90, 90, 90, 90, 90, 18: 90, 90, 90, 28: 90, 56: 94, 75: 93},
-		{28: 92},
-		{109, 6: 98, 8: 108, 95, 11: 104, 101, 100, 102, 105, 106, 18: 103, 99, 107, 97, 28: 91, 55: 96},
-		{89, 6: 89, 8: 89, 89, 89, 89, 89, 89, 89, 89, 89, 18: 89, 89, 89, 26: 89, 89, 89},
-		{88, 6: 88, 8: 88, 88, 88, 88, 88, 88, 88, 88, 88, 18: 88, 88, 88, 26: 88, 88, 88},
+		{89, 6: 89, 89, 89, 10: 89, 89, 89, 89, 89, 89, 89, 89, 89, 28: 89, 55: 93, 75: 92},
+		{28: 91},
+		{108, 6: 97, 107, 94, 10: 103, 100, 99, 101, 104, 105, 102, 98, 106, 21: 96, 28: 90, 54: 95},
+		{88, 6: 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 23: 88, 27: 88, 88},
+		{87, 6: 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 87, 23: 87, 27: 87, 87},
 		// 5
-		{87, 6: 87, 8: 87, 87, 87, 87, 87, 87, 87, 87, 87, 18: 87, 87, 87, 26: 87, 87, 87},
-		{86, 6: 86, 8: 86, 86, 86, 86, 86, 86, 86, 86, 86, 18: 86, 86, 86, 26: 86, 86, 86},
-		{24: 270},
-		{24: 256},
-		{24: 243},
+		{86, 6: 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, 86, 23: 86, 27: 86, 86},
+		{85, 6: 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 23: 85, 27: 85, 85},
+		{25: 267},
+		{25: 253},
+		{25: 240},
 		// 10
-		{24: 240},
-		{24: 237},
-		{24: 234},
-		{24: 210},
-		{24: 199},
+		{25: 237},
+		{25: 234},
+		{25: 231},
+		{25: 207},
+		{25: 196},
 		// 15
-		{72, 6: 72, 8: 72, 72, 72, 72, 72, 72, 72, 72, 72, 18: 72, 72, 72, 26: 72, 72, 72},
-		{71, 6: 71, 8: 71, 71, 71, 71, 71, 71, 71, 71, 71, 18: 71, 71, 71, 26: 71, 71, 71},
-		{42: 112, 46: 111, 52: 113, 59: 110},
-		{60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 22: 60, 60, 25: 60, 60, 60, 60, 34: 60, 60, 60, 60, 60, 41: 119, 47: 60, 50: 118, 53: 60},
-		{52: 113, 59: 197},
+		{71, 6: 71, 71, 71, 71, 71, 71, 71, 71, 71, 71, 71, 71, 71, 23: 71, 27: 71, 71},
+		{70, 6: 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 23: 70, 27: 70, 70},
+		{45: 110, 51: 112, 58: 109, 60: 111},
+		{59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 22: 59, 59, 59, 26: 59, 59, 59, 30: 59, 59, 59, 59, 38: 59, 41: 118, 46: 59, 49: 117, 52: 59},
+		{51: 112, 58: 194},
 		// 20
-		{46: 115, 52: 113, 59: 114},
-		{54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 22: 54, 54, 25: 54, 54, 54, 54, 34: 54, 54, 54, 54, 54, 41: 54, 47: 54, 50: 54, 53: 54, 57: 54},
-		{58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 22: 58, 58, 25: 58, 58, 58, 58, 34: 58, 58, 58, 58, 58, 41: 119, 47: 58, 50: 118, 53: 58},
-		{52: 113, 59: 116},
-		{5: 117, 41: 119, 50: 118},
+		{45: 114, 51: 112, 58: 113},
+		{53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 22: 53, 53, 53, 26: 53, 53, 53, 30: 53, 53, 53, 53, 38: 53, 41: 53, 46: 53, 49: 53, 52: 53, 56: 53},
+		{57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 22: 57, 57, 57, 26: 57, 57, 57, 30: 57, 57, 57, 57, 38: 57, 41: 118, 46: 57, 49: 117, 52: 57},
+		{51: 112, 58: 115},
+		{5: 116, 41: 118, 49: 117},
 		// 25
-		{57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 22: 57, 57, 25: 57, 57, 57, 57, 34: 57, 57, 57, 57, 57, 47: 57, 53: 57},
-		{52: 165, 72: 164, 166},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 42: 130, 128, 131, 129, 48: 127, 120},
-		{4: 163, 17: 148},
-		{1: 25, 25, 152, 25, 25, 17: 25, 22: 25, 25, 25: 25, 34: 155, 153, 151, 154, 161},
+		{56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 22: 56, 56, 56, 26: 56, 56, 56, 30: 56, 56, 56, 56, 38: 56, 46: 56, 52: 56},
+		{51: 162, 72: 161, 163},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 42: 127, 129, 128, 47: 126, 119},
+		{4: 160, 20: 145},
+		{1: 25, 25, 149, 25, 25, 20: 25, 22: 25, 24: 25, 26: 25, 30: 152, 150, 148, 151, 38: 158},
 		// 30
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 150, 123},
-		{1: 36, 36, 36, 36, 36, 17: 36, 22: 36, 36, 25: 36, 34: 36, 36, 36, 36, 36},
-		{1: 35, 35, 35, 35, 35, 17: 35, 22: 35, 35, 25: 35, 34: 35, 35, 35, 35, 35},
-		{1: 34, 34, 34, 34, 34, 17: 34, 22: 34, 34, 25: 34, 34: 34, 34, 34, 34, 34},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 42: 130, 128, 131, 129, 48: 127, 146},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 147, 122},
+		{1: 35, 35, 35, 35, 35, 20: 35, 22: 35, 24: 35, 26: 35, 30: 35, 35, 35, 35, 38: 35},
+		{1: 34, 34, 34, 34, 34, 20: 34, 22: 34, 24: 34, 26: 34, 30: 34, 34, 34, 34, 38: 34},
+		{1: 33, 33, 33, 33, 33, 20: 33, 22: 33, 24: 33, 26: 33, 30: 33, 33, 33, 33, 38: 33},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 42: 127, 129, 128, 47: 126, 143},
 		// 35
-		{1: 32, 32, 4: 32, 32, 17: 32, 22: 32, 32, 25: 144},
-		{1: 30, 30, 4: 30, 30, 17: 30, 22: 30, 30, 25: 30},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 42: 130, 143, 131, 129},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 42: 130, 142, 131, 129},
-		{1: 26, 26, 4: 26, 26, 17: 26, 22: 26, 26, 25: 26},
+		{1: 31, 31, 4: 31, 31, 20: 31, 22: 31, 24: 31, 26: 141},
+		{1: 29, 29, 4: 29, 29, 20: 29, 22: 29, 24: 29, 26: 29},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 42: 140, 129, 128},
+		{1: 26, 26, 4: 26, 26, 20: 26, 22: 26, 24: 26, 26: 26},
+		{1: 23, 23, 23, 23, 23, 20: 23, 22: 23, 24: 23, 26: 23, 30: 23, 23, 23, 23, 38: 23},
 		// 40
-		{1: 23, 23, 23, 23, 23, 17: 23, 22: 23, 23, 25: 23, 34: 23, 23, 23, 23, 23},
-		{18, 6: 18, 18, 47: 18, 71: 137},
-		{1: 21, 21, 21, 21, 21, 17: 21, 22: 21, 21, 25: 21, 34: 21, 21, 21, 21, 21},
-		{1: 20, 20, 20, 20, 20, 17: 20, 22: 20, 20, 25: 20, 34: 20, 20, 20, 20, 20},
-		{1: 19, 19, 19, 19, 19, 17: 19, 22: 19, 19, 25: 19, 34: 19, 19, 19, 19, 19},
+		{18, 6: 18, 19: 18, 46: 18, 71: 135},
+		{1: 21, 21, 21, 21, 21, 20: 21, 22: 21, 24: 21, 26: 21, 30: 21, 21, 21, 21, 38: 21},
+		{1: 20, 20, 20, 20, 20, 20: 20, 22: 20, 24: 20, 26: 20, 30: 20, 20, 20, 20, 38: 20},
+		{1: 19, 19, 19, 19, 19, 20: 19, 22: 19, 24: 19, 26: 19, 30: 19, 19, 19, 19, 38: 19},
+		{108, 6: 137, 19: 136, 21: 138, 46: 139},
 		// 45
-		{109, 6: 139, 138, 21: 140, 47: 141},
-		{1: 22, 22, 22, 22, 22, 17: 22, 22: 22, 22, 25: 22, 34: 22, 22, 22, 22, 22},
-		{17, 6: 17, 17, 47: 17},
-		{16, 6: 16, 16, 47: 16},
-		{15, 6: 15, 15, 47: 15},
+		{1: 22, 22, 22, 22, 22, 20: 22, 22: 22, 24: 22, 26: 22, 30: 22, 22, 22, 22, 38: 22},
+		{17, 6: 17, 19: 17, 46: 17},
+		{16, 6: 16, 19: 16, 46: 16},
+		{15, 6: 15, 19: 15, 46: 15},
+		{1: 27, 27, 4: 27, 27, 20: 27, 22: 27, 24: 27, 26: 27},
 		// 50
-		{1: 27, 27, 4: 27, 27, 17: 27, 22: 27, 27, 25: 27},
-		{1: 28, 28, 4: 28, 28, 17: 28, 22: 28, 28, 25: 28},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 42: 130, 145, 131, 129},
-		{1: 29, 29, 4: 29, 29, 17: 29, 22: 29, 29, 25: 29},
-		{1: 147, 17: 148},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 42: 142, 129, 128},
+		{1: 28, 28, 4: 28, 28, 20: 28, 22: 28, 24: 28, 26: 28},
+		{1: 144, 20: 145},
+		{1: 32, 32, 32, 32, 32, 20: 32, 22: 32, 24: 32, 26: 32, 30: 32, 32, 32, 32, 38: 32},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 42: 127, 129, 128, 47: 146},
 		// 55
-		{1: 33, 33, 33, 33, 33, 17: 33, 22: 33, 33, 25: 33, 34: 33, 33, 33, 33, 33},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 42: 130, 128, 131, 129, 48: 149},
-		{1: 31, 31, 4: 31, 31, 17: 31, 22: 31, 31, 25: 144},
-		{1: 37, 37, 37, 37, 37, 17: 37, 22: 37, 37, 25: 37, 34: 155, 153, 37, 154, 37},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 160, 123},
+		{1: 30, 30, 4: 30, 30, 20: 30, 22: 30, 24: 30, 26: 141},
+		{1: 36, 36, 36, 36, 36, 20: 36, 22: 36, 24: 36, 26: 36, 30: 152, 150, 36, 151, 38: 36},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 157, 122},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 156, 122},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 155, 122},
 		// 60
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 159, 123},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 158, 123},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 157, 123},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 156, 123},
-		{1: 38, 38, 38, 38, 38, 17: 38, 22: 38, 38, 25: 38, 34: 38, 38, 38, 38, 38},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 154, 122},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 153, 122},
+		{1: 37, 37, 37, 37, 37, 20: 37, 22: 37, 24: 37, 26: 37, 30: 37, 37, 37, 37, 38: 37},
+		{1: 38, 38, 38, 38, 38, 20: 38, 22: 38, 24: 38, 26: 38, 30: 38, 38, 38, 38, 38: 38},
+		{1: 39, 39, 39, 39, 39, 20: 39, 22: 39, 24: 39, 26: 39, 30: 39, 39, 39, 39, 38: 39},
 		// 65
-		{1: 39, 39, 39, 39, 39, 17: 39, 22: 39, 39, 25: 39, 34: 39, 39, 39, 39, 39},
-		{1: 40, 40, 40, 40, 40, 17: 40, 22: 40, 40, 25: 40, 34: 40, 40, 40, 40, 40},
-		{1: 41, 41, 41, 41, 41, 17: 41, 22: 41, 41, 25: 41, 34: 155, 153, 41, 154, 41},
-		{1: 42, 42, 42, 42, 42, 17: 42, 22: 42, 42, 25: 42, 34: 155, 153, 42, 154, 42},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 162, 123},
+		{1: 40, 40, 40, 40, 40, 20: 40, 22: 40, 24: 40, 26: 40, 30: 152, 150, 40, 151, 38: 40},
+		{1: 41, 41, 41, 41, 41, 20: 41, 22: 41, 24: 41, 26: 41, 30: 152, 150, 41, 151, 38: 41},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 159, 122},
+		{1: 24, 24, 149, 24, 24, 20: 24, 22: 24, 24: 24, 26: 24, 30: 152, 150, 148, 151},
+		{51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 22: 51, 51, 51, 26: 51, 51, 51, 30: 51, 51, 51, 51, 38: 51, 41: 51, 46: 51, 49: 51, 52: 51, 56: 51},
 		// 70
-		{1: 24, 24, 152, 24, 24, 17: 24, 22: 24, 24, 25: 24, 34: 155, 153, 151, 154},
-		{52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 22: 52, 52, 25: 52, 52, 52, 52, 34: 52, 52, 52, 52, 52, 41: 52, 47: 52, 50: 52, 53: 52, 57: 52},
-		{24: 167},
-		{53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 22: 53, 53, 25: 53, 53, 53, 53, 34: 53, 53, 53, 53, 53, 41: 53, 47: 53, 50: 53, 53: 53, 57: 53},
-		{51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 22: 51, 51, 25: 51, 51, 51, 51, 34: 51, 51, 51, 51, 51, 41: 51, 47: 51, 50: 51, 53: 51, 57: 51},
+		{25: 164},
+		{52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 22: 52, 52, 52, 26: 52, 52, 52, 30: 52, 52, 52, 52, 38: 52, 41: 52, 46: 52, 49: 52, 52: 52, 56: 52},
+		{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 22: 50, 50, 50, 26: 50, 50, 50, 30: 50, 50, 50, 50, 38: 50, 41: 50, 46: 50, 49: 50, 52: 50, 56: 50},
+		{108, 168, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 170, 127, 129, 128, 171, 47: 126, 165, 50: 166, 53: 167, 57: 172, 63: 169},
+		{1: 69, 69, 4: 69, 69, 20: 145},
 		// 75
-		{109, 171, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 173, 130, 128, 131, 129, 174, 48: 127, 168, 51: 169, 54: 170, 58: 175, 63: 172},
-		{1: 70, 70, 4: 70, 70, 17: 148},
-		{1: 69, 69, 4: 69, 69},
 		{1: 68, 68, 4: 68, 68},
-		{56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 22: 56, 56, 25: 56, 56, 56, 56, 34: 56, 56, 56, 56, 56, 41: 56, 47: 56, 50: 56, 53: 56, 57: 56},
+		{1: 67, 67, 4: 67, 67},
+		{55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 22: 55, 55, 55, 26: 55, 55, 55, 30: 55, 55, 55, 55, 38: 55, 41: 55, 46: 55, 49: 55, 52: 55, 56: 55},
+		{1: 193, 189},
+		{108, 3: 121, 184, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 170, 127, 129, 128, 171, 47: 126, 183, 50: 166, 53: 167, 57: 172, 63: 185, 74: 186},
 		// 80
-		{1: 196, 192},
-		{109, 3: 122, 187, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 173, 130, 128, 131, 129, 174, 48: 127, 186, 51: 169, 54: 170, 58: 175, 63: 188, 74: 189},
-		{109, 3: 122, 5: 176, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 42: 130, 128, 131, 129, 48: 127, 178, 70: 177},
+		{108, 3: 121, 5: 173, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 42: 127, 129, 128, 47: 126, 175, 70: 174},
 		{1: 2, 2, 4: 2},
-		{1: 46, 46, 4: 46, 46},
-		// 85
-		{2: 182, 5: 181},
-		{17: 148, 22: 179},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 173, 130, 128, 131, 129, 174, 48: 127, 168, 51: 169, 54: 170, 58: 180},
-		{2: 44, 5: 44},
 		{1: 45, 45, 4: 45, 45},
-		// 90
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 42: 130, 128, 131, 129, 48: 127, 183},
-		{17: 148, 22: 184},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 173, 130, 128, 131, 129, 174, 48: 127, 168, 51: 169, 54: 170, 58: 185},
+		{2: 179, 5: 178},
+		{20: 145, 22: 176},
+		// 85
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 170, 127, 129, 128, 171, 47: 126, 165, 50: 166, 53: 167, 57: 177},
 		{2: 43, 5: 43},
-		{2: 70, 4: 70, 17: 148, 23: 194},
-		// 95
-		{1: 50, 50, 4: 50, 50},
-		{2: 192, 4: 191},
-		{4: 190},
-		{1: 48, 48, 4: 48, 48},
+		{1: 44, 44, 4: 44, 44},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 42: 127, 129, 128, 47: 126, 180},
+		{20: 145, 22: 181},
+		// 90
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 170, 127, 129, 128, 171, 47: 126, 165, 50: 166, 53: 167, 57: 182},
+		{2: 42, 5: 42},
+		{2: 69, 4: 69, 20: 145, 24: 191},
 		{1: 49, 49, 4: 49, 49},
-		// 100
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 173, 130, 128, 131, 129, 174, 48: 127, 168, 51: 169, 54: 170, 58: 193},
+		{2: 189, 4: 188},
+		// 95
+		{4: 187},
+		{1: 47, 47, 4: 47, 47},
+		{1: 48, 48, 4: 48, 48},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 170, 127, 129, 128, 171, 47: 126, 165, 50: 166, 53: 167, 57: 190},
 		{1: 1, 1, 4: 1},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 42: 130, 128, 131, 129, 48: 127, 195},
-		{4: 47, 17: 148},
-		{55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 22: 55, 55, 25: 55, 55, 55, 55, 34: 55, 55, 55, 55, 55, 41: 55, 47: 55, 50: 55, 53: 55, 57: 55},
+		// 100
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 42: 127, 129, 128, 47: 126, 192},
+		{4: 46, 20: 145},
+		{54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 22: 54, 54, 54, 26: 54, 54, 54, 30: 54, 54, 54, 54, 38: 54, 41: 54, 46: 54, 49: 54, 52: 54, 56: 54},
+		{5: 195, 41: 118, 49: 117},
+		{58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 58, 22: 58, 58, 58, 26: 58, 58, 58, 30: 58, 58, 58, 58, 38: 58, 46: 58, 52: 58},
 		// 105
-		{5: 198, 41: 119, 50: 118},
-		{59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 59, 22: 59, 59, 25: 59, 59, 59, 59, 34: 59, 59, 59, 59, 59, 47: 59, 53: 59},
-		{109, 200, 7: 133, 21: 202, 29: 132, 136, 134, 135, 203, 41: 173, 46: 174, 51: 204, 54: 205, 60: 206, 201},
-		{74, 6: 74, 8: 74, 74, 74, 74, 74, 74, 74, 74, 74, 18: 74, 74, 74, 26: 74, 74, 74},
-		{1: 207, 208},
-		// 110
+		{108, 197, 19: 131, 21: 199, 29: 130, 34: 134, 132, 133, 200, 41: 170, 45: 171, 50: 201, 53: 202, 59: 203, 61: 198},
+		{73, 6: 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 73, 23: 73, 27: 73, 73},
+		{1: 204, 205},
 		{1: 14, 14},
 		{1: 13, 13},
+		// 110
 		{1: 12, 12},
 		{1: 11, 11},
 		{1: 10, 10},
+		{72, 6: 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 23: 72, 27: 72, 72},
+		{108, 19: 131, 21: 199, 29: 130, 34: 134, 132, 133, 200, 41: 170, 45: 171, 50: 201, 53: 202, 59: 206},
 		// 115
-		{73, 6: 73, 8: 73, 73, 73, 73, 73, 73, 73, 73, 73, 18: 73, 73, 73, 26: 73, 73, 73},
-		{109, 7: 133, 21: 202, 29: 132, 136, 134, 135, 203, 41: 173, 46: 174, 51: 204, 54: 205, 60: 209},
 		{1: 9, 9},
-		{52: 211},
-		{214, 78, 62: 215, 64: 212, 68: 213},
+		{51: 208},
+		{211, 77, 62: 212, 64: 209, 68: 210},
+		{1: 228},
+		{1: 75, 223, 65: 222},
 		// 120
-		{1: 231},
-		{1: 76, 226, 65: 225},
-		{42: 218, 46: 217, 52: 216},
+		{45: 214, 51: 213, 60: 215},
 		{1: 4, 4},
 		{1: 8, 8},
+		{51: 220},
+		{45: 217, 51: 216},
 		// 125
-		{52: 223},
-		{46: 220, 52: 219},
 		{1: 6, 6},
-		{52: 221},
-		{5: 222},
-		// 130
+		{51: 218},
+		{5: 219},
 		{1: 5, 5},
-		{5: 224},
+		{5: 221},
+		// 130
 		{1: 7, 7},
-		{1: 228},
-		{214, 62: 227},
-		// 135
+		{1: 225},
+		{211, 62: 224},
 		{1: 3, 3},
-		{90, 6: 90, 8: 90, 90, 90, 90, 90, 90, 90, 90, 90, 18: 90, 90, 90, 56: 229},
-		{109, 6: 98, 8: 108, 95, 230, 104, 101, 100, 102, 105, 106, 18: 103, 99, 107, 97, 55: 96},
-		{75, 6: 75, 8: 75, 75, 75, 75, 75, 75, 75, 75, 75, 18: 75, 75, 75, 26: 75, 75, 75},
-		{90, 6: 90, 8: 90, 90, 90, 90, 90, 90, 90, 90, 90, 18: 90, 90, 90, 56: 232},
+		{89, 6: 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 55: 226},
+		// 135
+		{108, 6: 97, 107, 94, 227, 103, 100, 99, 101, 104, 105, 102, 98, 106, 21: 96, 54: 95},
+		{74, 6: 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 23: 74, 27: 74, 74},
+		{89, 6: 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 55: 229},
+		{108, 6: 97, 107, 94, 230, 103, 100, 99, 101, 104, 105, 102, 98, 106, 21: 96, 54: 95},
+		{76, 6: 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 23: 76, 27: 76, 76},
 		// 140
-		{109, 6: 98, 8: 108, 95, 233, 104, 101, 100, 102, 105, 106, 18: 103, 99, 107, 97, 55: 96},
-		{77, 6: 77, 8: 77, 77, 77, 77, 77, 77, 77, 77, 77, 18: 77, 77, 77, 26: 77, 77, 77},
-		{29: 235},
+		{29: 232},
+		{1: 233},
+		{78, 6: 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 23: 78, 27: 78, 78},
+		{108, 19: 131, 21: 199, 29: 130, 34: 134, 132, 133, 200, 41: 170, 45: 171, 50: 201, 53: 202, 59: 235},
 		{1: 236},
-		{79, 6: 79, 8: 79, 79, 79, 79, 79, 79, 79, 79, 79, 18: 79, 79, 79, 26: 79, 79, 79},
 		// 145
-		{109, 7: 133, 21: 202, 29: 132, 136, 134, 135, 203, 41: 173, 46: 174, 51: 204, 54: 205, 60: 238},
-		{1: 239},
-		{80, 6: 80, 8: 80, 80, 80, 80, 80, 80, 80, 80, 80, 18: 80, 80, 80, 26: 80, 80, 80},
-		{109, 7: 133, 21: 202, 29: 132, 136, 134, 135, 203, 41: 173, 46: 174, 51: 204, 54: 205, 60: 206, 241},
-		{1: 242, 208},
+		{79, 6: 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 23: 79, 27: 79, 79},
+		{108, 19: 131, 21: 199, 29: 130, 34: 134, 132, 133, 200, 41: 170, 45: 171, 50: 201, 53: 202, 59: 203, 61: 238},
+		{1: 239, 205},
+		{80, 6: 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 23: 80, 27: 80, 80},
+		{108, 21: 241},
 		// 150
-		{81, 6: 81, 8: 81, 81, 81, 81, 81, 81, 81, 81, 81, 18: 81, 81, 81, 26: 81, 81, 81},
-		{109, 21: 244},
-		{53: 245},
-		{109, 21: 247, 41: 173, 46: 174, 51: 248, 54: 249, 69: 246},
-		{1: 250},
-		// 155
-		{1: 67},
+		{52: 242},
+		{108, 21: 244, 41: 170, 45: 171, 50: 245, 53: 246, 69: 243},
+		{1: 247},
 		{1: 66},
 		{1: 65},
-		{90, 6: 90, 8: 90, 90, 90, 90, 90, 90, 90, 90, 90, 18: 90, 90, 90, 26: 90, 56: 251},
-		{109, 6: 98, 8: 108, 95, 252, 104, 101, 100, 102, 105, 106, 18: 103, 99, 107, 97, 26: 253, 55: 96},
+		// 155
+		{1: 64},
+		{89, 6: 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 23: 89, 55: 248},
+		{108, 6: 97, 107, 94, 249, 103, 100, 99, 101, 104, 105, 102, 98, 106, 21: 96, 23: 250, 54: 95},
+		{82, 6: 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 23: 82, 27: 82, 82},
+		{89, 6: 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 55: 251},
 		// 160
-		{83, 6: 83, 8: 83, 83, 83, 83, 83, 83, 83, 83, 83, 18: 83, 83, 83, 26: 83, 83, 83},
-		{90, 6: 90, 8: 90, 90, 90, 90, 90, 90, 90, 90, 90, 18: 90, 90, 90, 56: 254},
-		{109, 6: 98, 8: 108, 95, 255, 104, 101, 100, 102, 105, 106, 18: 103, 99, 107, 97, 55: 96},
-		{82, 6: 82, 8: 82, 82, 82, 82, 82, 82, 82, 82, 82, 18: 82, 82, 82, 26: 82, 82, 82},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 42: 130, 128, 131, 129, 48: 127, 257},
+		{108, 6: 97, 107, 94, 252, 103, 100, 99, 101, 104, 105, 102, 98, 106, 21: 96, 54: 95},
+		{81, 6: 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 23: 81, 27: 81, 81},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 42: 127, 129, 128, 47: 126, 254},
+		{1: 255, 20: 145},
+		{89, 6: 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 23: 89, 27: 89, 55: 256},
 		// 165
-		{1: 258, 17: 148},
-		{90, 6: 90, 8: 90, 90, 90, 90, 90, 90, 90, 90, 90, 18: 90, 90, 90, 26: 90, 90, 56: 259},
-		{109, 6: 98, 8: 108, 95, 62, 104, 101, 100, 102, 105, 106, 18: 103, 99, 107, 97, 26: 62, 62, 55: 96, 66: 260, 261},
-		{10: 269},
-		{10: 64, 26: 262, 263},
+		{108, 6: 97, 107, 94, 61, 103, 100, 99, 101, 104, 105, 102, 98, 106, 21: 96, 23: 61, 27: 61, 54: 95, 66: 257, 258},
+		{9: 266},
+		{9: 63, 23: 259, 27: 260},
+		{89, 6: 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 55: 265},
+		{25: 261},
 		// 170
-		{90, 6: 90, 8: 90, 90, 90, 90, 90, 90, 90, 90, 90, 18: 90, 90, 90, 56: 268},
-		{24: 264},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 42: 130, 128, 131, 129, 48: 127, 265},
-		{1: 266, 17: 148},
-		{90, 6: 90, 8: 90, 90, 90, 90, 90, 90, 90, 90, 90, 18: 90, 90, 90, 26: 90, 90, 56: 267},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 42: 127, 129, 128, 47: 126, 262},
+		{1: 263, 20: 145},
+		{89, 6: 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 23: 89, 27: 89, 55: 264},
+		{108, 6: 97, 107, 94, 60, 103, 100, 99, 101, 104, 105, 102, 98, 106, 21: 96, 23: 60, 27: 60, 54: 95},
+		{108, 6: 97, 107, 94, 62, 103, 100, 99, 101, 104, 105, 102, 98, 106, 21: 96, 54: 95},
 		// 175
-		{109, 6: 98, 8: 108, 95, 61, 104, 101, 100, 102, 105, 106, 18: 103, 99, 107, 97, 26: 61, 61, 55: 96},
-		{109, 6: 98, 8: 108, 95, 63, 104, 101, 100, 102, 105, 106, 18: 103, 99, 107, 97, 55: 96},
-		{84, 6: 84, 8: 84, 84, 84, 84, 84, 84, 84, 84, 84, 18: 84, 84, 84, 26: 84, 84, 84},
-		{271},
-		{52: 113, 59: 272},
+		{83, 6: 83, 83, 83, 83, 83, 83, 83, 83, 83, 83, 83, 83, 83, 23: 83, 27: 83, 83},
+		{268},
+		{51: 112, 58: 269},
+		{41: 118, 49: 117, 56: 270},
+		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 170, 127, 129, 128, 171, 47: 126, 165, 50: 166, 53: 167, 57: 271},
 		// 180
-		{41: 119, 50: 118, 57: 273},
-		{109, 3: 122, 7: 133, 21: 124, 24: 126, 29: 132, 136, 134, 135, 125, 39: 121, 123, 173, 130, 128, 131, 129, 174, 48: 127, 168, 51: 169, 54: 170, 58: 274},
-		{1: 275},
-		{85, 6: 85, 8: 85, 85, 85, 85, 85, 85, 85, 85, 85, 18: 85, 85, 85, 26: 85, 85, 85},
+		{1: 272},
+		{84, 6: 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 23: 84, 27: 84, 84},
 	}
 )
 
@@ -1000,32 +995,32 @@ yynewstate:
 		}
 	case 7:
 		{
-			yyVAL.n = &SetNode{Var: yyS[yypt-3].n.(*VarNode), Expr: yyS[yypt-1].n.(*OpNode)}
+			yyVAL.n = &SetNode{Var: yyS[yypt-3].n.(*VarNode), Expr: yyS[yypt-1].n.(*OpNode), Pos: Pos{yyS[yypt-6].t.line}}
 		}
 	case 8:
 		{
 			elseNode, _ := yyS[yypt-1].n.(*IfNode)
-			yyVAL.n = &IfNode{Cond: yyS[yypt-4].n.(*OpNode), Items: yyS[yypt-2].v, Else: elseNode}
+			yyVAL.n = &IfNode{Cond: yyS[yypt-4].n.(*OpNode), Items: yyS[yypt-2].v, Else: elseNode, Pos: Pos{yyS[yypt-6].t.line}}
 		}
 	case 9:
 		{
-			yyVAL.n = &ForeachNode{Var: yyS[yypt-5].n.(*VarNode).RefNode, Iter: yyS[yypt-3].n.(*OpNode), Items: yyS[yypt-1].v}
+			yyVAL.n = &ForeachNode{Var: yyS[yypt-5].n.(*VarNode).RefNode, Iter: yyS[yypt-3].n.(*OpNode), Items: yyS[yypt-1].v, Pos: Pos{yyS[yypt-7].t.line}}
 		}
 	case 10:
 		{
-			yyVAL.n = &ForeachNode{Var: yyS[yypt-7].n.(*VarNode).RefNode, Iter: yyS[yypt-5].n.(*OpNode), Items: yyS[yypt-3].v, Else: yyS[yypt-1].v}
+			yyVAL.n = &ForeachNode{Var: yyS[yypt-7].n.(*VarNode).RefNode, Iter: yyS[yypt-5].n.(*OpNode), Items: yyS[yypt-3].v, Else: yyS[yypt-1].v, Pos: Pos{yyS[yypt-9].t.line}}
 		}
 	case 11:
 		{
-			yyVAL.n = &IncludeNode{yyS[yypt-1].n.([]*OpNode)}
+			yyVAL.n = &IncludeNode{Names: yyS[yypt-1].n.([]*OpNode), Pos: Pos{yyS[yypt-3].t.line}}
 		}
 	case 12:
 		{
-			yyVAL.n = &ParseNode{yyS[yypt-1].n.(*OpNode)}
+			yyVAL.n = &ParseNode{Name: yyS[yypt-1].n.(*OpNode), Pos: Pos{yyS[yypt-3].t.line}}
 		}
 	case 13:
 		{
-			yyVAL.n = &EvalNode{yyS[yypt-1].t.literal}
+			yyVAL.n = &EvalNode{Content: yyS[yypt-1].t.literal, Pos: Pos{yyS[yypt-3].t.line}}
 		}
 	case 14:
 		{
@@ -1033,7 +1028,7 @@ yynewstate:
 		}
 	case 15:
 		{
-			yyVAL.n = &MacroNode{yyS[yypt-4].t.literal, nil, yyS[yypt-1].v}
+			yyVAL.n = &MacroNode{Name: yyS[yypt-4].t.literal, Assign: nil, Items: yyS[yypt-1].v, Pos: Pos{yyS[yypt-6].t.line}}
 		}
 	case 16:
 		{
@@ -1041,15 +1036,15 @@ yynewstate:
 		}
 	case 17:
 		{
-			yyVAL.n = &MacroNode{yyS[yypt-5].t.literal, yyS[yypt-4].n.([]*RefNode), yyS[yypt-1].v}
+			yyVAL.n = &MacroNode{Name: yyS[yypt-5].t.literal, Assign: yyS[yypt-4].n.([]*RefNode), Items: yyS[yypt-1].v, Pos: Pos{yyS[yypt-7].t.line}}
 		}
 	case 18:
 		{
-			yyVAL.n = &MacroCall{yyS[yypt-2].t.literal, nil}
+			yyVAL.n = &MacroCall{Name: yyS[yypt-2].t.literal, Vals: nil, Pos: Pos{yyS[yypt-2].t.line}}
 		}
 	case 19:
 		{
-			yyVAL.n = &MacroCall{yyS[yypt-3].t.literal, yyS[yypt-1].n.([]*OpNode)}
+			yyVAL.n = &MacroCall{Name: yyS[yypt-3].t.literal, Vals: yyS[yypt-1].n.([]*OpNode), Pos: Pos{yyS[yypt-3].t.line}}
 		}
 	case 20:
 		{
@@ -1067,12 +1062,12 @@ yynewstate:
 		{
 			ifNode, _ := yyS[yypt-2].n.(*IfNode)
 			if ifNode == nil {
-				yyVAL.n = &IfNode{Items: yyS[yypt-0].v}
+				yyVAL.n = &IfNode{Items: yyS[yypt-0].v, Pos: Pos{yyS[yypt-1].t.line}}
 			} else {
 				for ifNode.Else != nil {
 					ifNode = ifNode.Else
 				}
-				ifNode.Else = &IfNode{Items: yyS[yypt-0].v}
+				ifNode.Else = &IfNode{Items: yyS[yypt-0].v, Pos: Pos{yyS[yypt-1].t.line}}
 			}
 		}
 	case 30:
@@ -1081,7 +1076,7 @@ yynewstate:
 		}
 	case 31:
 		{
-			elseifNode := &IfNode{Cond: yyS[yypt-2].n.(*OpNode), Items: yyS[yypt-0].v}
+			elseifNode := &IfNode{Cond: yyS[yypt-2].n.(*OpNode), Items: yyS[yypt-0].v, Pos: Pos{yyS[yypt-4].t.line}}
 			ifNode, _ := yyS[yypt-5].n.(*IfNode)
 			if ifNode == nil {
 				yyVAL.n = elseifNode
@@ -1109,20 +1104,20 @@ yynewstate:
 		}
 	case 36:
 		{
-			yyVAL.n = &AccessNode{Name: yyS[yypt-2].t.literal, IsCall: true}
+			yyVAL.n = &AccessNode{Name: yyS[yypt-2].t.literal, IsCall: true, Pos: Pos{yyS[yypt-2].t.line}}
 		}
 	case 37:
 		{
-			yyVAL.n = &AccessNode{Name: yyS[yypt-3].t.literal, IsCall: true, Args: yyS[yypt-1].n.([]*OpNode)}
+			yyVAL.n = &AccessNode{Name: yyS[yypt-3].t.literal, IsCall: true, Args: yyS[yypt-1].n.([]*OpNode), Pos: Pos{yyS[yypt-3].t.line}}
 		}
 	case 38:
 		{
-			yyVAL.n = &VarNode{RefNode: &RefNode{Name: yyS[yypt-0].t.literal}}
+			yyVAL.n = &VarNode{RefNode: &RefNode{Name: yyS[yypt-0].t.literal}, Pos: Pos{yyS[yypt-0].t.line}}
 		}
 	case 39:
 		{
 			v := yyS[yypt-2].n.(*VarNode)
-			v.Items = append(v.Items, &AccessNode{Name: yyS[yypt-0].t.literal})
+			v.Items = append(v.Items, &AccessNode{Name: yyS[yypt-0].t.literal, Pos: Pos{yyS[yypt-0].t.line}})
 			yyVAL.n = yyS[yypt-2].n
 		}
 	case 40:
@@ -1151,7 +1146,7 @@ yynewstate:
 		}
 	case 45:
 		{
-			yyVAL.n = &OpNode{Op: "range", Left: yyS[yypt-2].n.(*OpNode), Right: yyS[yypt-0].n.(*OpNode)}
+			yyVAL.n = &OpNode{Op: "range", Left: yyS[yypt-2].n.(*OpNode), Right: yyS[yypt-0].n.(*OpNode), Pos: Pos{yyS[yypt-1].t.line}}
 		}
 	case 46:
 		{
@@ -1206,113 +1201,109 @@ yynewstate:
 		}
 	case 61:
 		{
-			yyVAL.n = &OpNode{Op: yyS[yypt-1].t.literal, Left: yyS[yypt-2].n.(*OpNode), Right: yyS[yypt-0].n.(*OpNode)}
+			yyVAL.n = &OpNode{Op: yyS[yypt-1].t.literal, Left: yyS[yypt-2].n.(*OpNode), Right: yyS[yypt-0].n.(*OpNode), Pos: Pos{yyS[yypt-1].t.line}}
 		}
 	case 63:
 		{
-			yyVAL.n = &OpNode{Op: yyS[yypt-1].t.literal, Left: yyS[yypt-2].n.(*OpNode), Right: yyS[yypt-0].n.(*OpNode)}
+			yyVAL.n = &OpNode{Op: yyS[yypt-1].t.literal, Left: yyS[yypt-2].n.(*OpNode), Right: yyS[yypt-0].n.(*OpNode), Pos: Pos{yyS[yypt-1].t.line}}
 		}
 	case 64:
 		{
-			yyVAL.n = &OpNode{Op: "not", Left: yyS[yypt-0].n.(*OpNode)}
+			yyVAL.n = &OpNode{Op: "not", Left: yyS[yypt-0].n.(*OpNode), Pos: Pos{yyS[yypt-1].t.line}}
 		}
-	case 65:
+	case 67:
 		{
-			yyVAL.n = &OpNode{Op: "not", Left: yyS[yypt-0].n.(*OpNode)}
+			yyVAL.n = &OpNode{Op: yyS[yypt-1].t.literal, Left: yyS[yypt-2].n.(*OpNode), Right: yyS[yypt-0].n.(*OpNode), Pos: Pos{yyS[yypt-1].t.line}}
 		}
 	case 68:
 		{
-			yyVAL.n = &OpNode{Op: yyS[yypt-1].t.literal, Left: yyS[yypt-2].n.(*OpNode), Right: yyS[yypt-0].n.(*OpNode)}
+			yyVAL.n = &OpNode{Val: yyS[yypt-0].t.literal, Pos: Pos{yyS[yypt-0].t.line}}
 		}
 	case 69:
 		{
-			yyVAL.n = &OpNode{Val: yyS[yypt-0].t.literal}
+			yyVAL.n = &OpNode{Val: yyS[yypt-1].n}
 		}
 	case 70:
 		{
-			yyVAL.n = &OpNode{Val: yyS[yypt-1].n}
+			f, _ := strconv.ParseFloat(yyS[yypt-0].t.literal, 64)
+			yyVAL.n = &OpNode{Val: f, Pos: Pos{yyS[yypt-0].t.line}}
 		}
 	case 71:
 		{
-			f, _ := strconv.ParseFloat(yyS[yypt-0].t.literal, 64)
-			yyVAL.n = &OpNode{Val: f}
+			i, _ := strconv.ParseInt(yyS[yypt-0].t.literal, 10, 64)
+			yyVAL.n = &OpNode{Val: i, Pos: Pos{yyS[yypt-0].t.line}}
 		}
 	case 72:
-		{
-			i, _ := strconv.ParseInt(yyS[yypt-0].t.literal, 10, 64)
-			yyVAL.n = &OpNode{Val: i}
-		}
-	case 73:
 		{
 			var b bool
 			if yyS[yypt-0].t.literal == "true" {
 				b = true
 			}
-			yyVAL.n = &OpNode{Val: b}
+			yyVAL.n = &OpNode{Val: b, Pos: Pos{yyS[yypt-0].t.line}}
 		}
-	case 74:
+	case 73:
 		{
 			yyVAL.n = &InterpolatedNode{}
 		}
-	case 75:
+	case 74:
 		{
 			v := yyS[yypt-1].n.(*InterpolatedNode)
 			v.Items = append(v.Items, TextNode(yyS[yypt-0].t.literal))
 			yyVAL.n = v
 		}
-	case 76:
+	case 75:
 		{
 			v := yyS[yypt-1].n.(*InterpolatedNode)
 			v.Items = append(v.Items, yyS[yypt-0].n.(*VarNode))
 			yyVAL.n = v
 		}
-	case 77:
+	case 76:
 		{
 			v := yyS[yypt-1].n.(*InterpolatedNode)
 			v.Items = append(v.Items, TextNode(yyS[yypt-0].t.literal))
 			yyVAL.n = v
 		}
-	case 78:
+	case 77:
 		{
 			yyVAL.n = &OpNode{Val: yyS[yypt-0].n.(*VarNode)}
 		}
-	case 82:
+	case 81:
 		{
 			yyVAL.n = []*OpNode{yyS[yypt-0].n.(*OpNode)}
 		}
-	case 83:
+	case 82:
 		{
 			yyVAL.n = append(yyS[yypt-2].n.([]*OpNode), yyS[yypt-0].n.(*OpNode))
 		}
+	case 83:
+		{
+			yyVAL.n = &VarNode{RefNode: &RefNode{Name: yyS[yypt-0].t.literal}, Pos: Pos{yyS[yypt-0].t.line}}
+		}
 	case 84:
 		{
-			yyVAL.n = &VarNode{RefNode: &RefNode{Name: yyS[yypt-0].t.literal}}
+			yyVAL.n = &VarNode{RefNode: &RefNode{Name: yyS[yypt-1].t.literal}, Pos: Pos{yyS[yypt-1].t.line}}
 		}
 	case 85:
 		{
-			yyVAL.n = &VarNode{RefNode: &RefNode{Name: yyS[yypt-1].t.literal}}
+			yyVAL.n = &VarNode{RefNode: &RefNode{Name: yyS[yypt-0].t.literal}, Pos: Pos{yyS[yypt-0].t.line}}
 		}
 	case 86:
 		{
-			yyVAL.n = &VarNode{RefNode: &RefNode{Name: yyS[yypt-0].t.literal}}
+			yyVAL.n = &VarNode{RefNode: &RefNode{Name: yyS[yypt-1].t.literal}, Pos: Pos{yyS[yypt-1].t.line}}
 		}
 	case 87:
 		{
-			yyVAL.n = &VarNode{RefNode: &RefNode{Name: yyS[yypt-1].t.literal}}
+			yyVAL.n = []*RefNode{yyS[yypt-0].n.(*VarNode).RefNode}
 		}
 	case 88:
 		{
-			yyVAL.n = []*RefNode{yyS[yypt-0].n.(*VarNode).RefNode}
+			yyVAL.n = append(yyS[yypt-2].n.([]*RefNode), yyS[yypt-0].n.(*VarNode).RefNode)
 		}
 	case 89:
 		{
-			yyVAL.n = append(yyS[yypt-2].n.([]*RefNode), yyS[yypt-0].n.(*VarNode).RefNode)
-		}
-	case 90:
-		{
 			yyVAL.n = []*OpNode{yyS[yypt-0].n.(*OpNode)}
 		}
-	case 91:
+	case 90:
 		{
 			n := yyS[yypt-2].n.([]*OpNode)
 			yyVAL.n = append(n, yyS[yypt-0].n.(*OpNode))

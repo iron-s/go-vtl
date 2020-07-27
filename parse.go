@@ -1,7 +1,6 @@
 package govtl
 
 import (
-	"errors"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -46,7 +45,7 @@ func Parse(vtl, root, lib string) (*Template, error) {
 	}
 	ret := yyParse(l)
 	if ret != 0 {
-		return nil, errors.New("error parsing")
+		return nil, l.err
 	}
 	ast := l.result
 	gobble(ast, false)
