@@ -3,16 +3,25 @@ package govtl
 import (
 	"io/ioutil"
 	"path/filepath"
+	"reflect"
 	"strings"
+	"sync"
 )
 
 const DefaultMaxCallDepth = 20
 const DefaultMaxIterations = -1
 
+type methodIdx struct {
+	name string
+	i    int
+}
+
 type Template struct {
 	root, lib     string
 	tree          []Node
 	macros        map[string]*MacroNode
+	typeCache     map[reflect.Type][]methodIdx
+	cacheMutex    sync.Mutex
 	maxCallDepth  int
 	maxIterations int
 }
@@ -55,7 +64,7 @@ func Parse(vtl, root, lib string) (*Template, error) {
 	ast := l.result
 	gobble(ast, false)
 	// spew.Dump(ast)
-	return &Template{root, lib, ast, macros, DefaultMaxCallDepth, DefaultMaxIterations}, nil
+	return &Template{root, lib, ast, macros, make(map[reflect.Type][]methodIdx), sync.Mutex{}, DefaultMaxCallDepth, DefaultMaxIterations}, nil
 }
 
 func (t *Template) WithMaxCallDepth(n int) *Template {

@@ -9,10 +9,16 @@ import (
 	"log"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	// "github.com/davecgh/go-spew/spew"
 )
+
+var bufPool = sync.Pool{
+	New: func() interface{} { return new(bytes.Buffer) },
+}
 
 type undefinedError struct {
 	error
@@ -116,12 +122,14 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 				return false, err
 			}
 			if v.IsValid() {
-				var b bytes.Buffer
-				err := vtlPrint(&b, v, nil)
+				b := bufPool.Get().(*bytes.Buffer)
+				b.Reset()
+				err := vtlPrint(b, v, nil)
 				if err != nil {
 					return true, err
 				}
 				b.WriteTo(w)
+				bufPool.Put(b)
 			}
 		case *MacroNode:
 			if _, ok := t.macros[n.Name]; !ok {
@@ -211,7 +219,17 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 				if err != nil {
 					return true, err
 				}
-				data, err := ioutil.ReadFile(filepath.Join(t.root, name.String()))
+				var file string
+				switch {
+				case name.Kind() == reflect.String:
+					file = name.String()
+				case name.Type().Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem()):
+					file = fmt.Sprintf("%v", name.Interface())
+				default:
+					return false, errors.New("invalid include argument")
+				}
+
+				data, err := ioutil.ReadFile(filepath.Join(t.root, file))
 				if err != nil {
 					return true, err
 				}
@@ -239,7 +257,7 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 	return false, nil
 }
 
-func (t *Template) evalStep(v reflect.Value, m *AccessNode, ctx Ctx) (reflect.Value, error) {
+func (t *Template) evalStep(v reflect.Value, m *AccessNode, wrapT bool, ctx Ctx) (reflect.Value, error) {
 	var args []reflect.Value
 	var err error
 	for _, arg := range m.Args {
@@ -250,12 +268,15 @@ func (t *Template) evalStep(v reflect.Value, m *AccessNode, ctx Ctx) (reflect.Va
 		args = append(args, a)
 	}
 	if m.IsCall {
-		v, err = call(v, m.Name, args...)
+		v, err = t.call(v, m.Name, args...)
 	} else {
-		v, err = property(v, reflect.ValueOf(m.Name))
+		v, err = t.property(v, reflect.ValueOf(m.Name))
 	}
 	if err != nil {
 		return reflect.Value{}, err
+	}
+	if wrapT {
+		v = wrapTypes(v)
 	}
 	return v, nil
 }
@@ -266,7 +287,7 @@ func (t *Template) evalVar(n *VarNode, ctx Ctx) (reflect.Value, error) {
 		return v, err
 	}
 	for _, m := range n.Items {
-		if v, err = t.evalStep(v, m, ctx); err != nil {
+		if v, err = t.evalStep(v, m, true, ctx); err != nil {
 			return v, err
 		}
 	}
@@ -287,7 +308,7 @@ func (t *Template) setVar(n *VarNode, val reflect.Value, ctx Ctx) error {
 	var prev reflect.Value
 	for _, m := range n.Items {
 		prev = v
-		if v, err = t.evalStep(v, m, ctx); err != nil {
+		if v, err = t.evalStep(v, m, false, ctx); err != nil {
 			return err
 		}
 	}
@@ -301,10 +322,10 @@ func (t *Template) setVar(n *VarNode, val reflect.Value, ctx Ctx) error {
 	case !v.CanSet() && prev.Kind() == reflect.Ptr:
 		k := reflect.ValueOf(n.Items[len(n.Items)-1].Name)
 		if v.IsValid() && v.MethodByName("Set").IsValid() {
-			_, err := call(v, "Set", k, val)
+			_, err := t.call(v, "Set", k, val)
 			return err
 		} else if prev.MethodByName("Put").IsValid() {
-			_, err := call(prev, "Put", k, val)
+			_, err := t.call(prev, "Put", k, val)
 			return err
 		}
 		return fmt.Errorf("cannot set %s in $%s", k, n.Name)
@@ -358,8 +379,10 @@ func (t *Template) eval(e *OpNode, ctx Ctx, undefOk bool) (reflect.Value, error)
 	}
 	switch val := e.Val.(type) {
 	case *InterpolatedNode:
-		var b bytes.Buffer
-		_, err := t._execute(&b, val.Items, ctx)
+		b := bufPool.Get().(*bytes.Buffer)
+		b.Reset()
+		defer bufPool.Put(b)
+		_, err := t._execute(b, val.Items, ctx)
 		if err != nil {
 			return reflect.Value{}, err
 		}
@@ -521,14 +544,17 @@ var funcs = map[string]interface{}{
 	"map": func(v1, v2 reflect.Value) (reflect.Value, error) {
 		val := v1.Interface().(*Slice).S
 		m := make(map[string]interface{}, len(val)/2)
+		b := bufPool.Get().(*bytes.Buffer)
+		defer bufPool.Put(b)
+		b.Reset()
 		for i := 0; i < len(val); i += 2 {
 			k, v := val[i], val[i+1]
-			var b bytes.Buffer
-			err := vtlPrint(&b, reflect.ValueOf(k), nil)
+			err := vtlPrint(b, reflect.ValueOf(k), nil)
 			if err != nil {
 				return reflect.Value{}, err
 			}
 			m[b.String()] = v
+			b.Reset()
 		}
 		return reflect.ValueOf(&Map{m}), nil
 	},
@@ -600,13 +626,15 @@ func vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) error {
 	}
 	switch v.Kind() {
 	case reflect.Float64, reflect.Float32:
-		var buf bytes.Buffer
-		fmt.Fprintf(&buf, "%G", v.Float())
+		buf := bufPool.Get().(*bytes.Buffer)
+		buf.Reset()
+		fmt.Fprintf(buf, "%G", v.Float())
 		bb := buf.Bytes()
 		b.Write(bytes.Replace(bb, []byte("+"), nil, 1))
 		if !bytes.Contains(bb, []byte(".")) {
 			b.WriteString(".0")
 		}
+		bufPool.Put(buf)
 	case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
 		fmt.Fprintf(b, "%d", v.Int())
 	case reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uint:
@@ -672,7 +700,7 @@ func vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) error {
 	return nil
 }
 
-func property(v1, v2 reflect.Value) (reflect.Value, error) {
+func (t *Template) property(v1, v2 reflect.Value) (reflect.Value, error) {
 	vv1 := indirect(v1)
 	var (
 		ret reflect.Value
@@ -686,11 +714,11 @@ func property(v1, v2 reflect.Value) (reflect.Value, error) {
 			}
 		}
 		if !ret.IsValid() {
-			ret, err = call(v1, v2.String())
+			ret, err = t.call(v1, v2.String())
 		}
 	}
 	if !ret.IsValid() && v1.IsValid() && v1.MethodByName("Get").IsValid() {
-		ret, err = call(v1, "Get", v2)
+		ret, err = t.call(v1, "Get", v2)
 	}
 	if err == nil {
 		return ret, err
@@ -698,16 +726,32 @@ func property(v1, v2 reflect.Value) (reflect.Value, error) {
 	return reflect.Value{}, fmt.Errorf("cannot get property %s of %s value", v2, v1.Kind())
 }
 
-func call(v reflect.Value, meth string, args ...reflect.Value) (reflect.Value, error) {
+func (t *Template) call(v reflect.Value, meth string, args ...reflect.Value) (reflect.Value, error) {
 	if !v.IsValid() {
 		return reflect.Value{}, fmt.Errorf("cannot call %s on nil value", meth)
 	}
+	t.cacheMutex.Lock()
+	types, ok := t.typeCache[v.Type()]
+	if !ok {
+		n := v.NumMethod()
+		types = make([]methodIdx, n)
+		for i := 0; i < n; i++ {
+			typ := v.Type().Method(i)
+			types[i] = methodIdx{typ.Name, typ.Index}
+		}
+		sort.Slice(types, func(i, j int) bool { return types[i].name < types[j].name })
+		t.typeCache[v.Type()] = types
+	}
+	t.cacheMutex.Unlock()
 	trimm := strings.Title(strings.TrimPrefix(meth, "get"))
 	var m reflect.Value
 	for _, mm := range []string{meth, trimm, "Get" + trimm, "Is" + trimm} {
-		m = v.MethodByName(mm)
-		if m.IsValid() {
-			break
+		i := sort.Search(len(types), func(i int) bool { return types[i].name >= mm })
+		if i < len(types) && types[i].name == mm {
+			m = v.Method(types[i].i)
+			if m.IsValid() {
+				break
+			}
 		}
 	}
 	vv := indirect(v)
@@ -722,12 +766,12 @@ func call(v reflect.Value, meth string, args ...reflect.Value) (reflect.Value, e
 			if err != nil {
 				return reflect.Value{}, err
 			}
-			return wrapTypes(ret[0]), nil
+			return ret[0], nil
 		}
 	case vv.Kind() == reflect.Struct:
 		f := vv.FieldByName(trimm)
 		if f.IsValid() {
-			return wrapTypes(f), nil
+			return f, nil
 		}
 	case vv.Type() == reflect.TypeOf(""):
 		return reflect.Value{}, errors.New("naked string is not supported")

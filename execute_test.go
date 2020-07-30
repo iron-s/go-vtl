@@ -164,12 +164,6 @@ func BenchmarkExecuteGo(b *testing.B) {
 	}
 }
 
-func BenchmarkExecuteVtl(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		vtlTmpl.Execute(ioutil.Discard, m)
-	}
-}
-
 func TestExecuteFuzzCrashes(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -199,6 +193,8 @@ func TestExecuteFuzzCrashes(t *testing.T) {
 			`#set($arr=[])$arr.iterator.s`, "", ""},
 		{"cyclic reference",
 			`#set($p={})#set($p.p=$p)$p.p`, "", "cycle detected"},
+		{"include range",
+			`#include([[[[0e..0]]]])`, "", "invalid include argument"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
