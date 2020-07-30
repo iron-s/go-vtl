@@ -6,10 +6,15 @@ import (
 	"strings"
 )
 
+const DefaultMaxCallDepth = 20
+const DefaultMaxIterations = -1
+
 type Template struct {
-	root, lib string
-	tree      []Node
-	macros    map[string]*MacroNode
+	root, lib     string
+	tree          []Node
+	macros        map[string]*MacroNode
+	maxCallDepth  int
+	maxIterations int
 }
 
 func Must(t *Template, err error) *Template {
@@ -50,7 +55,17 @@ func Parse(vtl, root, lib string) (*Template, error) {
 	ast := l.result
 	gobble(ast, false)
 	// spew.Dump(ast)
-	return &Template{root, lib, ast, macros}, nil
+	return &Template{root, lib, ast, macros, DefaultMaxCallDepth, DefaultMaxIterations}, nil
+}
+
+func (t *Template) WithMaxCallDepth(n int) *Template {
+	t.maxCallDepth = n
+	return t
+}
+
+func (t *Template) WithMaxIterations(n int) *Template {
+	t.maxIterations = n
+	return t
 }
 
 func gobble(ast []Node, nested bool) {

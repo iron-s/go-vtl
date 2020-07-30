@@ -5,21 +5,29 @@ import (
 	"reflect"
 )
 
-type Ctx map[string][]reflect.Value
+type Ctx struct {
+	s map[string][]reflect.Value
+
+	callDepth int
+}
+
+func NewContext() Ctx {
+	return Ctx{make(map[string][]reflect.Value), 0}
+}
 
 func (ctx Ctx) Push(k string, v reflect.Value) int {
-	ctx[k] = append(ctx[k], v)
-	return len(ctx[k]) - 1
+	ctx.s[k] = append(ctx.s[k], v)
+	return len(ctx.s[k]) - 1
 }
 
 func (ctx Ctx) Pop(i int, k string) {
-	if len(ctx[k]) > 0 && i > 0 {
-		ctx[k] = append(ctx[k][:i], ctx[k][i+1:]...)
+	if len(ctx.s[k]) > 0 && i > 0 {
+		ctx.s[k] = append(ctx.s[k][:i], ctx.s[k][i+1:]...)
 	}
 }
 
 func (ctx Ctx) Get(k string) (reflect.Value, error) {
-	s := ctx[k]
+	s := ctx.s[k]
 	if len(s) > 0 {
 		return s[len(s)-1], nil
 	}
@@ -27,7 +35,7 @@ func (ctx Ctx) Get(k string) (reflect.Value, error) {
 }
 
 func (ctx Ctx) Set(i int, k string, v reflect.Value) {
-	s := ctx[k]
+	s := ctx.s[k]
 	if len(s) > i {
 		s[i] = v
 	}

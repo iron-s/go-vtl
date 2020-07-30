@@ -22,7 +22,7 @@ type nilError struct {
 }
 
 func (t *Template) Execute(w io.Writer, val map[string]interface{}) error {
-	ctx := make(Ctx)
+	ctx := NewContext()
 	for k, v := range val {
 		vv := reflect.ValueOf(v)
 		ctx.Push(k, wrapTypes(vv))
@@ -63,6 +63,9 @@ func wrapTypes(v reflect.Value) reflect.Value {
 }
 
 func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
+	if t.maxCallDepth >= 0 && ctx.callDepth > t.maxCallDepth {
+		return true, errors.New("call depth exceeded")
+	}
 	for _, expr := range list {
 		switch n := expr.(type) {
 		case TextNode:
@@ -113,10 +116,12 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 				return false, err
 			}
 			if v.IsValid() {
-				fmt.Fprint(w, vtlPrint(v))
-				// } else if !n.Silent {
-				// val, _ := ctx.Get(n.Name)
-				// fmt.Printf("%s %#v %v %v\n", n.Name, n.Items, val, err)
+				var b bytes.Buffer
+				err := vtlPrint(&b, v, nil)
+				if err != nil {
+					return true, err
+				}
+				b.WriteTo(w)
 			}
 		case *MacroNode:
 			if _, ok := t.macros[n.Name]; !ok {
@@ -127,6 +132,9 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			if !ok {
 				return false, fmt.Errorf("undefined macro '%s' call", n.Name)
 			}
+			if len(n.Vals) < len(m.Assign) {
+				return false, fmt.Errorf("variable $%s has not been set", m.Assign[len(n.Vals)].Name)
+			}
 			for i := range m.Assign {
 				v, err := t.eval(n.Vals[i], ctx, false)
 				if err != nil {
@@ -135,7 +143,9 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 				depth := ctx.Push(m.Assign[i].Name, v)
 				defer ctx.Pop(depth, m.Assign[i].Name)
 			}
+			ctx.callDepth++
 			stop, err := t._execute(w, m.Items, ctx)
+			ctx.callDepth--
 			if err != nil {
 				return true, err
 			} else if stop {
@@ -161,9 +171,21 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 				f.it = iter.Interface().(*Map).Values().Iterator()
 			case iteratorType:
 				f.it = iter.Interface().(*Iterator)
+			default:
+				typ := iter.Type().String()
+				if m := iter.MethodByName("Kind"); m.IsValid() && m.Type().NumIn() == 0 {
+					ret := m.Call(nil)
+					if len(ret) >= 1 && ret[0].Kind() == reflect.String {
+						typ = ret[0].String()
+					}
+				}
+				return true, fmt.Errorf("cannot iterate over %s", typ)
 			}
 			empty := true
 			for f.it.HasNext() {
+				if t.maxIterations >= 0 && f.Count() > t.maxIterations {
+					return true, errors.New("number of iterations exceeded")
+				}
 				empty = false
 				ctx.Set(vdepth, n.Var.Name, reflect.ValueOf(f.it.Next()))
 				_, err := t._execute(w, n.Items, ctx)
@@ -204,7 +226,9 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			if err != nil {
 				return true, err
 			}
+			ctx.callDepth++
 			stop, err := tmpl._execute(w, tmpl.tree, ctx)
+			ctx.callDepth--
 			if stop {
 				return true, err
 			}
@@ -256,8 +280,10 @@ func (t *Template) evalVar(n *VarNode, ctx Ctx) (reflect.Value, error) {
 }
 
 func (t *Template) setVar(n *VarNode, val reflect.Value, ctx Ctx) error {
-	v, _ := ctx.Get(n.Name)
-	var err error
+	v, err := ctx.Get(n.Name)
+	if err != nil && len(n.Items) > 0 {
+		return err
+	}
 	var prev reflect.Value
 	for _, m := range n.Items {
 		prev = v
@@ -354,7 +380,9 @@ func (t *Template) eval(e *OpNode, ctx Ctx, undefOk bool) (reflect.Value, error)
 			if err != nil {
 				return reflect.Value{}, err
 			}
-			vv[i] = e.Interface()
+			if e.IsValid() {
+				vv[i] = e.Interface()
+			}
 		}
 		return reflect.ValueOf(&Slice{vv}), nil
 	default:
@@ -396,6 +424,17 @@ func toFloat(v reflect.Value) float64 {
 		return float64(v.Uint())
 	default:
 		return float64(v.Int())
+	}
+}
+
+func toInt(v reflect.Value) int {
+	switch v.Kind() {
+	case reflect.Float32, reflect.Float64:
+		return int(v.Float())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return int(v.Uint())
+	default:
+		return int(v.Int())
 	}
 }
 
@@ -484,8 +523,12 @@ var funcs = map[string]interface{}{
 		m := make(map[string]interface{}, len(val)/2)
 		for i := 0; i < len(val); i += 2 {
 			k, v := val[i], val[i+1]
-			s := vtlPrint(reflect.ValueOf(k))
-			m[s] = v
+			var b bytes.Buffer
+			err := vtlPrint(&b, reflect.ValueOf(k), nil)
+			if err != nil {
+				return reflect.Value{}, err
+			}
+			m[b.String()] = v
 		}
 		return reflect.ValueOf(&Map{m}), nil
 	},
@@ -506,7 +549,10 @@ var funcs = map[string]interface{}{
 			}
 			v2 = reflect.ValueOf(i)
 		}
-		return reflect.ValueOf(NewRange(int(v1.Int()), int(v2.Int()))), nil
+		if !isNumber(v1) || !isNumber(v2) {
+			return reflect.Value{}, errors.New("NaN")
+		}
+		return reflect.ValueOf(NewRange(toInt(v1), toInt(v2))), nil
 	},
 }
 
@@ -532,21 +578,41 @@ var (
 	iteratorType  = reflect.TypeOf((*Iterator)(nil))
 )
 
-func vtlPrint(v reflect.Value) string {
-	var ret string
+func checkCycle(value reflect.Value, path []uintptr) bool {
+	if value.Kind() == reflect.Interface {
+		value = value.Elem()
+	}
+	switch value.Kind() {
+	case reflect.Ptr, reflect.Slice, reflect.Map:
+		addr := value.Pointer()
+		for i := range path {
+			if path[i] == addr {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) error {
+	if checkCycle(v, path) {
+		return errors.New("cycle detected")
+	}
 	switch v.Kind() {
 	case reflect.Float64, reflect.Float32:
-		ret = fmt.Sprintf("%G", v.Float())
-		if !strings.Contains(ret, ".") {
-			ret += ".0"
+		var buf bytes.Buffer
+		fmt.Fprintf(&buf, "%G", v.Float())
+		bb := buf.Bytes()
+		b.Write(bytes.Replace(bb, []byte("+"), nil, 1))
+		if !bytes.Contains(bb, []byte(".")) {
+			b.WriteString(".0")
 		}
-		return strings.Replace(ret, "+", "", 1)
 	case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
-		return fmt.Sprintf("%d", v.Int())
+		fmt.Fprintf(b, "%d", v.Int())
 	case reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uint:
-		return fmt.Sprintf("%d", v.Uint())
+		fmt.Fprintf(b, "%d", v.Uint())
 	case reflect.Ptr:
-		var b bytes.Buffer
+		path = append(path, v.Pointer())
 		switch v.Type() {
 		case mapType:
 			m := v.Interface().(*Map)
@@ -556,23 +622,29 @@ func vtlPrint(v reflect.Value) string {
 				if i > 0 {
 					b.WriteString(", ")
 				}
-				b.WriteString(vtlPrint(reflect.ValueOf(e)))
+				err := vtlPrint(b, reflect.ValueOf(e), path)
+				if err != nil {
+					return err
+				}
 			}
 			b.WriteByte('}')
 		case entryType:
 			e := v.Interface().(*MapEntry)
 			b.WriteString(e.k)
 			b.WriteByte('=')
-			b.WriteString(vtlPrint(reflect.ValueOf(e.v)))
+			return vtlPrint(b, reflect.ValueOf(e.v), path)
 		case viewType, keyViewType, entryViewType, valViewType:
 			s := v.Elem().FieldByName("Slice")
-			return vtlPrint(s)
+			return vtlPrint(b, s, path)
 		case sliceType, rangeType:
 			s := v.Interface().(Collection)
 			b.WriteByte('[')
 			it := s.Iterator()
 			for it.HasNext() {
-				b.WriteString(vtlPrint(reflect.ValueOf(it.Next())))
+				err := vtlPrint(b, reflect.ValueOf(it.Next()), path)
+				if err != nil {
+					return err
+				}
 				if it.HasNext() {
 					b.WriteString(", ")
 				}
@@ -580,20 +652,24 @@ func vtlPrint(v reflect.Value) string {
 			b.WriteByte(']')
 		default:
 			if v.Type().Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem()) {
-				return fmt.Sprintf("%v", v.Interface())
+				fmt.Fprintf(b, "%v", v.Interface())
+				return nil
 			}
-			return vtlPrint(indirect(v))
+			return vtlPrint(b, indirect(v), path)
 		}
-		return b.String()
+		return nil
 	case reflect.Map:
-		return "use of naked map"
+		return errors.New("use of naked map")
 	case reflect.Slice:
-		return "use of naked slice"
+		return errors.New("use of naked slice")
 	case reflect.Interface:
-		return vtlPrint(v.Elem())
+		return vtlPrint(b, v.Elem(), path)
+	case reflect.Invalid:
+		b.WriteString("null")
 	default:
-		return fmt.Sprintf("%v", v.Interface())
+		fmt.Fprintf(b, "%v", v.Interface())
 	}
+	return nil
 }
 
 func property(v1, v2 reflect.Value) (reflect.Value, error) {
@@ -604,13 +680,16 @@ func property(v1, v2 reflect.Value) (reflect.Value, error) {
 	)
 	if v2.Kind() == reflect.String {
 		if vv1.Kind() == reflect.Struct {
-			ret = vv1.FieldByName(v2.String())
+			f, ok := vv1.Type().FieldByName(v2.String())
+			if ok && f.PkgPath == "" {
+				ret = vv1.FieldByName(v2.String())
+			}
 		}
 		if !ret.IsValid() {
 			ret, err = call(v1, v2.String())
 		}
 	}
-	if !ret.IsValid() && v1.MethodByName("Get").IsValid() {
+	if !ret.IsValid() && v1.IsValid() && v1.MethodByName("Get").IsValid() {
 		ret, err = call(v1, "Get", v2)
 	}
 	if err == nil {
@@ -656,6 +735,8 @@ func call(v reflect.Value, meth string, args ...reflect.Value) (reflect.Value, e
 		return reflect.Value{}, errors.New("naked map is not supported")
 	case vv.Kind() == reflect.Slice:
 		return reflect.Value{}, errors.New("naked map is not supported")
+	default:
+		return reflect.Value{}, fmt.Errorf("cannot call %s on %s value", meth, v.Type().String())
 	}
 
 	return reflect.Value{}, nil
@@ -712,6 +793,9 @@ func comparable(k1, k2 reflect.Value) bool {
 }
 
 func compatible(f reflect.Value, args ...reflect.Value) error {
+	if len(args) < f.Type().NumIn() || (!f.Type().IsVariadic() && len(args) > f.Type().NumIn()) {
+		return errors.New("incompatible number of arguments")
+	}
 	for i, val := range args {
 		var argType reflect.Type
 		if f.Type().IsVariadic() {

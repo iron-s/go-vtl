@@ -20,6 +20,8 @@ type Map struct {
 
 var errMapExpected = errors.New("map expected")
 
+func (m *Map) Kind() string { return "map" }
+
 func (m *Map) Clear() {
 	m.M = make(map[string]interface{})
 }
@@ -159,6 +161,8 @@ type MapEntry struct {
 	m *Map
 }
 
+func (e *MapEntry) Kind() string { return "mapEntry" }
+
 func (e *MapEntry) Equals(entry *MapEntry) bool {
 	return e.k == entry.k && e.v == entry.v
 }
@@ -199,6 +203,8 @@ func (v *View) Clear() {
 }
 
 type KeyView View
+
+func (v *KeyView) Kind() string { return "keyView" }
 
 func (view *KeyView) Remove(k string) bool {
 	ok, _ := view.Slice.Remove(k)
@@ -246,6 +252,8 @@ type ValView struct {
 	k []string
 }
 
+func (v *ValView) Kind() string { return "valView" }
+
 func (view *ValView) Remove(val interface{}) bool {
 	ok, _ := view.Slice.Remove(val)
 	if ok {
@@ -290,6 +298,8 @@ func (view *ValView) RetainAll(v interface{}) (bool, error) {
 }
 
 type EntryView View
+
+func (v *EntryView) Kind() string { return "entryView" }
 
 func (view *EntryView) Remove(v *MapEntry) bool {
 	// cannot use Slice.Equals as it uses reflect.DeepEqual, and MapEntry should ignore map pointer
@@ -342,6 +352,8 @@ var errArrayExpected = errors.New("array expected")
 type Slice struct {
 	S []interface{}
 }
+
+func (s *Slice) Kind() string { return "slice" }
 
 func (s *Slice) Add(v interface{}) (bool, error) {
 	s.S = append(s.S, v)
@@ -458,6 +470,8 @@ type Iterator struct {
 	i int
 }
 
+func (it *Iterator) Kind() string { return "iterator" }
+
 type Collection interface {
 	Add(v interface{}) (bool, error)
 	AddAll(interface{}) (bool, error)
@@ -535,6 +549,8 @@ var lower = cases.Lower(language.Und)
 var upper = cases.Upper(language.Und)
 
 type Str string
+
+func (s Str) Kind() string { return "string" }
 
 func (s Str) CharAt(i int) (rune, error) {
 	r := []rune(s)
@@ -652,6 +668,8 @@ func (s Str) Trim() string        { return strings.TrimSpace(string(s)) }
 type Range struct {
 	start, end, diff int
 }
+
+func (r *Range) Kind() string { return "range" }
 
 func NewRange(start, end int) *Range {
 	r := &Range{start, end, 1}

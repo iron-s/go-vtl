@@ -1,6 +1,7 @@
 package govtl
 
 import (
+	"bytes"
 	"html/template"
 	"io/ioutil"
 	"strings"
@@ -166,5 +167,52 @@ func BenchmarkExecuteGo(b *testing.B) {
 func BenchmarkExecuteVtl(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		vtlTmpl.Execute(ioutil.Discard, m)
+	}
+}
+
+func TestExecuteFuzzCrashes(t *testing.T) {
+	tests := []struct {
+		name      string
+		tmpl      string
+		expect    string
+		expectErr string
+	}{
+		{"set property of nil value",
+			`#set($o.h={})`, "", "undefined var $o"},
+		{"get property same as method with non-zero argument count",
+			`#set($_foo="")#if($_foo.equals)#end`, "", "cannot get property equals of string value"},
+		{"infinite recursion",
+			`#macro(test)asd #test()#end#test()`, "asd asd asd asd asd asd asd asd asd asd asd asd asd asd asd asd asd asd asd asd ", "call depth exceeded"},
+		{"iteration over string",
+			`#set($y="")#foreach($a in$y)#end`, "", "cannot iterate over string"},
+		{"property of string",
+			`#set($_foo="")#if($_foo.t.o)#end`, "", "cannot get property t of string value"},
+		{"range with float",
+			`#foreach($i in[0..0.])#end`, "", ""},
+		{"create slice from non-existent map property",
+			`#set($woog={})#set($o=[$woog.r])$o`, "[null]", ""},
+		{"macro called without arguments",
+			`#macro(setthing$a)#end#setthing()`, "", "variable $a has not been set"},
+		{"range with bool",
+			`#macro(dirarg$a)#end#dirarg([0..!0])`, "", "NaN"},
+		{"unexported field",
+			`#set($arr=[])$arr.iterator.s`, "", ""},
+		{"cyclic reference",
+			`#set($p={})#set($p.p=$p)$p.p`, "", "cycle detected"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tmpl, err := Parse(test.tmpl, "", "")
+			var b bytes.Buffer
+			if assert.NoError(t, err) {
+				err := tmpl.Execute(&b, nil)
+				if test.expectErr == "" {
+					assert.NoError(t, err)
+				} else {
+					assert.EqualError(t, err, test.expectErr)
+				}
+				assert.Equal(t, test.expect, b.String())
+			}
+		})
 	}
 }
