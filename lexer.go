@@ -121,13 +121,6 @@ func (l *Lexer) Lex(lval *yySymType) int {
 		case '#':
 			p := l.Peek(1)
 			switch p {
-			// case '#':
-			// 	// single line comment
-			// 	l.ScanComment("\n")
-			// 	if l.prev == 0 {
-			// 		l.Skip(1)
-			// 	}
-			// 	return l.Lex(lval)
 			case '*':
 				// multiline comment
 				l.ScanComment("*#")
@@ -166,7 +159,6 @@ func (l *Lexer) Lex(lval *yySymType) int {
 			l.Skip(1)
 			d := l.ScanIdentifier()
 			if directive, ok := directives[d]; ok {
-				// fmt.Println("directive", d)
 				lval.t = Token{token: directive, line: l.line}
 				if directive != END && directive != ELSE {
 					l.SkipWhitespace()
@@ -232,9 +224,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 			pushState(l, sString)
 			return int(l.ScanByte())
 		case '$':
-			// l.Skip(1)
 			pushState(l, sVar)
-			// return l.Lex(lval)
 		case '.', '=', '!', '<', '>', '|', '&':
 			if op := l.ScanOp(); op != "" {
 				lval.t = Token{token: ops[op], literal: altOps[op], line: l.line}
@@ -314,8 +304,6 @@ func (l *Lexer) Lex(lval *yySymType) int {
 				switch l.Peek(0) {
 				case '(':
 					tok = METHOD
-					// case '[':
-					// 	tok = INDEX
 				}
 				lval.t = Token{token: tok, literal: ident, line: l.line}
 				return tok
@@ -327,7 +315,6 @@ func (l *Lexer) Lex(lval *yySymType) int {
 			return l.Lex(lval)
 		}
 	case sString:
-		// FIXME add support for interpolated values, not just text
 		text := l.ScanText("$\"")
 		if l.pos > l.prev {
 			lval.t = Token{token: TEXT, literal: text, line: l.line}
@@ -401,44 +388,6 @@ func eatWSend(t string) string {
 	return t
 }
 
-// func gobbleWS(n []Node, text string) string {
-// 	wsStart := -1
-// 	if len(n) == 1 {
-// 		wsStart = 0
-// 	} else if len(n) > 1 {
-// 		if t, ok := n[len(n)-2].(TextNode); ok {
-// 			if len(t) == 0 {
-// 				wsStart = 0
-// 			}
-// 			for s := len(t) - 1; s >= 0; s-- {
-// 				if t[s] == ' ' || t[s] == '\t' {
-// 					continue
-// 				}
-// 				if t[s] == '\n' {
-// 					wsStart = s
-// 				}
-// 				break
-// 			}
-// 		}
-// 	}
-// 	wsEnd := -1
-// 	for s := 0; s < len(text); s++ {
-// 		if text[s] == ' ' || text[s] == '\t' {
-// 			continue
-// 		}
-// 		if text[s] == '\n' {
-// 			wsEnd = s
-// 		}
-// 		break
-// 	}
-// 	if wsStart > -1 && wsEnd > -1 {
-// 		if len(n) > 1 && len(n[len(n)-2].(TextNode)) > 0 {
-// 			n[len(n)-2] = n[len(n)-2].(TextNode)[:wsStart+1]
-// 		}
-// 		text = text[wsEnd+1:]
-// 	}
-// 	return text
-// }
 
 func pushState(l interface{}, s lexState) {
 	lex := l.(*Lexer)
