@@ -167,9 +167,9 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			if !iter.IsValid() {
 				break
 			}
-			vdepth := ctx.Push(n.Var.Name, reflect.ValueOf(nil))
 			f := &foreach{}
 			fdepth := ctx.Push("foreach", reflect.ValueOf(f))
+			vdepth := ctx.Push(n.Var.Name, reflect.ValueOf(nil))
 			switch iter.Type() {
 			case sliceType:
 				f.it = iter.Interface().(*Slice).Iterator()

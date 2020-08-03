@@ -195,6 +195,10 @@ func TestExecuteFuzzCrashes(t *testing.T) {
 			`#set($p={})#set($p.p=$p)$p.p`, "", "cycle detected"},
 		{"include range",
 			`#include([[[[0e..0]]]])`, "", "invalid include argument"},
+		{"use $foreach as #foreach reference inside first foreach",
+			`#foreach($foreach in [0])$foreach#end`, "0", ""},
+		{"use $foreach as #foreach reference inside second foreach",
+			`#foreach($m in [0])#foreach($foreach in[0])$foreach#end#end`, "0", ""},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
