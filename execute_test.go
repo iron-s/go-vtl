@@ -164,6 +164,12 @@ func BenchmarkExecuteGo(b *testing.B) {
 	}
 }
 
+func BenchmarkExecuteVtl(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		vtlTmpl.Execute(ioutil.Discard, m)
+	}
+}
+
 func TestExecuteFuzzCrashes(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -199,6 +205,13 @@ func TestExecuteFuzzCrashes(t *testing.T) {
 			`#foreach($foreach in [0])$foreach#end`, "0", ""},
 		{"use $foreach as #foreach reference inside second foreach",
 			`#foreach($m in [0])#foreach($foreach in[0])$foreach#end#end`, "0", ""},
+		{"set property of the string",
+			`#set($e="")#set($e.p="")`, "", "cannot set p on string value"},
+		{"set non-existent property", `#set($p={})#set($p.p.x={})`, "", "cannot set x on nil value"},
+		{"huge range",
+			`#set($r=[2e30..0])$r.ToArray`, "", "start overflows int64"},
+		{"huge negative range",
+			`#set($r=[0..-2e30])$r.ToArray`, "", "end overflows int64"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -206,6 +219,57 @@ func TestExecuteFuzzCrashes(t *testing.T) {
 			var b bytes.Buffer
 			if assert.NoError(t, err) {
 				err := tmpl.Execute(&b, nil)
+				if test.expectErr == "" {
+					assert.NoError(t, err)
+				} else {
+					assert.EqualError(t, err, test.expectErr)
+				}
+				assert.Equal(t, test.expect, b.String())
+			}
+		})
+	}
+}
+
+func TestExecuteSet(t *testing.T) {
+	type S struct {
+		Int      int
+		Str      string
+		Slice    []string
+		Map      map[string]interface{}
+		SliceMap []map[string]interface{}
+		SliceAny []interface{}
+	}
+	tests := []struct {
+		name      string
+		tmpl      string
+		context   map[string]interface{}
+		expect    string
+		expectErr string
+	}{
+		{"undefined variable",
+			`#set($some = "text")$some`, nil, "text", ""},
+		{"existing variable",
+			`#set($some = "text")$some`, map[string]interface{}{"some": 123}, "text", ""},
+		{"redefine existing #set variable",
+			`#set($some = 123)#set($some = "text")$some`, nil, "text", ""},
+		{"redefine existing #set variable inside other directive",
+			`#set($some = "text")#if(true)#set($some = 123)$some#end$some`, nil, "123text", ""},
+		{"property of a struct to the wrong type",
+			`#set($s.int = "qwe")$s.int`, map[string]interface{}{"s": &S{Int: 42}}, "", "cannot set int (int) to string"},
+		{"property of a struct",
+			`#set($s.str = "some text")$s.str`, map[string]interface{}{"s": &S{Str: "orig"}}, "some text", ""},
+		{"index in new array",
+			`#set($arr = [1, 2, 3])#set($arr[0] = 0)$arr`, nil, "[0, 2, 3]", ""},
+		// FIXME redo types as simple interface values ???
+		// {"index in existing array",
+		// 	`#set($s.Slice[2] = 0)$s.Slice`, map[string]interface{}{"s": &S{Slice: []string{"a", "b", "c"}}}, "[a, b, 0]", ""},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tmpl, err := Parse(test.tmpl, "", "")
+			var b bytes.Buffer
+			if assert.NoError(t, err) {
+				err := tmpl.Execute(&b, test.context)
 				if test.expectErr == "" {
 					assert.NoError(t, err)
 				} else {

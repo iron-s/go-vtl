@@ -456,13 +456,13 @@ func (s *Slice) Size() int {
 	return len(s.S)
 }
 
-func (s *Slice) ToArray() *Slice {
+func (s *Slice) ToArray() (*Slice, error) {
 	if s.S == nil {
-		return &Slice{}
+		return &Slice{}, nil
 	}
 	ss := make([]interface{}, len(s.S))
 	copy(ss, s.S)
-	return &Slice{ss}
+	return &Slice{ss}, nil
 }
 
 type Iterator struct {
@@ -487,13 +487,16 @@ type Collection interface {
 	RetainAll(interface{}) (bool, error)
 	Set(int, interface{}) (interface{}, error)
 	Size() int
-	ToArray() *Slice
+	ToArray() (*Slice, error)
 }
 
 func containsAll(c Collection, v interface{}) (bool, error) {
 	vv, ok := v.(Collection)
 	if !ok {
 		return false, errArrayExpected
+	}
+	if err := checkSize(vv); err != nil {
+		return false, err
 	}
 	for i := 0; i < vv.Size(); i++ {
 		o, _ := vv.Get(i)
@@ -511,6 +514,9 @@ func equals(c Collection, v interface{}) (bool, error) {
 	}
 	if c.Size() != vv.Size() {
 		return false, nil
+	}
+	if err := checkSize(vv); err != nil {
+		return false, err
 	}
 	for i := 0; i < vv.Size(); i++ {
 		o, _ := vv.Get(i)
@@ -697,6 +703,9 @@ func (r *Range) ContainsAll(v interface{}) (bool, error) {
 }
 
 func (r *Range) Equals(v interface{}) (bool, error) {
+	if r2, ok := v.(*Range); ok {
+		return r.start == r2.start && r.end == r2.end, nil
+	}
 	return equals(r, v)
 }
 
@@ -735,7 +744,10 @@ func (r *Range) Size() int {
 	return (r.end-r.start)*r.diff + 1
 }
 
-func (r *Range) ToArray() *Slice {
+func (r *Range) ToArray() (*Slice, error) {
+	if err := checkSize(r); err != nil {
+		return nil, err
+	}
 	s := make([]interface{}, r.Size())
 	it := r.Iterator()
 	var i int
@@ -743,5 +755,12 @@ func (r *Range) ToArray() *Slice {
 		s[i] = it.Next()
 		i++
 	}
-	return &Slice{s}
+	return &Slice{s}, nil
+}
+
+func checkSize(c Collection) error {
+	if c.Size() > DefaultMaxArrayRenderSize {
+		return errors.New("size is too large")
+	}
+	return nil
 }

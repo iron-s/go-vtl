@@ -69,7 +69,7 @@ func TestParse(t *testing.T) {
 			"$customer1.Address",
 			[]Node{&VarNode{
 				&RefNode{"customer1"},
-				[]*AccessNode{{"Address", nil, false, Pos{1}}},
+				[]*AccessNode{{"Address", nil, AccessProperty, Pos{1}}},
 				false, Pos{1},
 			}},
 		},
@@ -77,7 +77,7 @@ func TestParse(t *testing.T) {
 			"${customer1.Address}",
 			[]Node{&VarNode{
 				&RefNode{"customer1"},
-				[]*AccessNode{{"Address", nil, false, Pos{1}}},
+				[]*AccessNode{{"Address", nil, AccessProperty, Pos{1}}},
 				false, Pos{1},
 			}},
 		},
@@ -86,7 +86,7 @@ func TestParse(t *testing.T) {
 			"$customer1.getAddress()",
 			[]Node{&VarNode{
 				&RefNode{"customer1"},
-				[]*AccessNode{{"getAddress", nil, true, Pos{1}}},
+				[]*AccessNode{{"getAddress", nil, AccessMethod, Pos{1}}},
 				false, Pos{1},
 			}},
 		},
@@ -94,7 +94,7 @@ func TestParse(t *testing.T) {
 			"${customer1.getAddress()}",
 			[]Node{&VarNode{
 				&RefNode{"customer1"},
-				[]*AccessNode{{"getAddress", nil, true, Pos{1}}},
+				[]*AccessNode{{"getAddress", nil, AccessMethod, Pos{1}}},
 				false, Pos{1},
 			}},
 		},
@@ -102,7 +102,7 @@ func TestParse(t *testing.T) {
 			`${customer1.setAddress("Somewhere")}`,
 			[]Node{&VarNode{
 				&RefNode{"customer1"},
-				[]*AccessNode{{"setAddress", []*OpNode{{Val: &InterpolatedNode{Items: []Node{TextNode("Somewhere")}}}}, true, Pos{1}}},
+				[]*AccessNode{{"setAddress", []*OpNode{{Val: &InterpolatedNode{Items: []Node{TextNode("Somewhere")}}}}, AccessMethod, Pos{1}}},
 				false, Pos{1},
 			}},
 		},
@@ -110,7 +110,7 @@ func TestParse(t *testing.T) {
 			`${customer1.setAddress("Somewhere" + 1)}`,
 			[]Node{&VarNode{
 				&RefNode{"customer1"},
-				[]*AccessNode{{"setAddress", []*OpNode{{Op: "+", Left: &OpNode{Val: &InterpolatedNode{Items: []Node{TextNode("Somewhere")}}, Pos: Pos{0}}, Right: &OpNode{Val: int64(1), Pos: Pos{1}}, Pos: Pos{0}}}, true, Pos{1}}},
+				[]*AccessNode{{"setAddress", []*OpNode{{Op: "+", Left: &OpNode{Val: &InterpolatedNode{Items: []Node{TextNode("Somewhere")}}, Pos: Pos{0}}, Right: &OpNode{Val: int64(1), Pos: Pos{1}}, Pos: Pos{0}}}, AccessMethod, Pos{1}}},
 				false, Pos{1},
 			}},
 		},
@@ -134,44 +134,44 @@ func TestParse(t *testing.T) {
 		{"set directive with string literal",
 			`#set( $monkey.Friend = 'monica' )`,
 			[]Node{&SetNode{
-				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Friend", nil, false, Pos{1}}}, false, Pos{1}},
+				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Friend", nil, AccessProperty, Pos{1}}}, false, Pos{1}},
 				&OpNode{Val: "monica", Pos: Pos{1}}, Pos{1},
 			}},
 		},
 		{"set directive with number literal",
 			`#set( $monkey.Number = 123 )`,
 			[]Node{&SetNode{
-				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Number", nil, false, Pos{1}}}, false, Pos{1}},
+				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Number", nil, AccessProperty, Pos{1}}}, false, Pos{1}},
 				&OpNode{Val: int64(123), Pos: Pos{1}}, Pos{1},
 			}},
 		},
 		{"set directive with property reference",
 			`#set( $monkey.Blame = $whitehouse.Leak )`,
 			[]Node{&SetNode{
-				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Blame", nil, false, Pos{1}}}, false, Pos{1}},
-				&OpNode{Val: &VarNode{&RefNode{"whitehouse"}, []*AccessNode{{"Leak", nil, false, Pos{1}}}, false, Pos{1}}}, Pos{1},
+				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Blame", nil, AccessProperty, Pos{1}}}, false, Pos{1}},
+				&OpNode{Val: &VarNode{&RefNode{"whitehouse"}, []*AccessNode{{"Leak", nil, AccessProperty, Pos{1}}}, false, Pos{1}}}, Pos{1},
 			}},
 		},
 		{"set directive with method reference",
 			`#set( $monkey.Plan = $spindoctor.weave($web) )`,
 			[]Node{&SetNode{
-				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Plan", nil, false, Pos{1}}}, false, Pos{1}},
+				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Plan", nil, AccessProperty, Pos{1}}}, false, Pos{1}},
 				&OpNode{Val: &VarNode{
 					&RefNode{"spindoctor"},
-					[]*AccessNode{{"weave", []*OpNode{{Val: &VarNode{&RefNode{"web"}, nil, false, Pos{1}}}}, true, Pos{1}}}, false, Pos{1}}}, Pos{1},
+					[]*AccessNode{{"weave", []*OpNode{{Val: &VarNode{&RefNode{"web"}, nil, false, Pos{1}}}}, AccessMethod, Pos{1}}}, false, Pos{1}}}, Pos{1},
 			}},
 		},
 		{"set directive with range operator",
 			`#set( $monkey.Numbers = [1..3] )`,
 			[]Node{&SetNode{
-				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Numbers", nil, false, Pos{1}}}, false, Pos{1}},
+				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Numbers", nil, AccessProperty, Pos{1}}}, false, Pos{1}},
 				&OpNode{Op: "range", Left: &OpNode{Val: int64(1), Pos: Pos{1}}, Right: &OpNode{Val: int64(3), Pos: Pos{1}}, Pos: Pos{1}}, Pos{1},
 			}},
 		},
 		{"set directive with object list",
 			`#set( $monkey.Say = ["Not", $my, "fault"] )`,
 			[]Node{&SetNode{
-				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Say", nil, false, Pos{1}}}, false, Pos{1}},
+				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Say", nil, AccessProperty, Pos{1}}}, false, Pos{1}},
 				&OpNode{Op: "list", Left: &OpNode{Val: []*OpNode{
 					{Val: &InterpolatedNode{Items: []Node{TextNode("Not")}}},
 					{Val: &VarNode{&RefNode{"my"}, nil, false, Pos{1}}},
@@ -181,7 +181,7 @@ func TestParse(t *testing.T) {
 		{"set directive with object map",
 			`#set( $monkey.Map = {"banana" : "good", "roast beef" : "bad"})`,
 			[]Node{&SetNode{
-				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Map", nil, false, Pos{1}}}, false, Pos{1}},
+				&VarNode{&RefNode{"monkey"}, []*AccessNode{{"Map", nil, AccessProperty, Pos{1}}}, false, Pos{1}},
 				&OpNode{Op: "map", Left: &OpNode{Val: []*OpNode{
 					{Val: &InterpolatedNode{Items: []Node{TextNode("banana")}}},
 					{Val: &InterpolatedNode{Items: []Node{TextNode("good")}}},

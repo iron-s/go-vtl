@@ -1428,7 +1428,8 @@ func TestSlice_ToArray(t *testing.T) {
 			s := &Slice{
 				S: tt.fields.S,
 			}
-			got := s.ToArray()
+			got, err := s.ToArray()
+			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 			if len(s.S) > 0 {
 				s.S[0] = "some new value"

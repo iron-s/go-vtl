@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -124,7 +125,7 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			if v.IsValid() {
 				b := bufPool.Get().(*bytes.Buffer)
 				b.Reset()
-				err := vtlPrint(b, v, nil)
+				err := t.vtlPrint(b, v, nil)
 				if err != nil {
 					return true, err
 				}
@@ -180,14 +181,7 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			case iteratorType:
 				f.it = iter.Interface().(*Iterator)
 			default:
-				typ := iter.Type().String()
-				if m := iter.MethodByName("Kind"); m.IsValid() && m.Type().NumIn() == 0 {
-					ret := m.Call(nil)
-					if len(ret) >= 1 && ret[0].Kind() == reflect.String {
-						typ = ret[0].String()
-					}
-				}
-				return true, fmt.Errorf("cannot iterate over %s", typ)
+				return true, fmt.Errorf("cannot iterate over %s", getKind(iter))
 			}
 			empty := true
 			for f.it.HasNext() {
@@ -267,9 +261,12 @@ func (t *Template) evalStep(v reflect.Value, m *AccessNode, wrapT bool, ctx Ctx)
 		}
 		args = append(args, a)
 	}
-	if m.IsCall {
+	switch m.Kind {
+	case AccessMethod:
 		v, err = t.call(v, m.Name, args...)
-	} else {
+	case AccessIndex:
+		v, err = t.call(v, "get", args...)
+	default:
 		v, err = t.property(v, reflect.ValueOf(m.Name))
 	}
 	if err != nil {
@@ -302,37 +299,74 @@ func (t *Template) evalVar(n *VarNode, ctx Ctx) (reflect.Value, error) {
 
 func (t *Template) setVar(n *VarNode, val reflect.Value, ctx Ctx) error {
 	v, err := ctx.Get(n.Name)
-	if err != nil && len(n.Items) > 0 {
+	if err != nil {
 		return err
 	}
-	var prev reflect.Value
-	for _, m := range n.Items {
-		prev = v
-		if v, err = t.evalStep(v, m, false, ctx); err != nil {
+	for i := 0; i < len(n.Items)-1; i++ {
+		if v, err = t.evalStep(v, n.Items[i], false, ctx); err != nil {
 			return err
 		}
+	}
+	last := n.Items[len(n.Items)-1]
+	if !v.IsValid() {
+		return fmt.Errorf("cannot set %s on nil value", last.Name)
 	}
 	switch v.Kind() {
-	case reflect.Chan, reflect.Func:
+	case reflect.Ptr, reflect.Slice, reflect.Map, reflect.Interface:
 		if v.IsNil() {
-			return fmt.Errorf("nil resul $%s", n.Name)
+			return fmt.Errorf("cannot set %s on nil value", last.Name)
 		}
 	}
-	switch {
-	case !v.CanSet() && prev.Kind() == reflect.Ptr:
-		k := reflect.ValueOf(n.Items[len(n.Items)-1].Name)
-		if v.IsValid() && v.MethodByName("Set").IsValid() {
-			_, err := t.call(v, "Set", k, val)
-			return err
-		} else if prev.MethodByName("Put").IsValid() {
-			_, err := t.call(prev, "Put", k, val)
+	switch last.Kind {
+	case AccessProperty:
+		// there are two ways to set a property in Velocity:
+		// 1. ref.setFoo( value )
+		// 2. ref.put("foo", value )
+		// In Go we add another one - setting struct field
+		setMethod := "Set" + strings.Title(last.Name)
+		if v.MethodByName(setMethod).IsValid() {
+			_, err := t.call(v, setMethod, val)
 			return err
 		}
-		return fmt.Errorf("cannot set %s in $%s", k, n.Name)
-	case prev.Kind() == reflect.Map:
-		prev.SetMapIndex(reflect.ValueOf(n.Items[len(n.Items)-1].Name), val)
-	case v.CanSet() && val.Type().ConvertibleTo(v.Type()):
+		if v.MethodByName("Put").IsValid() {
+			_, err := t.call(v, "Put", reflect.ValueOf(last.Name), val)
+			return err
+		}
+		prev := v
+		v, err = t.evalStep(v, last, false, ctx)
+		if !v.IsValid() {
+			return fmt.Errorf("cannot set %s on %s value", last.Name, getKind(prev))
+		}
+		if !val.Type().ConvertibleTo(v.Type()) {
+			return fmt.Errorf("cannot set %s (%s) to %s", last.Name, v.Type(), getKind(val))
+		}
+		vv := indirect(prev)
+		if vv.Kind() == reflect.Struct {
+			f := prev.Elem().FieldByName(strings.Title(last.Name))
+			s := val.Convert(f.Type())
+			f.Set(s)
+			return nil
+		}
 		v.Set(val.Convert(v.Type()))
+	case AccessIndex:
+		idx, err := t.eval(last.Args[0], ctx, false)
+		if err != nil {
+			return err
+		}
+		var method string
+		if v.MethodByName("Set").IsValid() {
+			method = "Set"
+		} else if v.MethodByName("Put").IsValid() {
+			method = "Put"
+		} else {
+			return fmt.Errorf("cannot set index %v on %s value", idx, getKind(v))
+		}
+		_, err = t.call(v, method, idx, val)
+		return err
+	case AccessMethod:
+		return fmt.Errorf("cannot set %s on %s value", last.Name, getKind(v))
+	default:
+		panic("should not happen")
 	}
 	return nil
 }
@@ -549,11 +583,8 @@ var funcs = map[string]interface{}{
 		b.Reset()
 		for i := 0; i < len(val); i += 2 {
 			k, v := val[i], val[i+1]
-			err := vtlPrint(b, reflect.ValueOf(k), nil)
-			if err != nil {
-				return reflect.Value{}, err
-			}
-			m[b.String()] = v
+			kk := fmt.Sprint(k)
+			m[kk] = v
 			b.Reset()
 		}
 		return reflect.ValueOf(&Map{m}), nil
@@ -578,8 +609,21 @@ var funcs = map[string]interface{}{
 		if !isNumber(v1) || !isNumber(v2) {
 			return reflect.Value{}, errors.New("NaN")
 		}
+		if overflowsInt64(v1) {
+			return reflect.Value{}, errors.New("start overflows int64")
+		}
+		if overflowsInt64(v2) {
+			return reflect.Value{}, errors.New("end overflows int64")
+		}
 		return reflect.ValueOf(NewRange(toInt(v1), toInt(v2))), nil
 	},
+}
+
+func overflowsInt64(v reflect.Value) bool {
+	if v.Kind() == reflect.Float64 {
+		return v.Float() > float64(math.MaxInt64) || v.Float() < float64(math.MinInt64)
+	}
+	return false
 }
 
 type foreach struct {
@@ -620,7 +664,7 @@ func checkCycle(value reflect.Value, path []uintptr) bool {
 	return false
 }
 
-func vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) error {
+func (t *Template) vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) error {
 	if checkCycle(v, path) {
 		return errors.New("cycle detected")
 	}
@@ -650,7 +694,7 @@ func vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) error {
 				if i > 0 {
 					b.WriteString(", ")
 				}
-				err := vtlPrint(b, reflect.ValueOf(e), path)
+				err := t.vtlPrint(b, reflect.ValueOf(e), path)
 				if err != nil {
 					return err
 				}
@@ -660,16 +704,19 @@ func vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) error {
 			e := v.Interface().(*MapEntry)
 			b.WriteString(e.k)
 			b.WriteByte('=')
-			return vtlPrint(b, reflect.ValueOf(e.v), path)
+			return t.vtlPrint(b, reflect.ValueOf(e.v), path)
 		case viewType, keyViewType, entryViewType, valViewType:
 			s := v.Elem().FieldByName("Slice")
-			return vtlPrint(b, s, path)
+			return t.vtlPrint(b, s, path)
 		case sliceType, rangeType:
 			s := v.Interface().(Collection)
 			b.WriteByte('[')
+			if s.Size() > t.maxArraySize {
+				return fmt.Errorf("%s size is too large", getKind(v))
+			}
 			it := s.Iterator()
 			for it.HasNext() {
-				err := vtlPrint(b, reflect.ValueOf(it.Next()), path)
+				err := t.vtlPrint(b, reflect.ValueOf(it.Next()), path)
 				if err != nil {
 					return err
 				}
@@ -683,7 +730,7 @@ func vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) error {
 				fmt.Fprintf(b, "%v", v.Interface())
 				return nil
 			}
-			return vtlPrint(b, indirect(v), path)
+			return t.vtlPrint(b, indirect(v), path)
 		}
 		return nil
 	case reflect.Map:
@@ -691,7 +738,7 @@ func vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) error {
 	case reflect.Slice:
 		return errors.New("use of naked slice")
 	case reflect.Interface:
-		return vtlPrint(b, v.Elem(), path)
+		return t.vtlPrint(b, v.Elem(), path)
 	case reflect.Invalid:
 		b.WriteString("null")
 	default:
@@ -745,7 +792,7 @@ func (t *Template) call(v reflect.Value, meth string, args ...reflect.Value) (re
 	t.cacheMutex.Unlock()
 	trimm := strings.Title(strings.TrimPrefix(meth, "get"))
 	var m reflect.Value
-	for _, mm := range []string{meth, trimm, "Get" + trimm, "Is" + trimm} {
+	for _, mm := range []string{strings.Title(meth), trimm, "Get" + trimm, "Is" + trimm} {
 		i := sort.Search(len(types), func(i int) bool { return types[i].name >= mm })
 		if i < len(types) && types[i].name == mm {
 			m = v.Method(types[i].i)
@@ -771,14 +818,14 @@ func (t *Template) call(v reflect.Value, meth string, args ...reflect.Value) (re
 	case vv.Kind() == reflect.Struct:
 		f := vv.FieldByName(trimm)
 		if f.IsValid() {
-			return f, nil
+			return wrapTypes(f), nil
 		}
 	case vv.Type() == reflect.TypeOf(""):
 		return reflect.Value{}, errors.New("naked string is not supported")
 	case vv.Kind() == reflect.Map:
 		return reflect.Value{}, errors.New("naked map is not supported")
 	case vv.Kind() == reflect.Slice:
-		return reflect.Value{}, errors.New("naked map is not supported")
+		return reflect.Value{}, errors.New("naked slice is not supported")
 	default:
 		return reflect.Value{}, fmt.Errorf("cannot call %s on %s value", meth, v.Type().String())
 	}
@@ -792,6 +839,17 @@ func asError(v interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func getKind(v reflect.Value) string {
+	typ := v.Type().String()
+	if m := v.MethodByName("Kind"); m.IsValid() && m.Type().NumIn() == 0 {
+		ret := m.Call(nil)
+		if len(ret) >= 1 && ret[0].Kind() == reflect.String {
+			typ = ret[0].String()
+		}
+	}
+	return typ
 }
 
 func isInt(v reflect.Value) bool {

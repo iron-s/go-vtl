@@ -144,8 +144,8 @@ var (
 		57394: 69, // iterable (1x)
 		57395: 70, // kvpairs (1x)
 		57397: 71, // literal (1x)
-		57347: 72, // METHOD (1x)
-		57399: 73, // method (1x)
+		57399: 72, // method (1x)
+		57347: 73, // METHOD (1x)
 		57401: 74, // range (1x)
 		57405: 75, // vtl (1x)
 		57378: 76, // $default (0x)
@@ -227,8 +227,8 @@ var (
 		"iterable",
 		"kvpairs",
 		"literal",
-		"METHOD",
 		"method",
+		"METHOD",
 		"range",
 		"vtl",
 		"$default",
@@ -276,8 +276,8 @@ var (
 		33: {21, 4},
 		34: {21, 3},
 		35: {21, 5},
-		36: {73, 3},
-		37: {73, 4},
+		36: {72, 3},
+		37: {72, 4},
 		38: {58, 1},
 		39: {58, 3},
 		40: {58, 4},
@@ -551,7 +551,7 @@ var (
 		{5: 116, 41: 118, 49: 117},
 		// 25
 		{56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 22: 56, 56, 56, 26: 56, 56, 56, 30: 56, 56, 56, 56, 38: 56, 46: 56, 52: 56},
-		{51: 162, 72: 161, 163},
+		{51: 162, 72: 163, 161},
 		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 39: 120, 122, 42: 127, 129, 128, 47: 126, 119},
 		{4: 160, 20: 145},
 		{1: 25, 25, 149, 25, 25, 20: 25, 22: 25, 24: 25, 26: 25, 30: 152, 150, 148, 151, 38: 158},
@@ -1104,11 +1104,11 @@ yynewstate:
 		}
 	case 36:
 		{
-			yyVAL.n = &AccessNode{Name: yyS[yypt-2].t.literal, IsCall: true, Pos: Pos{yyS[yypt-2].t.line}}
+			yyVAL.n = &AccessNode{Name: yyS[yypt-2].t.literal, Kind: AccessMethod, Pos: Pos{yyS[yypt-2].t.line}}
 		}
 	case 37:
 		{
-			yyVAL.n = &AccessNode{Name: yyS[yypt-3].t.literal, IsCall: true, Args: yyS[yypt-1].n.([]*OpNode), Pos: Pos{yyS[yypt-3].t.line}}
+			yyVAL.n = &AccessNode{Name: yyS[yypt-3].t.literal, Kind: AccessMethod, Args: yyS[yypt-1].n.([]*OpNode), Pos: Pos{yyS[yypt-3].t.line}}
 		}
 	case 38:
 		{
@@ -1117,13 +1117,13 @@ yynewstate:
 	case 39:
 		{
 			v := yyS[yypt-2].n.(*VarNode)
-			v.Items = append(v.Items, &AccessNode{Name: yyS[yypt-0].t.literal, Pos: Pos{yyS[yypt-0].t.line}})
+			v.Items = append(v.Items, &AccessNode{Name: yyS[yypt-0].t.literal, Kind: AccessProperty, Pos: Pos{yyS[yypt-0].t.line}})
 			yyVAL.n = yyS[yypt-2].n
 		}
 	case 40:
 		{
 			v := yyS[yypt-3].n.(*VarNode)
-			v.Items = append(v.Items, &AccessNode{Name: "get", IsCall: true, Args: []*OpNode{yyS[yypt-1].n.(*OpNode)}})
+			v.Items = append(v.Items, &AccessNode{Kind: AccessIndex, Args: []*OpNode{yyS[yypt-1].n.(*OpNode)}})
 			yyVAL.n = yyS[yypt-3].n
 		}
 	case 41:

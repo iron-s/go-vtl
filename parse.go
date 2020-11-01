@@ -10,6 +10,7 @@ import (
 
 const DefaultMaxCallDepth = 20
 const DefaultMaxIterations = -1
+const DefaultMaxArrayRenderSize = 1024 * 1024
 
 type methodIdx struct {
 	name string
@@ -24,6 +25,7 @@ type Template struct {
 	cacheMutex    sync.Mutex
 	maxCallDepth  int
 	maxIterations int
+	maxArraySize  int
 }
 
 func Must(t *Template, err error) *Template {
@@ -64,7 +66,7 @@ func Parse(vtl, root, lib string) (*Template, error) {
 	ast := l.result
 	gobble(ast, false)
 	// spew.Dump(ast)
-	return &Template{root, lib, ast, macros, make(map[reflect.Type][]methodIdx), sync.Mutex{}, DefaultMaxCallDepth, DefaultMaxIterations}, nil
+	return &Template{root, lib, ast, macros, make(map[reflect.Type][]methodIdx), sync.Mutex{}, DefaultMaxCallDepth, DefaultMaxIterations, DefaultMaxArrayRenderSize}, nil
 }
 
 func (t *Template) WithMaxCallDepth(n int) *Template {
@@ -74,6 +76,11 @@ func (t *Template) WithMaxCallDepth(n int) *Template {
 
 func (t *Template) WithMaxIterations(n int) *Template {
 	t.maxIterations = n
+	return t
+}
+
+func (t *Template) WithMaxArrayRenderSize(n int) *Template {
+	t.maxArraySize = n
 	return t
 }
 

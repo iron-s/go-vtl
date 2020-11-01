@@ -135,9 +135,9 @@ interpolated:   '$' reference
                 ;
 
 method:         METHOD '(' ')'
-                { $$ = &AccessNode{Name: $1.literal, IsCall: true, Pos: Pos{$1.line}} }
+                { $$ = &AccessNode{Name: $1.literal, Kind: AccessMethod, Pos: Pos{$1.line}} }
         |       METHOD '(' list ')'
-                { $$ = &AccessNode{Name: $1.literal, IsCall: true, Args: $3.([]*OpNode), Pos: Pos{$1.line}} }
+                { $$ = &AccessNode{Name: $1.literal, Kind: AccessMethod, Args: $3.([]*OpNode), Pos: Pos{$1.line}} }
                 ;
 
 reference:      IDENTIFIER
@@ -145,13 +145,13 @@ reference:      IDENTIFIER
         |       reference '.' IDENTIFIER
                 {
                     v := $1.(*VarNode)
-                    v.Items = append(v.Items, &AccessNode{Name: $3.literal, Pos: Pos{$3.line}})
+                    v.Items = append(v.Items, &AccessNode{Name: $3.literal, Kind: AccessProperty, Pos: Pos{$3.line}})
                     $$ = $1
                 }
         |       reference '[' bool_expr ']'
                 {
                     v := $1.(*VarNode)
-                    v.Items = append(v.Items, &AccessNode{Name: "get", IsCall: true, Args: []*OpNode{$3.(*OpNode)}})
+                    v.Items = append(v.Items, &AccessNode{Kind: AccessIndex, Args: []*OpNode{$3.(*OpNode)}})
                     $$ = $1
                 }
         |       reference '.' method

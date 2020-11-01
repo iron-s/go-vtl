@@ -21,11 +21,20 @@ type RefNode struct {
 	Name string
 }
 
+type AccessKind int
+
+const (
+	AccessNone AccessKind = iota
+	AccessProperty
+	AccessIndex
+	AccessMethod
+)
+
 type AccessNode struct {
-	Name   string
-	Args   []*OpNode
-	IsCall bool
-	Pos    Pos
+	Name string
+	Args []*OpNode
+	Kind AccessKind
+	Pos  Pos
 }
 
 type OpNode struct {
