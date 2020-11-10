@@ -41,19 +41,9 @@ func (t *Template) Execute(w io.Writer, val map[string]interface{}) error {
 func wrapTypes(v reflect.Value) reflect.Value {
 	switch v.Kind() {
 	case reflect.Slice:
-		s := &Slice{}
-		for i := 0; i < v.Len(); i++ {
-			s.S = append(s.S, v.Index(i).Interface())
-		}
-		return reflect.ValueOf(s)
+		return reflect.ValueOf(&Slice{v.Interface()})
 	case reflect.Map:
-		m := &Map{M: make(map[string]interface{})}
-		it := v.MapRange()
-		for it.Next() {
-			k, v := it.Key(), it.Value()
-			m.M[k.String()] = v.Interface()
-		}
-		return reflect.ValueOf(m)
+		return reflect.ValueOf(&Map{v.Interface()})
 	case reflect.String:
 		return v.Convert(reflect.TypeOf(Str("")))
 	case reflect.Interface:
@@ -178,13 +168,14 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 				f.it = iter.Interface().(*Range).Iterator()
 			case mapType:
 				f.it = iter.Interface().(*Map).Values().Iterator()
-			case iteratorType:
-				f.it = iter.Interface().(*Iterator)
+			case collIteratorType, mapIteratorType:
+				f.it = iter.Interface().(Iterator)
 			default:
 				return true, fmt.Errorf("cannot iterate over %s", getKind(iter))
 			}
 			empty := true
 			for f.it.HasNext() {
+				f.i++
 				if t.maxIterations >= 0 && f.Count() > t.maxIterations {
 					return true, errors.New("number of iterations exceeded")
 				}
@@ -576,15 +567,15 @@ var funcs = map[string]interface{}{
 	"not": func(v1 reflect.Value, v2 interface{}) bool { return !isTrue(v1) },
 
 	"map": func(v1, v2 reflect.Value) (reflect.Value, error) {
-		val := v1.Interface().(*Slice).S
-		m := make(map[string]interface{}, len(val)/2)
+		val := reflect.ValueOf(v1.Interface().(*Slice).S)
+		m := make(map[string]interface{}, val.Len()/2)
 		b := bufPool.Get().(*bytes.Buffer)
 		defer bufPool.Put(b)
 		b.Reset()
-		for i := 0; i < len(val); i += 2 {
-			k, v := val[i], val[i+1]
-			kk := fmt.Sprint(k)
-			m[kk] = v
+		for i := 0; i < val.Len(); i += 2 {
+			k, v := val.Index(i), val.Index(i+1)
+			kk := fmt.Sprint(k.Interface())
+			m[kk] = v.Interface()
 			b.Reset()
 		}
 		return reflect.ValueOf(&Map{m}), nil
@@ -627,30 +618,35 @@ func overflowsInt64(v reflect.Value) bool {
 }
 
 type foreach struct {
-	it *Iterator
+	it Iterator
+	i  int
 }
 
 func (f *foreach) HasNext() bool { return f.it.HasNext() }
-func (f *foreach) First() bool   { return f.it.i == 1 }
-func (f *foreach) Last() bool    { return f.it.i == f.it.s.Size()-1 }
-func (f *foreach) Count() int    { return f.it.i }
-func (f *foreach) Index() int    { return f.it.i - 1 }
+func (f *foreach) First() bool   { return f.i == 1 }
+func (f *foreach) Last() bool    { return !f.it.HasNext() }
+func (f *foreach) Count() int    { return f.i }
+func (f *foreach) Index() int    { return f.i - 1 }
 
 var (
-	sliceType     = reflect.TypeOf((*Slice)(nil))
-	rangeType     = reflect.TypeOf((*Range)(nil))
-	mapType       = reflect.TypeOf((*Map)(nil))
-	entryType     = reflect.TypeOf((*MapEntry)(nil))
-	viewType      = reflect.TypeOf((*View)(nil))
-	keyViewType   = reflect.TypeOf((*KeyView)(nil))
-	entryViewType = reflect.TypeOf((*EntryView)(nil))
-	valViewType   = reflect.TypeOf((*ValView)(nil))
-	iteratorType  = reflect.TypeOf((*Iterator)(nil))
+	sliceType        = reflect.TypeOf((*Slice)(nil))
+	rangeType        = reflect.TypeOf((*Range)(nil))
+	mapType          = reflect.TypeOf((*Map)(nil))
+	entryType        = reflect.TypeOf((*MapEntry)(nil))
+	viewType         = reflect.TypeOf((*View)(nil))
+	keyViewType      = reflect.TypeOf((*KeyView)(nil))
+	entryViewType    = reflect.TypeOf((*EntryView)(nil))
+	valViewType      = reflect.TypeOf((*ValView)(nil))
+	collIteratorType = reflect.TypeOf((*CollectionIterator)(nil))
+	mapIteratorType  = reflect.TypeOf((*MapIterator)(nil))
 )
 
 func checkCycle(value reflect.Value, path []uintptr) bool {
 	if value.Kind() == reflect.Interface {
 		value = value.Elem()
+	}
+	if value.IsValid() && value.Type() == reflect.TypeOf(reflect.Value{}) {
+		value = value.Interface().(reflect.Value)
 	}
 	switch value.Kind() {
 	case reflect.Ptr, reflect.Slice, reflect.Map:
@@ -689,12 +685,19 @@ func (t *Template) vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) er
 		case mapType:
 			m := v.Interface().(*Map)
 			b.WriteByte('{')
-			entries := m.EntrySet().Slice.S
-			for i, e := range entries {
-				if i > 0 {
+			it := reflect.ValueOf(m.M).MapRange()
+			first := true
+			for it.Next() {
+				if !first {
 					b.WriteString(", ")
 				}
-				err := t.vtlPrint(b, reflect.ValueOf(e), path)
+				first = false
+				err := t.vtlPrint(b, it.Key(), path)
+				if err != nil {
+					return err
+				}
+				b.WriteByte('=')
+				err = t.vtlPrint(b, it.Value(), path)
 				if err != nil {
 					return err
 				}
@@ -702,7 +705,10 @@ func (t *Template) vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) er
 			b.WriteByte('}')
 		case entryType:
 			e := v.Interface().(*MapEntry)
-			b.WriteString(e.k)
+			err := t.vtlPrint(b, reflect.ValueOf(e.k), path)
+			if err != nil {
+				return err
+			}
 			b.WriteByte('=')
 			return t.vtlPrint(b, reflect.ValueOf(e.v), path)
 		case viewType, keyViewType, entryViewType, valViewType:

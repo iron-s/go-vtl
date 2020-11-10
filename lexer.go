@@ -388,7 +388,6 @@ func eatWSend(t string) string {
 	return t
 }
 
-
 func pushState(l interface{}, s lexState) {
 	lex := l.(*Lexer)
 	lex.states = append(lex.states, s)

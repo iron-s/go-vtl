@@ -134,15 +134,17 @@ func (p *provider) GetHashtable() map[string]string {
 }
 
 func (p *provider) Concat(s ...interface{}) string {
-	var ret, space string
+	var ret string
 	slice, ok := s[0].(*govtl.Slice)
 	if len(s) == 1 && ok {
-		s = slice.S
-		// quirk: if we concat array - we need space, if it's just strings - no need for space
-		space = " "
-	}
-	for _, v := range s {
-		ret += fmt.Sprintf("%v", v) + space
+		for i := 0; i < slice.Size(); i++ {
+			e, _ := slice.Get(i)
+			ret += fmt.Sprintf("%v", e) + " "
+		}
+	} else {
+		for _, v := range s {
+			ret += fmt.Sprintf("%v", v)
+		}
 	}
 	return ret
 }
