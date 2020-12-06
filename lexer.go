@@ -241,7 +241,7 @@ func (l *Lexer) Lex(lval *yySymType) int {
 			switch strings.ToLower(ident) {
 			case "ge", "le", "gt", "lt", "eq", "ne", "and", "or", "not":
 				prev := l.Peek(-len(ident) - 1)
-				if prev == ' ' || prev == '\t' || prev == '\n' {
+				if prev == ' ' || prev == '\t' || prev == '\n' || prev == '(' {
 					lval.t = Token{token: ops[ident], literal: ident, line: l.line}
 					return ops[ident]
 				}
@@ -264,9 +264,6 @@ func (l *Lexer) Lex(lval *yySymType) int {
 		}
 		start := l.pos
 		switch {
-		case p == '-' && isNum(l.Peek(1)):
-			p = l.ScanByte()
-			fallthrough
 		case isNum(p):
 			tok := INT
 			l.ScanInt()

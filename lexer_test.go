@@ -7,13 +7,14 @@ import (
 func TestLex(t *testing.T) {
 	tests := []string{
 		`schmoo #set($x = $list.size() * ( 3 + $list[0].length() )) and then some
-#set($some = {"var": {"index": $list}})
-$some.var["index"].add( $x )
-$x. ${some}and${x.}`,
+		#set($some = {"var": {"index": $list}})
+		$some.var["index"].add( $x )
+		$x. ${some}and${x.}`,
 		`$x$x back to back`,
 		`${x}$x formal then normal`,
 		`$x${x} normal then formal`,
 		`$!{x}$x silent formal, then normal`,
+		`#set($x = 2 > 0 && 3-2==1)`,
 	}
 	for _, test := range tests {
 		l := &Lexer{}
@@ -34,16 +35,3 @@ $x. ${some}and${x.}`,
 		}
 	}
 }
-
-// func TestScanText(t *testing.T) {
-// 	tests := []struct{
-// 		in, out string
-// 		pos int
-// 	}{
-// 		{`
-// #{if} (true)
-//     this is a test
-// #end
-// `}
-// 	}
-// }

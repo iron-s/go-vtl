@@ -21,7 +21,7 @@ func (ctx Ctx) Push(k string, v reflect.Value) int {
 }
 
 func (ctx Ctx) Pop(i int, k string) {
-	if len(ctx.s[k]) > 0 && i > 0 {
+	if len(ctx.s[k]) > 0 && i >= 0 {
 		ctx.s[k] = append(ctx.s[k][:i], ctx.s[k][i+1:]...)
 	}
 }

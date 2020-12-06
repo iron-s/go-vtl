@@ -25,10 +25,11 @@ error "expected '('"
 153 // FOREACH '(' '$' IDENTIFIER IN '$' IDENTIFIER
 154 // FOREACH '(' '$' IDENTIFIER IN '[' ']'
 155 // FOREACH '(' '$' IDENTIFIER IN '{' '}'
+163 // IF '(' BOOLEAN
 180 // SET '(' '$' IDENTIFIER '=' BOOLEAN
 error "expected ')'"
 
-95 // INCLUDE '(' '[' BOOLEAN RANGE BOOLEAN
+95 // IF '(' '[' BOOLEAN RANGE BOOLEAN
 error "expected ']'"
 
 127 // MACRO '(' IDENTIFIER '$' '!' '{' IDENTIFIER
@@ -64,9 +65,8 @@ error "expected bool_and or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NO
 
 27 // '$' IDENTIFIER '['
 34 // IF '(' '('
-88 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN ','
-100 // INCLUDE '(' '[' BOOLEAN RANGE
-162 // IF '('
+88 // MACROCALL '(' '{' BOOLEAN ':' BOOLEAN ','
+100 // IF '(' '[' BOOLEAN RANGE
 170 // IF '(' BOOLEAN ')' ELSEIF '('
 error "expected bool_expr or one of ['\"', '$', '(', '-', BOOLEAN, FLOAT, INT, NOT, STRING]"
 
@@ -131,13 +131,13 @@ error "expected interpolated or one of ['\"', '$', TEXT, WS]"
 151 // FOREACH '(' '$' IDENTIFIER IN
 error "expected iterable or one of ['$', '[', '{']"
 
-80 // INCLUDE '(' '{'
+80 // MACROCALL '(' '{'
 error "expected kvpairs or one of ['\"', '$', '(', '-', '}', BOOLEAN, FLOAT, INT, NOT, STRING]"
 
 73 // '$' IDENTIFIER '.' METHOD '('
 error "expected list or one of ['\"', '$', '(', ')', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]"
 
-79 // INCLUDE '(' '['
+79 // IF '(' '['
 error "expected list or range or one of ['\"', '$', '(', '-', '[', ']', '{', BOOLEAN, FLOAT, INT, NOT, STRING]"
 
 40 // PARSE '(' '"'
@@ -194,9 +194,9 @@ error "expected one of ['\"', '$', TEXT, WS]"
 32 // IF '(' '$' IDENTIFIER
 33 // IF '(' BOOLEAN
 39 // IF '(' STRING
-41 // INCLUDE '(' FLOAT
-42 // INCLUDE '(' INT
-43 // IF '(' BOOLEAN
+41 // MACROCALL '(' FLOAT
+42 // MACROCALL '(' INT
+43 // MACROCALL '(' BOOLEAN
 45 // PARSE '(' '"' '"'
 53 // IF '(' '(' BOOLEAN ')'
 56 // IF '(' '-' BOOLEAN
@@ -218,20 +218,20 @@ error "expected one of ['%', ')', '*', '+', ',', '-', '/', ':', ']', '}', AND, O
 55 // IF '(' BOOLEAN OR BOOLEAN
 error "expected one of [')', ',', ':', ']', '}', AND, OR, RANGE]"
 
-74 // '$' IDENTIFIER '.' METHOD '(' BOOLEAN
+74 // IF '(' BOOLEAN
 error "expected one of [')', ',', ']', '}', OR]"
 
-75 // INCLUDE '(' '[' '[' ']'
-76 // INCLUDE '(' '[' '{' '}'
-82 // INCLUDE '(' '{' '}'
-87 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN '}'
-93 // INCLUDE '(' '[' ']'
-96 // INCLUDE '(' '[' BOOLEAN RANGE BOOLEAN ']'
-97 // INCLUDE '(' '[' BOOLEAN ']'
+75 // IF '(' '[' ']'
+76 // IF '(' '{' '}'
+82 // MACROCALL '(' '{' '}'
+87 // MACROCALL '(' '{' BOOLEAN ':' BOOLEAN '}'
+93 // IF '(' '[' ']'
+96 // IF '(' '[' BOOLEAN RANGE BOOLEAN ']'
+97 // IF '(' '[' BOOLEAN ']'
 error "expected one of [')', ',', ']', '}']"
 
-81 // INCLUDE '(' '[' BOOLEAN
-99 // INCLUDE '(' '[' BOOLEAN ',' BOOLEAN
+81 // IF '(' '[' BOOLEAN
+99 // IF '(' '[' BOOLEAN ',' BOOLEAN
 error "expected one of [')', ',', ']']"
 
 78 // '$' IDENTIFIER '.' METHOD '(' BOOLEAN
@@ -253,19 +253,18 @@ error "expected one of [')', ',', ']']"
 error "expected one of [')', ',']"
 
 52 // IF '(' '(' BOOLEAN
-163 // IF '(' BOOLEAN
 171 // IF '(' BOOLEAN ')' ELSEIF '(' BOOLEAN
 error "expected one of [')', OR]"
 
-92 // INCLUDE '(' '[' BOOLEAN
+92 // IF '(' '[' BOOLEAN
 error "expected one of [',', ']', OR, RANGE]"
 
-94 // INCLUDE '(' '[' BOOLEAN
+94 // IF '(' '[' BOOLEAN
 error "expected one of [',', ']']"
 
-83 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN
-86 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN
-91 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN ',' BOOLEAN ':' BOOLEAN
+83 // MACROCALL '(' '{' BOOLEAN ':' BOOLEAN
+86 // MACROCALL '(' '{' BOOLEAN ':' BOOLEAN
+91 // MACROCALL '(' '{' BOOLEAN ':' BOOLEAN ',' BOOLEAN ':' BOOLEAN
 error "expected one of [',', '}']"
 
 178 // SET '(' '$' IDENTIFIER
@@ -275,12 +274,12 @@ error "expected one of ['.', '=', '[']"
 103 // '$' '{' IDENTIFIER
 error "expected one of ['.', '[', '}']"
 
-84 // INCLUDE '(' '{' BOOLEAN
-89 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN ',' BOOLEAN
+84 // MACROCALL '(' '{' BOOLEAN
+89 // MACROCALL '(' '{' BOOLEAN ':' BOOLEAN ',' BOOLEAN
 error "expected one of [':', OR]"
 
 28 // '$' IDENTIFIER '[' BOOLEAN
-101 // INCLUDE '(' '[' BOOLEAN RANGE BOOLEAN
+101 // IF '(' '[' BOOLEAN RANGE BOOLEAN
 error "expected one of [']', OR]"
 
 124 // MACRO '(' IDENTIFIER '$' '!'
@@ -300,9 +299,10 @@ error "expected reference or one of ['!', '{', IDENTIFIER]"
 20 // '$' '!'
 error "expected reference or one of ['{', IDENTIFIER]"
 
-85 // INCLUDE '(' '{' BOOLEAN ':'
-90 // INCLUDE '(' '{' BOOLEAN ':' BOOLEAN ',' BOOLEAN ':'
-98 // INCLUDE '(' '[' BOOLEAN ','
+85 // MACROCALL '(' '{' BOOLEAN ':'
+90 // MACROCALL '(' '{' BOOLEAN ':' BOOLEAN ',' BOOLEAN ':'
+98 // IF '(' '[' BOOLEAN ','
+162 // IF '('
 179 // SET '(' '$' IDENTIFIER '='
 error "expected setarg or one of ['\"', '$', '(', '-', '[', '{', BOOLEAN, FLOAT, INT, NOT, STRING]"
 

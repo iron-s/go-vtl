@@ -121,6 +121,14 @@ func (p *provider) GetName() string {
 	return "jason"
 }
 
+func (p *provider) GetTitle() string {
+	return p.Title
+}
+
+func (p *provider) SetTitle(title string) {
+	p.Title = title
+}
+
 func (p *provider) GetList() []string {
 	return []string{"list element 1", "list element 2", "list element 3"}
 }
@@ -166,6 +174,14 @@ func (p *provider) GetArray() []string {
 	return []string{"first element", "second element"}
 }
 
+func (p *provider) GetStateTrue() bool {
+	return true
+}
+
+func (p *provider) GetStateFalse() bool {
+	return false
+}
+
 func (p *provider) TheAPLRules() bool {
 	return true
 }
@@ -188,11 +204,11 @@ func (p *provider) ShowPerson(pp *person) string {
 	return pp.name
 }
 
-func (p *provider) Person() *person {
+func (p *provider) GetPerson() *person {
 	return &person{"Person"}
 }
 
-func (p *provider) Child() *person {
+func (p *provider) GetChild() *person {
 	return &person{"Child"}
 }
 
@@ -210,9 +226,7 @@ func (p *person) GetName() string {
 
 type num float64
 
-func (n num) AsNumber() float64 {
-	return float64(n)
-}
+func (n num) GetAsNumber() float64 { return float64(n) }
 
 type boolean struct{}
 

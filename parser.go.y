@@ -53,7 +53,7 @@ directives:     /*empty */
 
 directive:      SET '(' '$' reference '=' setarg ')'
                 { $$ = &SetNode{Var: $4.(*VarNode), Expr: $6.(*OpNode), Pos: Pos{$1.line}} }
-        |       IF '(' bool_expr ')' directives else END
+        |       IF '(' setarg ')' directives else END
                 {
                     elseNode, _ := $6.(*IfNode)
                     $$ = &IfNode{Cond: $3.(*OpNode), Items: $5, Else: elseNode, Pos: Pos{$1.line} }

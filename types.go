@@ -22,14 +22,20 @@ type Map struct {
 	M interface{}
 }
 
-func (m *Map) Kind() string { return "map" }
+func (m *Map) kind() string { return "map" }
 
 func (m *Map) Clear() {
 	m.M = reflect.MakeMap(reflect.TypeOf(m.M)).Interface()
 }
 
 func (m *Map) ContainsKey(key interface{}) bool {
-	v := reflect.ValueOf(m.M).MapIndex(reflect.ValueOf(key))
+	k := reflect.ValueOf(key)
+	mM := reflect.ValueOf(m.M)
+	k, err := convertType(k, mM.Type().Key())
+	if err != nil {
+		return false
+	}
+	v := mM.MapIndex(k)
 	return v != Nil
 }
 
@@ -95,22 +101,31 @@ func (m *Map) KeySet() *KeyView {
 	return &KeyView{m: m}
 }
 
-func (m *Map) Put(key interface{}, value interface{}) interface{} {
+func (m *Map) Put(key, value interface{}) (interface{}, error) {
 	mM := reflect.ValueOf(m.M)
 	kk := reflect.ValueOf(key)
 	vv := reflect.ValueOf(value)
-	if kk.Type().ConvertibleTo(mM.Type().Elem()) {
-		kk = kk.Convert(mM.Type().Key())
+
+	elemT := mM.Type().Elem()
+	keyT := mM.Type().Key()
+
+	var err error
+	kk, err = convertType(kk, keyT)
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert key %w", err)
 	}
-	if vv.Type().ConvertibleTo(mM.Type().Elem()) {
-		vv = vv.Convert(mM.Type().Elem())
+
+	vv, err = convertType(vv, elemT)
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert value %w", err)
 	}
+
 	was := mM.MapIndex(kk)
 	mM.SetMapIndex(kk, vv)
 	if was == Nil {
-		return nil
+		return nil, nil
 	}
-	return was.Interface()
+	return was.Interface(), nil
 }
 
 func (m *Map) PutAll(v interface{}) error {
@@ -119,9 +134,21 @@ func (m *Map) PutAll(v interface{}) error {
 		return errMapExpected
 	}
 	mM, vM := reflect.ValueOf(m.M), reflect.ValueOf(vv.M)
+	elemT := mM.Type().Elem()
+	keyT := mM.Type().Key()
+
 	iter := vM.MapRange()
 	for iter.Next() {
-		mM.SetMapIndex(iter.Key(), iter.Value())
+		kk, err := convertType(iter.Key(), keyT)
+		if err != nil {
+			return fmt.Errorf("cannot convert key %w", err)
+		}
+
+		vv, err := convertType(iter.Value(), elemT)
+		if err != nil {
+			return fmt.Errorf("cannot convert value %w", err)
+		}
+		mM.SetMapIndex(kk, vv)
 	}
 	return nil
 }
@@ -134,19 +161,23 @@ func (m *Map) PutIfAbsent(key interface{}, value interface{}) interface{} {
 	return v
 }
 
-func (m *Map) Remove(key interface{}) interface{} {
+func (m *Map) Remove(key interface{}) (interface{}, error) {
 	mM := reflect.ValueOf(m.M)
+	keyT := mM.Type().Key()
+	kk, err := convertType(reflect.ValueOf(key), keyT)
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert key %w", err)
+	}
 	v := m.Get(key)
-	mM.SetMapIndex(reflect.ValueOf(key), Nil)
-	return v
+	mM.SetMapIndex(kk, Nil)
+	return v, nil
 }
 
 func (m *Map) Replace(key interface{}, val interface{}) interface{} {
-	mM := reflect.ValueOf(m.M)
-	v := mM.MapIndex(reflect.ValueOf(key))
-	if v != Nil {
+	v := m.Get(key)
+	if v != nil {
 		m.Put(key, val)
-		return v.Interface()
+		return v
 	}
 	return nil
 }
@@ -165,7 +196,7 @@ type MapEntry struct {
 	m *Map
 }
 
-func (e *MapEntry) Kind() string { return "mapEntry" }
+func (e *MapEntry) kind() string { return "mapEntry" }
 
 func (e *MapEntry) Equals(entry *MapEntry) bool {
 	return reflect.DeepEqual(e.k, entry.k) && reflect.DeepEqual(e.v, entry.v)
@@ -179,12 +210,13 @@ func (e *MapEntry) GetValue() interface{} {
 	return e.v
 }
 
-func (e *MapEntry) SetValue(val interface{}) interface{} {
-	v := e.v
-	vv := reflect.ValueOf(val)
-	reflect.ValueOf(e.m.M).SetMapIndex(reflect.ValueOf(e.k), vv)
-	e.v = vv
-	return v
+func (e *MapEntry) SetValue(val interface{}) (interface{}, error) {
+	v, err := e.m.Put(e.k, val)
+	if err != nil {
+		return nil, err
+	}
+	e.v = v
+	return v, nil
 }
 
 type View struct {
@@ -207,8 +239,8 @@ func (v *View) Clear() {
 
 type KeyView View
 
-func (view *KeyView) Contains(val interface{}) bool {
-	return view.m.ContainsKey(val)
+func (view *KeyView) Contains(key interface{}) bool {
+	return view.m.ContainsKey(key)
 }
 
 func (view *KeyView) Iterator() Iterator {
@@ -218,7 +250,7 @@ func (view *KeyView) Iterator() Iterator {
 		})
 }
 
-func (v *KeyView) Kind() string { return "keyView" }
+func (v *KeyView) kind() string { return "keyView" }
 
 func (view *KeyView) Remove(k interface{}) bool {
 	ok := view.m.ContainsKey(k)
@@ -244,6 +276,13 @@ func (view *KeyView) RetainAll(v interface{}) (bool, error) {
 	return retainAll(view.Iterator(), vv)
 }
 
+func (view *KeyView) ToArray() (*Slice, error) {
+	it := view.Iterator()
+	l := view.m.Size()
+	s := reflect.MakeSlice(reflect.SliceOf(reflect.ValueOf(view.m.M).Type().Key()), l, l)
+	return toArray(it, s)
+}
+
 type ValView View
 
 func (view *ValView) Contains(val interface{}) bool {
@@ -257,7 +296,7 @@ func (view *ValView) Iterator() Iterator {
 		})
 }
 
-func (view *ValView) Kind() string { return "valView" }
+func (view *ValView) kind() string { return "valView" }
 
 func (view *ValView) Remove(val interface{}) bool {
 	mM := reflect.ValueOf(view.m.M)
@@ -290,6 +329,13 @@ func (view *ValView) RetainAll(v interface{}) (bool, error) {
 	return retainAll(view.Iterator(), vv)
 }
 
+func (view *ValView) ToArray() (*Slice, error) {
+	it := view.Iterator()
+	l := view.m.Size()
+	s := reflect.MakeSlice(reflect.SliceOf(reflect.ValueOf(view.m.M).Type().Elem()), l, l)
+	return toArray(it, s)
+}
+
 type EntryView View
 
 func (view *EntryView) Contains(val interface{}) bool {
@@ -307,7 +353,7 @@ func (view *EntryView) Iterator() Iterator {
 		})
 }
 
-func (v *EntryView) Kind() string { return "entryView" }
+func (v *EntryView) kind() string { return "entryView" }
 
 func (view *EntryView) Remove(val *MapEntry) bool {
 	mM := reflect.ValueOf(view.m.M)
@@ -335,16 +381,28 @@ func (view *EntryView) RetainAll(v interface{}) (bool, error) {
 	return retainAll(view.Iterator(), vv)
 }
 
+func (view *EntryView) ToArray() (*Slice, error) {
+	it := view.Iterator()
+	l := view.m.Size()
+	s := reflect.MakeSlice(reflect.SliceOf(entryType), l, l)
+	return toArray(it, s)
+}
+
 var errArrayExpected = errors.New("array expected")
 
 type Slice struct {
 	S interface{}
 }
 
-func (s *Slice) Kind() string { return "slice" }
+func (s *Slice) kind() string { return "slice" }
 
 func (s *Slice) Add(v interface{}) (bool, error) {
-	s.S = reflect.Append(reflect.ValueOf(s.S), reflect.ValueOf(v)).Interface()
+	sS := reflect.ValueOf(s.S)
+	vv, err := convertType(reflect.ValueOf(v), sS.Type().Elem())
+	if err != nil {
+		return false, fmt.Errorf("cannot convert argument %w", err)
+	}
+	s.S = reflect.Append(sS, vv).Interface()
 	return true, nil
 }
 
@@ -457,7 +515,16 @@ func (s *Slice) Set(i int, v interface{}) (interface{}, error) {
 	sS := reflect.ValueOf(s.S)
 	if i >= 0 && i < sS.Len() {
 		r := sS.Index(i).Interface()
-		sS.Index(i).Set(reflect.ValueOf(v))
+		vv := reflect.ValueOf(v)
+		elemT := sS.Type().Elem()
+		switch {
+		case vv.Type().AssignableTo(elemT):
+		case vv.Type().ConvertibleTo(elemT):
+			vv = vv.Convert(elemT)
+		default:
+			return nil, fmt.Errorf("cannot convert %s to %s", getKind(vv), getKind(elemT))
+		}
+		sS.Index(i).Set(vv)
 		return r, nil
 	}
 	return nil, fmt.Errorf("index out of range %d with length %d", i, sS.Len())
@@ -470,17 +537,19 @@ func (s *Slice) Size() int {
 func (s *Slice) ToArray() (*Slice, error) {
 	sS := reflect.ValueOf(s.S)
 	if sS.IsNil() {
-		return &Slice{}, nil
+		return &Slice{[]interface{}(nil)}, nil
 	}
 	ss := reflect.MakeSlice(sS.Type(), sS.Len(), sS.Len())
 	reflect.Copy(ss, sS)
 	return &Slice{ss.Interface()}, nil
 }
 
+var errIteratorInvalidState = errors.New("next hasn't yet been called on iterator")
+
 type Iterator interface {
 	Next() interface{}
 	HasNext() bool
-	Remove()
+	Remove() error
 }
 
 type CollectionIterator struct {
@@ -500,7 +569,7 @@ func NewIterator(v interface{}) Iterator {
 	}
 }
 
-func (it *CollectionIterator) Kind() string { return "iterator" }
+func (it *CollectionIterator) kind() string { return "iterator" }
 
 func (it *CollectionIterator) Next() interface{} {
 	if it.i < it.s.Size() {
@@ -513,9 +582,13 @@ func (it *CollectionIterator) Next() interface{} {
 
 func (it *CollectionIterator) HasNext() bool { return it.i < it.s.Size() }
 
-func (it *CollectionIterator) Remove() {
+func (it *CollectionIterator) Remove() error {
+	if it.i == 0 {
+		return errIteratorInvalidState
+	}
 	it.s.removeAt(it.i - 1)
 	it.i--
+	return nil
 }
 
 type MapIterator struct {
@@ -552,7 +625,13 @@ func (it *MapIterator) Next() interface{} {
 	it.i++
 	return it.mapper(it.mM, it.k[it.i-1])
 }
-func (it *MapIterator) Remove() { it.mM.SetMapIndex(it.k[it.i-1], Nil) }
+func (it *MapIterator) Remove() error {
+	if it.i == 0 {
+		return errIteratorInvalidState
+	}
+	it.mM.SetMapIndex(it.k[it.i-1], Nil)
+	return nil
+}
 
 type Collection interface {
 	Add(v interface{}) (bool, error)
@@ -641,7 +720,7 @@ var upper = cases.Upper(language.Und)
 
 type Str string
 
-func (s Str) Kind() string { return "string" }
+func (s Str) kind() string { return "string" }
 
 func (s Str) CharAt(i int) (rune, error) {
 	r := []rune(s)
@@ -760,7 +839,7 @@ type Range struct {
 	start, end, diff int
 }
 
-func (r *Range) Kind() string { return "range" }
+func (r *Range) kind() string { return "range" }
 
 func NewRange(start, end int) *Range {
 	r := &Range{start, end, 1}
@@ -836,12 +915,7 @@ func (r *Range) ToArray() (*Slice, error) {
 	}
 	s := make([]int, r.Size())
 	it := r.Iterator()
-	var i int
-	for it.HasNext() {
-		s[i] = it.Next().(int)
-		i++
-	}
-	return &Slice{s}, nil
+	return toArray(it, reflect.ValueOf(s))
 }
 
 func checkSize(c Collection) error {
@@ -849,4 +923,34 @@ func checkSize(c Collection) error {
 		return errors.New("size is too large")
 	}
 	return nil
+}
+
+type Kinder interface {
+	kind() string
+}
+
+func convertType(v reflect.Value, t reflect.Type) (reflect.Value, error) {
+	switch {
+	case !v.IsValid():
+		switch t.Kind() {
+		case reflect.Slice, reflect.Map, reflect.Ptr, reflect.Interface:
+			return reflect.Zero(t), nil
+		default:
+			return Nil, fmt.Errorf("%s to %s", "nil", getKind(t))
+		}
+	case v.Type().AssignableTo(t):
+		return v, nil
+	case v.Type().ConvertibleTo(t):
+		return v.Convert(t), nil
+	}
+	return Nil, fmt.Errorf("%s to %s", getKind(v), getKind(t))
+}
+
+func toArray(it Iterator, s reflect.Value) (*Slice, error) {
+	var i int
+	for it.HasNext() {
+		s.Index(i).Set(reflect.ValueOf(it.Next()))
+		i++
+	}
+	return &Slice{s.Interface()}, nil
 }
