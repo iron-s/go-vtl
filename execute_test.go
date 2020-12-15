@@ -560,3 +560,166 @@ func TestExecuteIf_Body(t *testing.T) {
 		})
 	}
 }
+
+func TestExecuteForeach_Reference(t *testing.T) {
+	tests := []struct {
+		name      string
+		tmpl      string
+		context   _m
+		expect    string
+		expectErr string
+	}{
+		// null expression
+		{"undefined reference",
+			`#foreach($x in [1])x: $x#end`, nil, "x: 1", ""},
+		{"existing variable",
+			`#foreach($x in [1])x: $x#end, after: $x`, _m{"x": 42}, "x: 1, after: 42", ""},
+		{"reserved variable foreach will be shadowed",
+			`#foreach($foreach in [1])foreach: $foreach#end`, nil, "foreach: 1", ""},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tmpl, err := Parse(test.tmpl, "", "")
+			var b bytes.Buffer
+			if assert.NoError(t, err) {
+				err := tmpl.Execute(&b, test.context)
+				if test.expectErr == "" {
+					assert.NoError(t, err)
+				} else {
+					assert.EqualError(t, err, test.expectErr)
+				}
+				assert.Equal(t, test.expect, b.String())
+			}
+		})
+	}
+}
+
+func TestExecuteForeach_Argument(t *testing.T) {
+	tests := []struct {
+		name      string
+		tmpl      string
+		context   _m
+		expect    string
+		expectErr string
+	}{
+		// null expression
+		{"undefined variable",
+			`#foreach($x in $anything)x: $x#end`, nil, "", "undefined var $anything"},
+		{"defined null variable",
+			`#foreach($x in $some)x: $x#end`, _m{"some": nil}, "", ""},
+		{"evals to null",
+			`#foreach($x in $y.some)x: $x#end`, _m{"y": map[string]interface{}{"some": nil}}, "", ""},
+		// literals
+		{"range literal",
+			`#foreach($x in [0..0])x: $x#end`, nil, "x: 0", ""},
+		{"empty array literal",
+			`#foreach($x in [])x: $x#end`, nil, "", ""},
+		{"non-empty array literal",
+			`#foreach($x in [0])x: $x#end`, nil, "x: 0", ""},
+		{"empty map literal",
+			`#foreach($x in {})x: $x#end`, nil, "", ""},
+		{"non-empty map literal",
+			`#foreach($x in {0:1})x: $x#end`, nil, "x: 1", ""},
+		// non-iterable vars
+		{"empty string var",
+			`#foreach($x in $some)x: $x#end`, _m{"some": ""}, "", "cannot iterate over string"},
+		{"non-empty string var",
+			`#foreach($x in $some)x: $x#end`, _m{"some": "0"}, "", "cannot iterate over string"},
+		{"bool false var",
+			`#foreach($x in $some)x: $x#end`, _m{"some": false}, "", "cannot iterate over bool"},
+		{"bool true var",
+			`#foreach($x in $some)x: $x#end`, _m{"some": true}, "", "cannot iterate over bool"},
+		{"zero int var",
+			`#foreach($x in $some)x: $x#end`, _m{"some": 0}, "", "cannot iterate over int"},
+		{"negative zero float var",
+			`#foreach($x in $some)x: $x#end`, _m{"some": -0.0}, "", "cannot iterate over float64"},
+		{"two int var",
+			`#foreach($x in $some)x: $x#end`, _m{"some": 2}, "", "cannot iterate over int"},
+		{"negative one float var",
+			`#foreach($x in $some)x: $x#end`, _m{"some": -1.0}, "", "cannot iterate over float64"},
+		// iterable vars
+		{"empty array var",
+			`#foreach($x in $some)x: $x#end`, _m{"some": []int{}}, "", ""},
+		{"non-empty array var",
+			`#foreach($x in $some)x: $x#end`, _m{"some": []string{""}}, "x: ", ""},
+		{"empty map var",
+			`#foreach($x in $some)x: $x#end`, _m{"some": map[string]int{}}, "", ""},
+		{"non-empty map var",
+			`#foreach($x in $some)x: $x#end`, _m{"some": map[string]string{"": ""}}, "x: ", ""},
+		{"empty iterator",
+			`#foreach($x in $some)x: $x#end`, _m{"some": (&Map{map[string]int{}}).EntrySet()}, "", ""},
+		{"non-empty iterator",
+			`#foreach($x in $some)x: $x#end`, _m{"some": (&Map{map[string]string{"": ""}}).EntrySet()}, "x: =", ""},
+		// expressions
+		{"non-empty iterator from array",
+			`#foreach($x in $some.iterator())x: $x#end`, _m{"some": []string{""}}, "x: ", ""},
+		{"non-empty values from map",
+			`#foreach($x in $some.values())x: $x#end`, _m{"some": map[string]string{"": ""}}, "x: ", ""},
+		{"entrySet from map",
+			`#foreach($x in $some.entrySet())$x.key - $x.value#if($foreach.hasNext), #end#end`, _m{"some": map[string]int{"a": 1, "b": 2}}, "a - 1, b - 2", ""},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tmpl, err := Parse(test.tmpl, "", "")
+			var b bytes.Buffer
+			if assert.NoError(t, err) {
+				err := tmpl.Execute(&b, test.context)
+				if test.expectErr == "" {
+					assert.NoError(t, err)
+				} else {
+					assert.EqualError(t, err, test.expectErr)
+				}
+				assert.Equal(t, test.expect, b.String())
+			}
+		})
+	}
+}
+
+func TestExecuteForeach_Body(t *testing.T) {
+	tests := []struct {
+		name      string
+		tmpl      string
+		context   _m
+		expect    string
+		expectErr string
+	}{
+		{"foreach properties",
+			`#foreach($x in [1..2])
+x: $x
+first: $foreach.first
+last: $foreach.last
+index: $foreach.index
+count: $foreach.count
+hasNext: $foreach.hasNext
+#end`, nil, `x: 1
+first: true
+last: false
+index: 0
+count: 1
+hasNext: true
+x: 2
+first: false
+last: true
+index: 1
+count: 2
+hasNext: false
+`, ""},
+		{"if, set and other foreach",
+			`#foreach($x in [1..2])x: $x#if($foreach.hasNext), #end#set($l = [2, 3])#if($x > 1)!#foreach($y in $l)$y#end#end#end`, nil, "x: 1, x: 2!23", ""},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tmpl, err := Parse(test.tmpl, "", "")
+			var b bytes.Buffer
+			if assert.NoError(t, err) {
+				err := tmpl.Execute(&b, test.context)
+				if test.expectErr == "" {
+					assert.NoError(t, err)
+				} else {
+					assert.EqualError(t, err, test.expectErr)
+				}
+				assert.Equal(t, test.expect, b.String())
+			}
+		})
+	}
+}

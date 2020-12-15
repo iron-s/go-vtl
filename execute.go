@@ -162,10 +162,8 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			fdepth := ctx.Push("foreach", reflect.ValueOf(f))
 			vdepth := ctx.Push(n.Var.Name, reflect.ValueOf(nil))
 			switch iter.Type() {
-			case sliceType:
-				f.it = iter.Interface().(*Slice).Iterator()
-			case rangeType:
-				f.it = iter.Interface().(*Range).Iterator()
+			case sliceType, rangeType, keyViewType, valViewType, entryViewType:
+				f.it = iter.Interface().(Iterable).Iterator()
 			case mapType:
 				f.it = iter.Interface().(*Map).Values().Iterator()
 			case collIteratorType, mapIteratorType:
