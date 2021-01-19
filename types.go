@@ -596,7 +596,10 @@ func (it *CollectionIterator) Remove() error {
 	if it.i == 0 {
 		return errIteratorInvalidState
 	}
-	it.s.removeAt(it.i - 1)
+	err := it.s.removeAt(it.i - 1)
+	if err != nil {
+		return err
+	}
 	it.i--
 	return nil
 }

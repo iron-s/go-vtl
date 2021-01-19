@@ -2457,22 +2457,21 @@ func TestCollectionIterator_Remove(t *testing.T) {
 	tests := []struct {
 		name      string
 		fields    fields
-		n         int
 		assertion assert.ErrorAssertionFunc
 		wantErr   error
 		want      interface{}
 	}{
 		{"can't remove from range",
-			fields{&Range{1, 3, 1}, 0}, 0,
+			fields{&Range{1, 3, 1}, 1},
 			assert.Error, errUnsupported, &Range{1, 3, 1}},
 		{"remove from the middle of a slice",
-			fields{&Slice{[]int{1, 2, 3}}, 0}, 2,
+			fields{&Slice{[]int{1, 2, 3}}, 2},
 			assert.NoError, nil, &Slice{[]int{1, 3}}},
 		{"remove from the end of a slice",
-			fields{&Slice{[]int{1, 2, 3}}, 0}, 1,
+			fields{&Slice{[]int{1, 2, 3}}, 3},
 			assert.NoError, nil, &Slice{[]int{1, 2}}},
 		{"remove from the start of a slice",
-			fields{&Slice{[]int{1, 2, 3}}, 0}, 3,
+			fields{&Slice{[]int{1, 2, 3}}, 1},
 			assert.NoError, nil, &Slice{[]int{2, 3}}},
 	}
 	for _, tt := range tests {
@@ -2480,10 +2479,6 @@ func TestCollectionIterator_Remove(t *testing.T) {
 			it := &CollectionIterator{
 				s: tt.fields.s,
 				i: tt.fields.i,
-			}
-			for tt.n > 0 {
-				tt.n--
-				it.Next()
 			}
 			err := it.Remove()
 			tt.assertion(t, err)
