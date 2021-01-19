@@ -19,18 +19,18 @@ var Nil = reflect.Value{}
 var errMapExpected = errors.New("map expected")
 
 type Map struct {
-	M interface{}
+	m interface{}
 }
 
 func (m *Map) kind() string { return "map" }
 
 func (m *Map) Clear() {
-	m.M = reflect.MakeMap(reflect.TypeOf(m.M)).Interface()
+	m.m = reflect.MakeMap(reflect.TypeOf(m.m)).Interface()
 }
 
 func (m *Map) ContainsKey(key interface{}) bool {
 	k := reflect.ValueOf(key)
-	mM := reflect.ValueOf(m.M)
+	mM := reflect.ValueOf(m.m)
 	k, err := convertType(k, mM.Type().Key())
 	if err != nil {
 		return false
@@ -40,10 +40,14 @@ func (m *Map) ContainsKey(key interface{}) bool {
 }
 
 func (m *Map) ContainsValue(val interface{}) bool {
-	iter := reflect.ValueOf(m.M).MapRange()
+	iter := reflect.ValueOf(m.m).MapRange()
 	for iter.Next() {
 		v := iter.Value()
-		if reflect.DeepEqual(v.Interface(), val) {
+		if !v.IsValid() || val == nil {
+			if !v.IsValid() || v.IsNil() && val == nil {
+				return true
+			}
+		} else if rTypeConvEQ(v, reflect.ValueOf(val)) {
 			return true
 		}
 	}
@@ -59,14 +63,14 @@ func (m *Map) Equals(v interface{}) (bool, error) {
 	if !ok {
 		return false, errMapExpected
 	}
-	mM, vM := reflect.ValueOf(m.M), reflect.ValueOf(vv.M)
+	mM, vM := reflect.ValueOf(m.m), reflect.ValueOf(vv.m)
 	if mM.Len() != vM.Len() {
 		return false, nil
 	}
 	iter := mM.MapRange()
 	for iter.Next() {
 		vV := vM.MapIndex(iter.Key())
-		if vV == Nil || !reflect.DeepEqual(vV.Interface(), iter.Value().Interface()) {
+		if vV == Nil || !rTypeConvEQ(vV, iter.Value()) {
 			return false, nil
 		}
 	}
@@ -78,7 +82,7 @@ func (m *Map) Get(key interface{}) interface{} {
 }
 
 func (m *Map) GetOrDefault(key interface{}, deflt interface{}) interface{} {
-	mM := reflect.ValueOf(m.M)
+	mM := reflect.ValueOf(m.m)
 	k := reflect.ValueOf(key)
 	switch {
 	case k.Type().AssignableTo(mM.Type().Key()):
@@ -94,7 +98,7 @@ func (m *Map) GetOrDefault(key interface{}, deflt interface{}) interface{} {
 }
 
 func (m *Map) IsEmpty() bool {
-	return reflect.ValueOf(m.M).Len() == 0
+	return reflect.ValueOf(m.m).Len() == 0
 }
 
 func (m *Map) KeySet() *KeyView {
@@ -102,7 +106,7 @@ func (m *Map) KeySet() *KeyView {
 }
 
 func (m *Map) Put(key, value interface{}) (interface{}, error) {
-	mM := reflect.ValueOf(m.M)
+	mM := reflect.ValueOf(m.m)
 	kk := reflect.ValueOf(key)
 	vv := reflect.ValueOf(value)
 
@@ -133,7 +137,7 @@ func (m *Map) PutAll(v interface{}) error {
 	if !ok {
 		return errMapExpected
 	}
-	mM, vM := reflect.ValueOf(m.M), reflect.ValueOf(vv.M)
+	mM, vM := reflect.ValueOf(m.m), reflect.ValueOf(vv.m)
 	elemT := mM.Type().Elem()
 	keyT := mM.Type().Key()
 
@@ -162,7 +166,7 @@ func (m *Map) PutIfAbsent(key interface{}, value interface{}) interface{} {
 }
 
 func (m *Map) Remove(key interface{}) (interface{}, error) {
-	mM := reflect.ValueOf(m.M)
+	mM := reflect.ValueOf(m.m)
 	keyT := mM.Type().Key()
 	kk, err := convertType(reflect.ValueOf(key), keyT)
 	if err != nil {
@@ -183,7 +187,7 @@ func (m *Map) Replace(key interface{}, val interface{}) interface{} {
 }
 
 func (m *Map) Size() int {
-	return reflect.ValueOf(m.M).Len()
+	return reflect.ValueOf(m.m).Len()
 }
 
 func (m *Map) Values() *ValView {
@@ -199,7 +203,7 @@ type MapEntry struct {
 func (e *MapEntry) kind() string { return "mapEntry" }
 
 func (e *MapEntry) Equals(entry *MapEntry) bool {
-	return reflect.DeepEqual(e.k, entry.k) && reflect.DeepEqual(e.v, entry.v)
+	return reflect.DeepEqual(e.k, entry.k) && iTypeConvEQ(e.v, entry.v)
 }
 
 func (e *MapEntry) GetKey() interface{} {
@@ -279,7 +283,7 @@ func (view *KeyView) RetainAll(v interface{}) (bool, error) {
 func (view *KeyView) ToArray() (*Slice, error) {
 	it := view.Iterator()
 	l := view.m.Size()
-	s := reflect.MakeSlice(reflect.SliceOf(reflect.ValueOf(view.m.M).Type().Key()), l, l)
+	s := reflect.MakeSlice(reflect.SliceOf(reflect.ValueOf(view.m.m).Type().Key()), l, l)
 	return toArray(it, s)
 }
 
@@ -299,12 +303,12 @@ func (view *ValView) Iterator() Iterator {
 func (view *ValView) kind() string { return "valView" }
 
 func (view *ValView) Remove(val interface{}) bool {
-	mM := reflect.ValueOf(view.m.M)
+	mM := reflect.ValueOf(view.m.m)
 	var found bool
 	iter := mM.MapRange()
 	for iter.Next() {
 		v := iter.Value()
-		if reflect.DeepEqual(v.Interface(), val) {
+		if rTypeConvEQ(v, reflect.ValueOf(val)) {
 			mM.SetMapIndex(iter.Key(), Nil)
 			found = true
 			break
@@ -332,7 +336,7 @@ func (view *ValView) RetainAll(v interface{}) (bool, error) {
 func (view *ValView) ToArray() (*Slice, error) {
 	it := view.Iterator()
 	l := view.m.Size()
-	s := reflect.MakeSlice(reflect.SliceOf(reflect.ValueOf(view.m.M).Type().Elem()), l, l)
+	s := reflect.MakeSlice(reflect.SliceOf(reflect.ValueOf(view.m.m).Type().Elem()), l, l)
 	return toArray(it, s)
 }
 
@@ -343,7 +347,10 @@ func (view *EntryView) Contains(val interface{}) bool {
 	if !ok {
 		return false
 	}
-	return view.m.ContainsKey(me.k) && reflect.DeepEqual(view.m.Get(me.k), me.v)
+	if !view.m.ContainsKey(me.k) {
+		return false
+	}
+	return iTypeConvEQ(view.m.Get(me.k), me.v)
 }
 
 func (view *EntryView) Iterator() Iterator {
@@ -356,9 +363,9 @@ func (view *EntryView) Iterator() Iterator {
 func (v *EntryView) kind() string { return "entryView" }
 
 func (view *EntryView) Remove(val *MapEntry) bool {
-	mM := reflect.ValueOf(view.m.M)
+	mM := reflect.ValueOf(view.m.m)
 	v := mM.MapIndex(reflect.ValueOf(val.k))
-	if v != Nil && reflect.DeepEqual(v.Interface(), val.v) {
+	if v != Nil && rTypeConvEQ(v, reflect.ValueOf(val.v)) {
 		mM.SetMapIndex(reflect.ValueOf(val.k), Nil)
 		return true
 	}
@@ -391,18 +398,18 @@ func (view *EntryView) ToArray() (*Slice, error) {
 var errArrayExpected = errors.New("array expected")
 
 type Slice struct {
-	S interface{}
+	s interface{}
 }
 
 func (s *Slice) kind() string { return "slice" }
 
 func (s *Slice) Add(v interface{}) (bool, error) {
-	sS := reflect.ValueOf(s.S)
+	sS := reflect.ValueOf(s.s)
 	vv, err := convertType(reflect.ValueOf(v), sS.Type().Elem())
 	if err != nil {
 		return false, fmt.Errorf("cannot convert argument %w", err)
 	}
-	s.S = reflect.Append(sS, vv).Interface()
+	s.s = reflect.Append(sS, vv).Interface()
 	return true, nil
 }
 
@@ -411,33 +418,33 @@ func (s *Slice) AddAll(v interface{}) (bool, error) {
 	if !ok {
 		return false, errArrayExpected
 	}
-	s.S = reflect.AppendSlice(reflect.ValueOf(s.S), reflect.ValueOf(vv.S)).Interface()
+	s.s = reflect.AppendSlice(reflect.ValueOf(s.s), reflect.ValueOf(vv.s)).Interface()
 	return true, nil
 }
 
 func (s *Slice) Clear() error {
-	sS := reflect.ValueOf(s.S)
+	sS := reflect.ValueOf(s.s)
 	if sS.IsValid() && sS.Kind() == reflect.Slice {
-		s.S = reflect.Zero(sS.Type()).Interface()
+		s.s = reflect.Zero(sS.Type()).Interface()
 	} else {
-		s.S = reflect.ValueOf([]interface{}(nil)).Interface()
+		s.s = reflect.ValueOf([]interface{}(nil)).Interface()
 	}
 	return nil
 }
 
 func (s *Slice) Contains(v interface{}) bool {
-	sS := reflect.ValueOf(s.S)
-	comparer := reflect.DeepEqual
+	sS := reflect.ValueOf(s.s)
+	comparer := iTypeConvEQ
 	// special case - if this is slice of MapEntry we should use Equals method
 	vv := reflect.ValueOf(v)
 	for vv.Kind() == reflect.Interface {
 		vv = vv.Elem()
 	}
-
 	if vv.IsValid() && vv.Type() == entryType {
 		comparer = func(x, y interface{}) bool {
-			ye, ok := y.(*MapEntry)
-			return ok && x.(*MapEntry).Equals(ye)
+			xe, xok := x.(*MapEntry)
+			ye, yok := y.(*MapEntry)
+			return xok && yok && xe.Equals(ye)
 		}
 	}
 	for i := 0; i < sS.Len(); i++ {
@@ -461,25 +468,25 @@ func (s *Slice) Equals(v interface{}) (bool, error) {
 }
 
 func (s *Slice) Get(i int) (interface{}, error) {
-	sS := reflect.ValueOf(s.S)
+	sS := reflect.ValueOf(s.s)
 	if i >= 0 && i < sS.Len() {
 		return sS.Index(i).Interface(), nil
 	}
 	return nil, fmt.Errorf("index out of range %d with length %d", i, sS.Len())
 }
 
-func (s *Slice) IsEmpty() bool { return reflect.ValueOf(s.S).Len() == 0 }
+func (s *Slice) IsEmpty() bool { return reflect.ValueOf(s.s).Len() == 0 }
 
 func (s *Slice) Iterator() Iterator { return &CollectionIterator{s: s} }
 
 func (s *Slice) Remove(v interface{}) (bool, error) {
-	sS := reflect.ValueOf(s.S)
+	sS := reflect.ValueOf(s.s)
 	if !sS.IsValid() {
 		return false, nil
 	}
 	for i := 0; i < sS.Len(); i++ {
-		if reflect.DeepEqual(sS.Index(i).Interface(), v) {
-			s.S = reflect.AppendSlice(sS.Slice(0, i), sS.Slice(i+1, sS.Len())).Interface()
+		if rTypeConvEQ(sS.Index(i), reflect.ValueOf(v)) {
+			s.s = reflect.AppendSlice(sS.Slice(0, i), sS.Slice(i+1, sS.Len())).Interface()
 			return true, nil
 		}
 	}
@@ -487,11 +494,14 @@ func (s *Slice) Remove(v interface{}) (bool, error) {
 }
 
 func (s *Slice) removeAt(i int) error {
-	sS := reflect.ValueOf(s.S)
+	sS := reflect.ValueOf(s.s)
 	if !sS.IsValid() {
 		return fmt.Errorf("index out of range %d with length %d", i, 0)
 	}
-	s.S = reflect.AppendSlice(sS.Slice(0, i), sS.Slice(i+1, sS.Len())).Interface()
+	if i < 0 || i >= sS.Len() {
+		return fmt.Errorf("index out of range %d with length %d", i, sS.Len())
+	}
+	s.s = reflect.AppendSlice(sS.Slice(0, i), sS.Slice(i+1, sS.Len())).Interface()
 	return nil
 }
 
@@ -512,7 +522,7 @@ func (s *Slice) RetainAll(v interface{}) (bool, error) {
 }
 
 func (s *Slice) Set(i int, v interface{}) (interface{}, error) {
-	sS := reflect.ValueOf(s.S)
+	sS := reflect.ValueOf(s.s)
 	if i >= 0 && i < sS.Len() {
 		r := sS.Index(i).Interface()
 		vv := reflect.ValueOf(v)
@@ -531,11 +541,11 @@ func (s *Slice) Set(i int, v interface{}) (interface{}, error) {
 }
 
 func (s *Slice) Size() int {
-	return reflect.ValueOf(s.S).Len()
+	return reflect.ValueOf(s.s).Len()
 }
 
 func (s *Slice) ToArray() (*Slice, error) {
-	sS := reflect.ValueOf(s.S)
+	sS := reflect.ValueOf(s.s)
 	if sS.IsNil() {
 		return &Slice{[]interface{}(nil)}, nil
 	}
@@ -565,7 +575,7 @@ func NewIterator(v interface{}) Iterator {
 	default:
 		ss := reflect.MakeSlice(reflect.SliceOf(vv.Type()), 1, 1)
 		ss.Index(0).Set(vv)
-		return &CollectionIterator{s: &Slice{S: ss.Interface()}}
+		return &CollectionIterator{s: &Slice{s: ss.Interface()}}
 	}
 }
 
@@ -599,7 +609,7 @@ type MapIterator struct {
 }
 
 func NewMapIterator(m *Map, mapper func(m, k reflect.Value) interface{}) *MapIterator {
-	mM := reflect.ValueOf(m.M)
+	mM := reflect.ValueOf(m.m)
 	keys := mM.MapKeys()
 	kind := basicKind(reflect.Zero(mM.Type().Key()))
 	sort.Slice(keys, func(i, j int) bool {
@@ -683,7 +693,7 @@ func equals(c Collection, v interface{}) (bool, error) {
 	for i := 0; i < vv.Size(); i++ {
 		o, _ := vv.Get(i)
 		t, _ := c.Get(i)
-		if !reflect.DeepEqual(o, t) {
+		if !iTypeConvEQ(o, t) {
 			return false, nil
 		}
 	}
@@ -888,7 +898,7 @@ func (r *Range) IndexOf(i int) int {
 	return ret
 }
 
-func (r *Range) IsEmpty() bool { return r.Size() > 0 }
+func (r *Range) IsEmpty() bool { return false }
 
 func (r *Range) Iterator() Iterator {
 	return &CollectionIterator{s: r}
@@ -953,4 +963,17 @@ func toArray(it Iterator, s reflect.Value) (*Slice, error) {
 		i++
 	}
 	return &Slice{s.Interface()}, nil
+}
+
+func iTypeConvEQ(a, b interface{}) bool {
+	return rTypeConvEQ(reflect.ValueOf(a), reflect.ValueOf(b))
+}
+
+func rTypeConvEQ(a, b reflect.Value) bool {
+	if a == Nil || b == Nil {
+		return a == b
+	}
+	ia := wrapTypes(a).Interface()
+	ib := wrapTypes(b).Interface()
+	return reflect.DeepEqual(ia, ib)
 }

@@ -1,6 +1,8 @@
 package govtl
 
 import (
+	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,26 +14,26 @@ func emptyMap() map[string]interface{} {
 
 func TestMap_Clear(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	tests := []struct {
 		name   string
 		fields fields
 	}{
 		{"full map should be cleared",
-			fields{M: map[string]interface{}{"some": "field"}}},
+			fields{m: map[string]interface{}{"some": "field"}}},
 		{"and even nil map should be replaced",
-			fields{M: nil}},
+			fields{m: nil}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			m.Clear()
-			assert.NotNil(t, m.M, "map is not nil")
-			if assert.IsType(t, m.M, map[string]interface{}(nil), "proper type") {
-				assert.Len(t, m.M.(map[string]interface{}), 0, "and of zero length")
+			assert.NotNil(t, m.m, "map is not nil")
+			if assert.IsType(t, m.m, map[string]interface{}(nil), "proper type") {
+				assert.Len(t, m.m.(map[string]interface{}), 0, "and of zero length")
 			}
 		})
 	}
@@ -39,7 +41,7 @@ func TestMap_Clear(t *testing.T) {
 
 func TestMap_ContainsKey(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	type args struct {
 		key interface{}
@@ -51,26 +53,26 @@ func TestMap_ContainsKey(t *testing.T) {
 		want   bool
 	}{
 		{"key in map exists",
-			fields{M: map[string]interface{}{"some": "field"}},
+			fields{m: map[string]interface{}{"some": "field"}},
 			args{key: "some"},
 			true},
 		{"no key in map exists",
-			fields{M: map[string]interface{}{"some": "field"}},
+			fields{m: map[string]interface{}{"some": "field"}},
 			args{key: "other"},
 			false},
 		{"key of incompatible type",
-			fields{M: map[string]interface{}{"some": "field"}},
+			fields{m: map[string]interface{}{"some": "field"}},
 			args{key: 1},
 			false},
 		{"key of composite",
-			fields{M: map[string]interface{}{"some": "field"}},
+			fields{m: map[string]interface{}{"some": "field"}},
 			args{key: map[string]interface{}{}},
 			false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			assert.Equal(t, tt.want, m.ContainsKey(tt.args.key))
 		})
@@ -79,7 +81,7 @@ func TestMap_ContainsKey(t *testing.T) {
 
 func TestMap_ContainsValue(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	type args struct {
 		val interface{}
@@ -91,26 +93,26 @@ func TestMap_ContainsValue(t *testing.T) {
 		want   bool
 	}{
 		{"value does not exist",
-			fields{M: map[string]interface{}{"some": "field"}},
+			fields{m: map[string]interface{}{"some": "field"}},
 			args{val: "some"},
 			false},
 		{"value exists and of comparable type",
-			fields{M: map[string]interface{}{"some": "field"}},
+			fields{m: map[string]interface{}{"some": "field"}},
 			args{val: "field"},
 			true},
 		{"value exists and is nil",
-			fields{M: map[string]interface{}{"some": nil}},
+			fields{m: map[string]interface{}{"some": nil}},
 			args{val: nil},
 			true},
 		{"value exists and of non-comparable type",
-			fields{M: map[string]interface{}{"some": []string{"field"}}},
+			fields{m: map[string]interface{}{"some": []string{"field"}}},
 			args{val: []string{"field"}},
 			true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			assert.Equal(t, tt.want, m.ContainsValue(tt.args.val))
 		})
@@ -119,7 +121,7 @@ func TestMap_ContainsValue(t *testing.T) {
 
 func TestMap_EntrySet(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	m := map[string]interface{}{"second": "value", "first": []int{1}}
 	tests := []struct {
@@ -137,7 +139,7 @@ func TestMap_EntrySet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			es := m.EntrySet()
 			assert.Equal(t, tt.wantM, es.m)
@@ -147,7 +149,7 @@ func TestMap_EntrySet(t *testing.T) {
 
 func TestMap_Equals(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	type args struct {
 		v interface{}
@@ -193,7 +195,7 @@ func TestMap_Equals(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			got, err := m.Equals(tt.args.v)
 			tt.assertion(t, err)
@@ -204,7 +206,7 @@ func TestMap_Equals(t *testing.T) {
 
 func TestMap_Get(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	type args struct {
 		key interface{}
@@ -231,7 +233,7 @@ func TestMap_Get(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			assert.Equal(t, tt.want, m.Get(tt.args.key))
 		})
@@ -240,7 +242,7 @@ func TestMap_Get(t *testing.T) {
 
 func TestMap_GetOrDefault(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	type args struct {
 		key   interface{}
@@ -268,7 +270,7 @@ func TestMap_GetOrDefault(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			assert.Equal(t, tt.want, m.GetOrDefault(tt.args.key, tt.args.deflt))
 		})
@@ -277,7 +279,7 @@ func TestMap_GetOrDefault(t *testing.T) {
 
 func TestMap_IsEmpty(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	tests := []struct {
 		name   string
@@ -294,7 +296,7 @@ func TestMap_IsEmpty(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			assert.Equal(t, tt.want, m.IsEmpty())
 		})
@@ -303,7 +305,7 @@ func TestMap_IsEmpty(t *testing.T) {
 
 func TestMap_KeySet(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	m := map[string]interface{}{"second": "value", "first": []int{1}}
 	empty := emptyMap()
@@ -322,7 +324,7 @@ func TestMap_KeySet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			assert.Equal(t, tt.want, m.KeySet())
 		})
@@ -331,7 +333,7 @@ func TestMap_KeySet(t *testing.T) {
 
 func TestMap_Put(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	m := emptyMap()
 	type args struct {
@@ -362,7 +364,7 @@ func TestMap_Put(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			got, err := m.Put(tt.args.key, tt.args.value)
 			assert.Equal(t, tt.want, got)
@@ -376,7 +378,7 @@ func TestMap_Put(t *testing.T) {
 
 func TestMap_PutAll(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	type args struct {
 		v interface{}
@@ -413,17 +415,17 @@ func TestMap_PutAll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			tt.assertion(t, m.PutAll(tt.args.v))
-			assert.Equal(t, m.M, tt.want)
+			assert.Equal(t, m.m, tt.want)
 		})
 	}
 }
 
 func TestMap_PutIfAbsent(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	type args struct {
 		key   string
@@ -456,17 +458,17 @@ func TestMap_PutIfAbsent(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			assert.Equal(t, tt.want, m.PutIfAbsent(tt.args.key, tt.args.value))
-			assert.Equal(t, m.M, tt.wantM)
+			assert.Equal(t, m.m, tt.wantM)
 		})
 	}
 }
 
 func TestMap_Remove(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	type args struct {
 		key interface{}
@@ -507,19 +509,19 @@ func TestMap_Remove(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			got, err := m.Remove(tt.args.key)
 			assert.Equal(t, tt.want, got)
 			tt.assertion(t, err)
-			assert.Equal(t, tt.wantM, m.M)
+			assert.Equal(t, tt.wantM, m.m)
 		})
 	}
 }
 
 func TestMap_Replace(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	type args struct {
 		key string
@@ -556,7 +558,7 @@ func TestMap_Replace(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			assert.Equal(t, tt.want, m.Replace(tt.args.key, tt.args.val))
 		})
@@ -565,7 +567,7 @@ func TestMap_Replace(t *testing.T) {
 
 func TestMap_Size(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	tests := []struct {
 		name   string
@@ -585,7 +587,7 @@ func TestMap_Size(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			assert.Equal(t, tt.want, m.Size())
 		})
@@ -594,7 +596,7 @@ func TestMap_Size(t *testing.T) {
 
 func TestMap_Values(t *testing.T) {
 	type fields struct {
-		M map[string]interface{}
+		m map[string]interface{}
 	}
 	empty := emptyMap()
 	m := map[string]interface{}{"second": "value", "first": []int{1}}
@@ -613,7 +615,7 @@ func TestMap_Values(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &Map{
-				M: tt.fields.M,
+				m: tt.fields.m,
 			}
 			assert.Equal(t, tt.want, m.Values())
 		})
@@ -854,7 +856,90 @@ func TestView_Clear(t *testing.T) {
 				m: tt.fields.m,
 			}
 			v.Clear()
-			assert.Equal(t, emptyMap(), v.m.M)
+			assert.Equal(t, emptyMap(), v.m.m)
+		})
+	}
+}
+
+func TestKeyView_Contains(t *testing.T) {
+	type fields struct {
+		m *Map
+	}
+	type args struct {
+		key interface{}
+	}
+	k := Str("k")
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{"works with empty",
+			fields{&Map{emptyMap()}},
+			args{"key"},
+			false},
+		{"does not contain non-existant",
+			fields{&Map{map[string]interface{}{"k": 1}}},
+			args{"key"},
+			false},
+		{"does not contain int type",
+			fields{&Map{map[string]interface{}{"k": 1, "key": "value"}}},
+			args{1},
+			false},
+		{"does not contain pointer type",
+			fields{&Map{map[string]interface{}{"k": 1, "key": "value"}}},
+			args{&k},
+			false},
+		{"contains wrapped type",
+			fields{&Map{map[string]interface{}{"k": 1, "key": "value"}}},
+			args{Str("k")},
+			true},
+		{"contains existing",
+			fields{&Map{map[string]interface{}{"k": 1, "key": "value"}}},
+			args{"key"},
+			true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			view := &KeyView{
+				m: tt.fields.m,
+			}
+			assert.Equal(t, tt.want, view.Contains(tt.args.key))
+		})
+	}
+}
+
+func TestKeyView_Iterator(t *testing.T) {
+	type fields struct {
+		m *Map
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []interface{}
+	}{
+		{"works with empty",
+			fields{&Map{emptyMap()}},
+			nil},
+		{"single key",
+			fields{&Map{map[string]interface{}{"k": 1}}},
+			[]interface{}{"k"}},
+		{"multiple keys in order",
+			fields{&Map{map[string]interface{}{"b": 1, "a": "value"}}},
+			[]interface{}{"a", "b"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			view := &KeyView{
+				m: tt.fields.m,
+			}
+			it := view.Iterator()
+			var got []interface{}
+			for it.HasNext() {
+				got = append(got, it.Next())
+			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -883,7 +968,7 @@ func TestKeyView_Remove(t *testing.T) {
 			args{"key"},
 			false,
 			map[string]interface{}{"k": 1}},
-		{"removes from slice and map",
+		{"removes from map",
 			fields{&Map{map[string]interface{}{"k": 1, "key": "value"}}},
 			args{"key"},
 			true,
@@ -895,7 +980,7 @@ func TestKeyView_Remove(t *testing.T) {
 				m: tt.fields.m,
 			}
 			assert.Equal(t, tt.want, view.Remove(tt.args.k))
-			assert.Equal(t, tt.wantM, view.m.M)
+			assert.Equal(t, tt.wantM, view.m.m)
 		})
 	}
 }
@@ -942,7 +1027,7 @@ func TestKeyView_RemoveAll(t *testing.T) {
 			got, err := view.RemoveAll(tt.args.v)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.wantM, view.m.M)
+			assert.Equal(t, tt.wantM, view.m.m)
 		})
 	}
 }
@@ -995,7 +1080,152 @@ func TestKeyView_RetainAll(t *testing.T) {
 			got, err := view.RetainAll(tt.args.v)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.wantM, view.m.M)
+			assert.Equal(t, tt.wantM, view.m.m)
+		})
+	}
+}
+
+func TestKeyView_ToArray(t *testing.T) {
+	type fields struct {
+		m *Map
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		want      *Slice
+		assertion assert.ErrorAssertionFunc
+	}{
+		{"works with empty",
+			fields{&Map{emptyMap()}},
+			&Slice{[]string{}}, assert.NoError},
+		{"single key",
+			fields{&Map{map[string]interface{}{"k": 1}}},
+			&Slice{[]string{"k"}}, assert.NoError},
+		{"multiple keys in order",
+			fields{&Map{map[string]interface{}{"b": 1, "a": "value"}}},
+			&Slice{[]string{"a", "b"}}, assert.NoError},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			view := &KeyView{
+				m: tt.fields.m,
+			}
+			got, err := view.ToArray()
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestValView_Contains(t *testing.T) {
+	type fields struct {
+		m *Map
+	}
+	type args struct {
+		val interface{}
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{"does not contain anything in empty map",
+			fields{&Map{emptyMap()}},
+			args{"value"},
+			false},
+		{"contains simple value",
+			fields{&Map{map[string]interface{}{"k": "value"}}},
+			args{"value"},
+			true},
+		{"contains slice value",
+			fields{&Map{map[string]interface{}{"k": []string{"value1", "value2"}, "k2": "value1"}}},
+			args{&Slice{[]string{"value1", "value2"}}},
+			true},
+		{"slices comparable too",
+			fields{&Map{map[string]interface{}{"k": &Slice{[]string{"value1", "value2"}}, "k2": "value1"}}},
+			args{&Slice{[]string{"value1", "value2"}}},
+			true},
+		{"does not contain value",
+			fields{&Map{map[string]interface{}{"k": []string{"value1", "value2"}, "k2": "value1"}}},
+			args{&Slice{[]string{"value1"}}},
+			false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			view := &ValView{
+				m: tt.fields.m,
+			}
+			assert.Equal(t, tt.want, view.Contains(tt.args.val))
+		})
+	}
+}
+
+func TestValView_Iterator(t *testing.T) {
+	type fields struct {
+		m *Map
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []interface{}
+	}{
+		{"works with empty",
+			fields{&Map{emptyMap()}},
+			nil},
+		{"single value",
+			fields{&Map{map[string]interface{}{"k": 1}}},
+			[]interface{}{1}},
+		{"multiple values in order",
+			fields{&Map{map[string]interface{}{"b": 1, "a": "value", "c": 1}}},
+			[]interface{}{"value", 1, 1}},
+		{"typed map",
+			fields{&Map{map[string]int{"b": 1, "a": 2, "c": 1}}},
+			[]interface{}{2, 1, 1}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			view := &ValView{
+				m: tt.fields.m,
+			}
+			it := view.Iterator()
+			var got []interface{}
+			for it.HasNext() {
+				got = append(got, it.Next())
+			}
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestValView_ToArray(t *testing.T) {
+	type fields struct {
+		m *Map
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		want      *Slice
+		assertion assert.ErrorAssertionFunc
+	}{
+		{"works with empty",
+			fields{&Map{emptyMap()}},
+			&Slice{[]interface{}{}}, assert.NoError},
+		{"single value",
+			fields{&Map{map[string]interface{}{"k": 1}}},
+			&Slice{[]interface{}{1}}, assert.NoError},
+		{"multiple values in order",
+			fields{&Map{map[string]int{"b": 1, "a": 2}}},
+			&Slice{[]int{2, 1}}, assert.NoError},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			view := &ValView{
+				m: tt.fields.m,
+			}
+			got, err := view.ToArray()
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -1041,7 +1271,7 @@ func TestValView_Remove(t *testing.T) {
 				m: tt.fields.m,
 			}
 			assert.Equal(t, tt.want, view.Remove(tt.args.val))
-			assert.Equal(t, tt.wantM, view.m.M)
+			assert.Equal(t, tt.wantM, view.m.m)
 		})
 	}
 }
@@ -1094,7 +1324,7 @@ func TestValView_RemoveAll(t *testing.T) {
 			got, err := view.RemoveAll(tt.args.v)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.wantM, view.m.M)
+			assert.Equal(t, tt.wantM, view.m.m)
 		})
 	}
 }
@@ -1147,7 +1377,114 @@ func TestValView_RetainAll(t *testing.T) {
 			got, err := view.RetainAll(tt.args.v)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.wantM, view.m.M)
+			assert.Equal(t, tt.wantM, view.m.m)
+		})
+	}
+}
+
+func TestEntryView_Contains(t *testing.T) {
+	type fields struct {
+		m *Map
+	}
+	type args struct {
+		val interface{}
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{"does not contain anything in empty map",
+			fields{&Map{emptyMap()}},
+			args{&MapEntry{"key", "value", nil}},
+			false},
+		{"contains simple value",
+			fields{&Map{map[string]interface{}{"k": "value"}}},
+			args{&MapEntry{"k", "value", nil}},
+			true},
+		{"contains slice value",
+			fields{&Map{map[string]interface{}{"k": []string{"value1", "value2"}, "k2": "value1"}}},
+			args{&MapEntry{"k", &Slice{[]string{"value1", "value2"}}, nil}},
+			true},
+		{"slices comparable too",
+			fields{&Map{map[string]interface{}{"k": &Slice{[]string{"value1", "value2"}}, "k2": "value1"}}},
+			args{&MapEntry{"k", &Slice{[]string{"value1", "value2"}}, nil}},
+			true},
+		{"does not contain value",
+			fields{&Map{map[string]interface{}{"k": []string{"value1", "value2"}, "k2": "value1"}}},
+			args{&MapEntry{"k2", &Slice{[]string{"value1"}}, nil}},
+			false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			view := &EntryView{
+				m: tt.fields.m,
+			}
+			assert.Equal(t, tt.want, view.Contains(tt.args.val))
+		})
+	}
+}
+
+func TestEntryView_Iterator(t *testing.T) {
+	type fields struct {
+		m map[string]interface{}
+	}
+	view := &EntryView{&Map{}}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []interface{}
+	}{
+		{"works with empty",
+			fields{emptyMap()},
+			nil},
+		{"single key",
+			fields{map[string]interface{}{"k": 1}},
+			[]interface{}{&MapEntry{"k", 1, view.m}}},
+		{"multiple keys in order",
+			fields{map[string]interface{}{"b": 1, "a": "value"}},
+			[]interface{}{&MapEntry{"a", "value", view.m}, &MapEntry{"b", 1, view.m}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			view.m.m = tt.fields.m
+			it := view.Iterator()
+			var got []interface{}
+			for it.HasNext() {
+				got = append(got, it.Next())
+			}
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestEntryView_ToArray(t *testing.T) {
+	type fields struct {
+		m map[string]interface{}
+	}
+	view := &EntryView{&Map{}}
+	tests := []struct {
+		name   string
+		fields fields
+		want   *Slice
+	}{
+		{"works with empty",
+			fields{emptyMap()},
+			&Slice{[]*MapEntry{}}},
+		{"single key",
+			fields{map[string]interface{}{"k": 1}},
+			&Slice{[]*MapEntry{{"k", 1, view.m}}}},
+		{"multiple keys in order",
+			fields{map[string]interface{}{"b": 1, "a": "value"}},
+			&Slice{[]*MapEntry{{"a", "value", view.m}, {"b", 1, view.m}}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			view.m.m = tt.fields.m
+			got, err := view.ToArray()
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -1188,7 +1525,7 @@ func TestEntryView_Remove(t *testing.T) {
 				m: tt.fields.m,
 			}
 			assert.Equal(t, tt.want, view.Remove(tt.args.entry))
-			assert.Equal(t, tt.wantM, view.m.M)
+			assert.Equal(t, tt.wantM, view.m.m)
 		})
 	}
 }
@@ -1235,7 +1572,7 @@ func TestEntryView_RemoveAll(t *testing.T) {
 			got, err := view.RemoveAll(tt.args.v)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.wantM, view.m.M)
+			assert.Equal(t, tt.wantM, view.m.m)
 		})
 	}
 }
@@ -1287,14 +1624,14 @@ func TestEntryView_RetainAll(t *testing.T) {
 			got, err := view.RetainAll(tt.args.v)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.wantM, view.m.M)
+			assert.Equal(t, tt.wantM, view.m.m)
 		})
 	}
 }
 
 func TestSlice_Add(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	type args struct {
 		v interface{}
@@ -1323,19 +1660,19 @@ func TestSlice_Add(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			got, err := s.Add(tt.args.v)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.wantS, s.S)
+			assert.Equal(t, tt.wantS, s.s)
 		})
 	}
 }
 
 func TestSlice_AddAll(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	type args struct {
 		v interface{}
@@ -1370,19 +1707,19 @@ func TestSlice_AddAll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			got, err := s.AddAll(tt.args.v)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.wantS, s.S)
+			assert.Equal(t, tt.wantS, s.s)
 		})
 	}
 }
 
 func TestSlice_Clear(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	tests := []struct {
 		name   string
@@ -1399,17 +1736,17 @@ func TestSlice_Clear(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			s.Clear()
-			assert.Equal(t, tt.wantS, s.S)
+			assert.Equal(t, tt.wantS, s.s)
 		})
 	}
 }
 
 func TestSlice_Contains(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	type args struct {
 		v interface{}
@@ -1440,11 +1777,15 @@ func TestSlice_Contains(t *testing.T) {
 			fields{[]interface{}{"some", []string{"slice"}}},
 			args{[]string{"slice"}},
 			true},
+		{"value exists and of slice type",
+			fields{[]interface{}{"some", []string{"slice"}}},
+			args{&Slice{[]string{"slice"}}},
+			true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			assert.Equal(t, tt.want, s.Contains(tt.args.v))
 		})
@@ -1453,7 +1794,7 @@ func TestSlice_Contains(t *testing.T) {
 
 func TestSlice_ContainsAll(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	type args struct {
 		v interface{}
@@ -1465,7 +1806,7 @@ func TestSlice_ContainsAll(t *testing.T) {
 		want      bool
 		assertion assert.ErrorAssertionFunc
 	}{
-		{"error checking regular go slice",
+		{"regular go slice is not supported",
 			fields{[]interface{}{"some", "slice"}},
 			args{[]interface{}{"some"}},
 			false,
@@ -1494,7 +1835,7 @@ func TestSlice_ContainsAll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			got, err := s.ContainsAll(tt.args.v)
 			tt.assertion(t, err)
@@ -1505,7 +1846,7 @@ func TestSlice_ContainsAll(t *testing.T) {
 
 func TestSlice_Equals(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	type args struct {
 		v interface{}
@@ -1517,7 +1858,7 @@ func TestSlice_Equals(t *testing.T) {
 		want      bool
 		assertion assert.ErrorAssertionFunc
 	}{
-		{"error checking regular go slice",
+		{"regular go slice is not supported",
 			fields{[]interface{}{"some", "slice"}},
 			args{[]interface{}{"some"}},
 			false,
@@ -1551,7 +1892,7 @@ func TestSlice_Equals(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			got, err := s.Equals(tt.args.v)
 			tt.assertion(t, err)
@@ -1562,7 +1903,7 @@ func TestSlice_Equals(t *testing.T) {
 
 func TestSlice_Get(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	type args struct {
 		i int
@@ -1598,7 +1939,7 @@ func TestSlice_Get(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			got, err := s.Get(tt.args.i)
 			tt.assertion(t, err)
@@ -1609,7 +1950,7 @@ func TestSlice_Get(t *testing.T) {
 
 func TestSlice_IsEmpty(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	tests := []struct {
 		name   string
@@ -1629,7 +1970,7 @@ func TestSlice_IsEmpty(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			assert.Equal(t, tt.want, s.IsEmpty())
 		})
@@ -1638,7 +1979,7 @@ func TestSlice_IsEmpty(t *testing.T) {
 
 func TestSlice_Iterator(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	tests := []struct {
 		name   string
@@ -1652,7 +1993,7 @@ func TestSlice_Iterator(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			assert.Equal(t, tt.want, s.Iterator())
 		})
@@ -1661,7 +2002,7 @@ func TestSlice_Iterator(t *testing.T) {
 
 func TestSlice_Remove(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	type args struct {
 		v interface{}
@@ -1708,11 +2049,11 @@ func TestSlice_Remove(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			removed, err := s.Remove(tt.args.v)
 			assert.Equal(t, tt.want, removed)
-			assert.Equal(t, tt.wantS, s.S)
+			assert.Equal(t, tt.wantS, s.s)
 			tt.assertion(t, err)
 		})
 	}
@@ -1720,7 +2061,7 @@ func TestSlice_Remove(t *testing.T) {
 
 func TestSlice_RemoveAll(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	type args struct {
 		v interface{}
@@ -1773,19 +2114,19 @@ func TestSlice_RemoveAll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			got, err := s.RemoveAll(tt.args.v)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.wantS, s.S)
+			assert.Equal(t, tt.wantS, s.s)
 		})
 	}
 }
 
 func TestSlice_RetainAll(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	type args struct {
 		v interface{}
@@ -1838,19 +2179,19 @@ func TestSlice_RetainAll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			got, err := s.RetainAll(tt.args.v)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.wantS, s.S)
+			assert.Equal(t, tt.wantS, s.s)
 		})
 	}
 }
 
 func TestSlice_Size(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	tests := []struct {
 		name   string
@@ -1873,7 +2214,7 @@ func TestSlice_Size(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			assert.Equal(t, tt.want, s.Size())
 		})
@@ -1882,7 +2223,7 @@ func TestSlice_Size(t *testing.T) {
 
 func TestSlice_Set(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	type args struct {
 		i int
@@ -1942,19 +2283,19 @@ func TestSlice_Set(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			got, err := s.Set(tt.args.i, tt.args.v)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.wantS, s.S)
+			assert.Equal(t, tt.wantS, s.s)
 		})
 	}
 }
 
 func TestSlice_ToArray(t *testing.T) {
 	type fields struct {
-		S []interface{}
+		s []interface{}
 	}
 	tests := []struct {
 		name   string
@@ -1974,12 +2315,12 @@ func TestSlice_ToArray(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Slice{
-				S: tt.fields.S,
+				s: tt.fields.s,
 			}
 			got, err := s.ToArray()
 			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
-			if slice, ok := s.S.([]interface{}); ok && len(slice) > 0 {
+			if slice, ok := s.s.([]interface{}); ok && len(slice) > 0 {
 				slice[0] = "some new value"
 				assert.Equal(t, tt.want, got)
 			}
@@ -2104,6 +2445,50 @@ func TestCollectionIterator_HasNext(t *testing.T) {
 				i: tt.fields.i,
 			}
 			assert.Equal(t, tt.want, i.HasNext())
+		})
+	}
+}
+
+func TestCollectionIterator_Remove(t *testing.T) {
+	type fields struct {
+		s Collection
+		i int
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		n         int
+		assertion assert.ErrorAssertionFunc
+		wantErr   error
+		want      interface{}
+	}{
+		{"can't remove from range",
+			fields{&Range{1, 3, 1}, 0}, 0,
+			assert.Error, errUnsupported, &Range{1, 3, 1}},
+		{"remove from the middle of a slice",
+			fields{&Slice{[]int{1, 2, 3}}, 0}, 2,
+			assert.NoError, nil, &Slice{[]int{1, 3}}},
+		{"remove from the end of a slice",
+			fields{&Slice{[]int{1, 2, 3}}, 0}, 1,
+			assert.NoError, nil, &Slice{[]int{1, 2}}},
+		{"remove from the start of a slice",
+			fields{&Slice{[]int{1, 2, 3}}, 0}, 3,
+			assert.NoError, nil, &Slice{[]int{2, 3}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			it := &CollectionIterator{
+				s: tt.fields.s,
+				i: tt.fields.i,
+			}
+			for tt.n > 0 {
+				tt.n--
+				it.Next()
+			}
+			err := it.Remove()
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, it.s)
+			assert.Equal(t, tt.wantErr, err)
 		})
 	}
 }
@@ -2815,6 +3200,258 @@ func TestNewRange(t *testing.T) {
 	}
 }
 
+func TestRange_Add(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	type args struct {
+		v interface{}
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		want      bool
+		assertion assert.ErrorAssertionFunc
+		wantErr   error
+	}{
+		{"not supported", fields{-2, 2, 1}, args{3}, false, assert.Error, errUnsupported},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			got, err := r.Add(tt.args.v)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantErr, err)
+		})
+	}
+}
+
+func TestRange_AddAll(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	type args struct {
+		v interface{}
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		want      bool
+		assertion assert.ErrorAssertionFunc
+		wantErr   error
+	}{
+		{"not supported", fields{-2, 2, 1}, args{[]int{3}}, false, assert.Error, errUnsupported},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			got, err := r.AddAll(tt.args.v)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantErr, err)
+		})
+	}
+}
+
+func TestRange_Clear(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		assertion assert.ErrorAssertionFunc
+		wantErr   error
+	}{
+		{"not supported", fields{-2, 2, 1}, assert.Error, errUnsupported},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			err := r.Clear()
+			tt.assertion(t, err)
+			assert.Equal(t, tt.wantErr, err)
+		})
+	}
+}
+
+func TestRange_Contains(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	type args struct {
+		v interface{}
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{"incompatible type - string", fields{0, 3, 1}, args{"string"}, false},
+		{"incompatible type - float", fields{0, 3, 1}, args{0.0}, false},
+		{"incompatible type - slice", fields{0, 3, 1}, args{[]int{0}}, false},
+		{"contains int", fields{-3, 3, 1}, args{int(0)}, true},
+		{"contains int8", fields{-3, 3, 1}, args{int8(-3)}, true},
+		{"contains int16", fields{-3, 3, 1}, args{int16(-2)}, true},
+		{"contains int32", fields{-3, 3, 1}, args{int32(-1)}, true},
+		{"contains int64", fields{-3, 3, 1}, args{int64(1)}, true},
+		{"contains uint", fields{-3, 3, 1}, args{int64(2)}, true},
+		{"contains uint8", fields{-3, 3, 1}, args{int64(3)}, true},
+		{"contains uint16", fields{-3, 3, 1}, args{int16(0)}, true},
+		{"contains uint32", fields{-3, 3, 1}, args{int32(1)}, true},
+		{"does not contain int", fields{-3, 3, 1}, args{int(4)}, false},
+		{"does not contain int8", fields{-3, 3, 1}, args{int8(-4)}, false},
+		{"does not contain int16", fields{-3, 3, 1}, args{int16(-5)}, false},
+		{"does not contain int32", fields{-3, 3, 1}, args{int32(-7)}, false},
+		{"does not contain int64", fields{-3, 3, 1}, args{int64(4)}, false},
+		{"does not contain uint", fields{-3, 3, 1}, args{int64(5)}, false},
+		{"does not contain uint8", fields{-3, 3, 1}, args{int64(6)}, false},
+		{"does not contain uint16", fields{-3, 3, 1}, args{int16(7)}, false},
+		{"does not contain uint32", fields{-3, 3, 1}, args{int32(8)}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			assert.Equal(t, tt.want, r.Contains(tt.args.v))
+		})
+	}
+}
+
+func TestRange_ContainsAll(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	type args struct {
+		v interface{}
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		want      bool
+		assertion assert.ErrorAssertionFunc
+	}{
+		{"regular go slice is not supported",
+			fields{-3, 3, 1},
+			args{[]interface{}{0}},
+			false,
+			assert.Error},
+		{"no value exists",
+			fields{-3, 3, 1},
+			args{&Slice{[]interface{}{4}}},
+			false,
+			assert.NoError},
+		{"some values exist",
+			fields{-3, 3, 1},
+			args{&Slice{[]int{-3, 0, 4}}},
+			false,
+			assert.NoError},
+		{"all values exist - some points",
+			fields{-3, 3, 1},
+			args{&Slice{[]int64{-3, 0, 3}}},
+			true,
+			assert.NoError},
+		{"all values exist - full range",
+			fields{-3, 3, 1},
+			args{&Slice{[]int64{-3, -2, -1, 0, 1, 2, 3}}},
+			true,
+			assert.NoError},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			got, err := r.ContainsAll(tt.args.v)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestRange_Equals(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	type args struct {
+		v interface{}
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		want      bool
+		assertion assert.ErrorAssertionFunc
+	}{
+		{"regular go slice is not supported",
+			fields{-3, 3, 1},
+			args{[]int{-3, 3, 1}},
+			false,
+			assert.Error},
+		{"range is not equal",
+			fields{-3, 3, 1},
+			args{&Range{-3, 4, 1}},
+			false,
+			assert.NoError},
+		{"wrong direction",
+			fields{-3, 3, 1},
+			args{&Range{3, -3, -1}},
+			false,
+			assert.NoError},
+		{"equal ranges",
+			fields{-3, 3, 1},
+			args{&Range{-3, 3, 1}},
+			true,
+			assert.NoError},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			got, err := r.Equals(tt.args.v)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestRange_Get(t *testing.T) {
 	type fields struct {
 		start int
@@ -2891,6 +3528,33 @@ func TestRange_IndexOf(t *testing.T) {
 	}
 }
 
+func TestRange_IsEmpty(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{"range is never empty", fields{0, 0, 1}, false},
+		{"upward is not empty", fields{-3, 3, 1}, false},
+		{"downward is not empty", fields{3, -3, -1}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			assert.Equal(t, tt.want, r.IsEmpty())
+		})
+	}
+}
+
 func TestRange_Iterator(t *testing.T) {
 	type fields struct {
 		start int
@@ -2953,6 +3617,108 @@ func TestRange_LastIndexOf(t *testing.T) {
 	}
 }
 
+func TestRange_Remove(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	type args struct {
+		in0 interface{}
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		want      bool
+		assertion assert.ErrorAssertionFunc
+		wantErr   error
+	}{
+		{"not supported", fields{-2, 2, 1}, args{3}, false, assert.Error, errUnsupported},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			got, err := r.Remove(tt.args.in0)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantErr, err)
+		})
+	}
+}
+
+func TestRange_RemoveAll(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	type args struct {
+		in0 interface{}
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		want      bool
+		assertion assert.ErrorAssertionFunc
+		wantErr   error
+	}{
+		{"not supported", fields{-2, 2, 1}, args{[]int{3}}, false, assert.Error, errUnsupported},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			got, err := r.RemoveAll(tt.args.in0)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantErr, err)
+		})
+	}
+}
+
+func TestRange_RetainAll(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	type args struct {
+		in0 interface{}
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		want      bool
+		assertion assert.ErrorAssertionFunc
+		wantErr   error
+	}{
+		{"not supported", fields{-2, 2, 1}, args{[]int{3}}, false, assert.Error, errUnsupported},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			got, err := r.RetainAll(tt.args.in0)
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantErr, err)
+		})
+	}
+}
+
 func TestRange_Set(t *testing.T) {
 	type fields struct {
 		start int
@@ -2969,9 +3735,10 @@ func TestRange_Set(t *testing.T) {
 		args      args
 		want      interface{}
 		assertion assert.ErrorAssertionFunc
+		wantErr   error
 	}{
-		{"index in range", fields{-2, 2, 1}, args{0, 2}, nil, assert.Error},
-		{"index outside range", fields{-2, 2, 1}, args{8, 1}, nil, assert.Error},
+		{"index in range", fields{-2, 2, 1}, args{0, 2}, nil, assert.Error, errUnsupported},
+		{"index outside range", fields{-2, 2, 1}, args{8, 1}, nil, assert.Error, errUnsupported},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2983,6 +3750,7 @@ func TestRange_Set(t *testing.T) {
 			prev, err := r.Set(tt.args.i, tt.args.v)
 			assert.Equal(t, tt.want, prev)
 			tt.assertion(t, err)
+			assert.Equal(t, tt.wantErr, err)
 		})
 	}
 }
@@ -3014,6 +3782,142 @@ func TestRange_Size(t *testing.T) {
 				diff:  tt.fields.diff,
 			}
 			assert.Equal(t, tt.want, r.Size())
+		})
+	}
+}
+
+func TestRange_ToArray(t *testing.T) {
+	type fields struct {
+		start int
+		end   int
+		diff  int
+	}
+	s := make([]int, 1024*1024)
+	for i := range s {
+		s[i] = i
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		want      *Slice
+		assertion assert.ErrorAssertionFunc
+		wantErr   error
+	}{
+		{"too large range", fields{0, 1024 * 1024, 1}, nil, assert.Error, errors.New("size is too large")},
+		{"maximum range", fields{0, 1024*1024 - 1, 1}, &Slice{s}, assert.NoError, nil},
+		{"some small slice upwards", fields{-3, 3, 1}, &Slice{[]int{-3, -2, -1, 0, 1, 2, 3}}, assert.NoError, nil},
+		{"some small slice downwards", fields{3, -3, -1}, &Slice{[]int{3, 2, 1, 0, -1, -2, -3}}, assert.NoError, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Range{
+				start: tt.fields.start,
+				end:   tt.fields.end,
+				diff:  tt.fields.diff,
+			}
+			got, err := r.ToArray()
+			tt.assertion(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestNewMapIterator(t *testing.T) {
+	type args struct {
+		m      *Map
+		mapper func(m, k reflect.Value) interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want *MapIterator
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, NewMapIterator(tt.args.m, tt.args.mapper))
+		})
+	}
+}
+
+func TestMapIterator_HasNext(t *testing.T) {
+	type fields struct {
+		mM     reflect.Value
+		mapper func(m, k reflect.Value) interface{}
+		k      []reflect.Value
+		i      int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			it := &MapIterator{
+				mM:     tt.fields.mM,
+				mapper: tt.fields.mapper,
+				k:      tt.fields.k,
+				i:      tt.fields.i,
+			}
+			assert.Equal(t, tt.want, it.HasNext())
+		})
+	}
+}
+
+func TestMapIterator_Next(t *testing.T) {
+	type fields struct {
+		mM     reflect.Value
+		mapper func(m, k reflect.Value) interface{}
+		k      []reflect.Value
+		i      int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   interface{}
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			it := &MapIterator{
+				mM:     tt.fields.mM,
+				mapper: tt.fields.mapper,
+				k:      tt.fields.k,
+				i:      tt.fields.i,
+			}
+			assert.Equal(t, tt.want, it.Next())
+		})
+	}
+}
+
+func TestMapIterator_Remove(t *testing.T) {
+	type fields struct {
+		mM     reflect.Value
+		mapper func(m, k reflect.Value) interface{}
+		k      []reflect.Value
+		i      int
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		assertion assert.ErrorAssertionFunc
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			it := &MapIterator{
+				mM:     tt.fields.mM,
+				mapper: tt.fields.mapper,
+				k:      tt.fields.k,
+				i:      tt.fields.i,
+			}
+			tt.assertion(t, it.Remove())
 		})
 	}
 }

@@ -204,9 +204,9 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 				}
 				var file string
 				switch {
-				case name.Kind() == reflect.String:
+				case name.IsValid() && name.Kind() == reflect.String:
 					file = name.String()
-				case name.Type().Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem()):
+				case name.IsValid() && name.Type().Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem()):
 					file = fmt.Sprintf("%v", name.Interface())
 				default:
 					return false, errors.New("invalid include argument")
@@ -322,24 +322,24 @@ func (t *Template) setVar(n *VarNode, val reflect.Value, ctx Ctx) error {
 			return err
 		}
 		prev := v
-		v, err = t.evalStep(v, last, false, ctx)
+		v, err = t.property(v, reflect.ValueOf(last.Name))
 		if !v.IsValid() {
+			return fmt.Errorf("cannot set %s on %s value", last.Name, getKind(prev))
+		}
+		vv := indirect(prev)
+		if vv.Kind() != reflect.Struct {
 			return fmt.Errorf("cannot set %s on %s value", last.Name, getKind(prev))
 		}
 		if !val.Type().ConvertibleTo(v.Type()) {
 			return fmt.Errorf("cannot set %s (%s) to %s", last.Name, v.Type(), getKind(val))
 		}
-		vv := indirect(prev)
-		if vv.Kind() == reflect.Struct {
-			f := prev.Elem().FieldByName(strings.Title(last.Name))
-			if !f.IsValid() {
-				return fmt.Errorf("cannot set %s on %s value", last.Name, getKind(prev))
-			}
-			s := val.Convert(f.Type())
-			f.Set(s)
-			return nil
+		f := prev.Elem().FieldByName(strings.Title(last.Name))
+		if !f.IsValid() {
+			return fmt.Errorf("cannot set %s on %s value", last.Name, getKind(prev))
 		}
-		v.Set(val.Convert(v.Type()))
+		s := val.Convert(f.Type())
+		f.Set(s)
+		return nil
 	case AccessIndex:
 		idx, err := t.eval(last.Args[0], ctx, false)
 		if err != nil {
@@ -581,7 +581,10 @@ var funcs = map[string]interface{}{
 	"not": func(v1 reflect.Value, v2 interface{}) bool { return !isTrue(v1) },
 
 	"map": func(v1, v2 reflect.Value) (reflect.Value, error) {
-		val := reflect.ValueOf(v1.Interface().(*Slice).S)
+		if !v1.IsValid() {
+			return reflect.ValueOf(&Map{map[string]interface{}{}}), nil
+		}
+		val := reflect.ValueOf(v1.Interface().(*Slice).s)
 		m := make(map[string]interface{}, val.Len()/2)
 		b := bufPool.Get().(*bytes.Buffer)
 		defer bufPool.Put(b)

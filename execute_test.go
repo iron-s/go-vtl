@@ -226,6 +226,16 @@ func TestExecuteFuzzCrashes(t *testing.T) {
 			`#set($r='')$r.Bytes.Add($r)`, "", "cannot convert argument string to uint8"},
 		{"remove in the beginning of iterator",
 			`#set($array=[])#set($it=$array.iterator())#foreach($m in[0])$it.Remove()#end`, "", "next hasn't yet been called on iterator"},
+		{"invalid conversion",
+			`#foreach($m in[0])#if(1)#set($p={0:0})$p.EntrySet().RetainAll([[0..0]])#end#end`, "true", ""},
+		{"try to set valid string property - has method IsEmpty",
+			`#set($p='')#set($p.empty=true)`, "", "cannot set empty on string value"},
+		{"set property of the slice",
+			`#set($r=[])#if(1)#set($r.s='')$r.Add($r)#end`, "", ""},
+		{"map with undefined var as key inside if",
+			`#if({$p:0})0#end`, "", ""},
+		{"map with undefined var as value inside if",
+			`#foreach($m in[0])#if({'':$p})0#end#end`, "", ""},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
