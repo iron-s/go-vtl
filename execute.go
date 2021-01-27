@@ -365,7 +365,6 @@ func (t *Template) setVar(n *VarNode, val reflect.Value, ctx Ctx) error {
 	default:
 		panic("should not happen")
 	}
-	return nil
 }
 
 var reflectValueType = reflect.TypeOf((*reflect.Value)(nil)).Elem()
@@ -500,6 +499,24 @@ func toInt(v reflect.Value) int {
 	}
 }
 
+func concat(v1, v2 reflect.Value) reflect.Value {
+	buf := bufPool.Get().(*bytes.Buffer)
+	defer bufPool.Put(buf)
+	buf.Reset()
+	var b []byte
+	if isFloat(v1) {
+		b = printFloat(v1.Float(), buf)
+		b = append(b, fmt.Sprint(v2)...)
+		return reflect.ValueOf(string(b))
+	}
+	if isFloat(v2) {
+		b = []byte(fmt.Sprint(v1))
+		b = append(b, printFloat(v2.Float(), buf)...)
+		return reflect.ValueOf(string(b))
+	}
+	return reflect.ValueOf(fmt.Sprintf("%v%v", v1, v2))
+}
+
 var funcs = map[string]interface{}{
 	"eq": eq, "ne": ne, "le": le, "lt": lt, "ge": ge, "gt": gt,
 
@@ -517,7 +534,7 @@ var funcs = map[string]interface{}{
 
 	"+": func(v1, v2 reflect.Value) (reflect.Value, error) {
 		if !isNumber(v1) || !isNumber(v2) {
-			return reflect.ValueOf(fmt.Sprint(v1) + fmt.Sprint(v2)), nil
+			return concat(v1, v2), nil
 		}
 		switch {
 		case isInt(v1) && isInt(v2):
@@ -686,6 +703,17 @@ func checkCycle(value reflect.Value, path []uintptr) bool {
 	return false
 }
 
+func printFloat(v float64, buf *bytes.Buffer) []byte {
+	buf.Reset()
+	fmt.Fprintf(buf, "%G", v)
+	bb := buf.Bytes()
+	bb = bytes.Replace(bb, []byte("+"), nil, 1)
+	if !bytes.ContainsAny(bb, ".") {
+		bb = append(bb, ".0"...)
+	}
+	return bb
+}
+
 func (t *Template) vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) error {
 	if checkCycle(v, path) {
 		return errors.New("cycle detected")
@@ -693,13 +721,7 @@ func (t *Template) vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) er
 	switch v.Kind() {
 	case reflect.Float64, reflect.Float32:
 		buf := bufPool.Get().(*bytes.Buffer)
-		buf.Reset()
-		fmt.Fprintf(buf, "%G", v.Float())
-		bb := buf.Bytes()
-		b.Write(bytes.Replace(bb, []byte("+"), nil, 1))
-		if !bytes.Contains(bb, []byte(".")) {
-			b.WriteString(".0")
-		}
+		b.Write(printFloat(v.Float(), buf))
 		bufPool.Put(buf)
 	case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
 		fmt.Fprintf(b, "%d", v.Int())
