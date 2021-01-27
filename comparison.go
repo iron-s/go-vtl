@@ -5,13 +5,15 @@
 // This code is heavily based on text/template. List of changes below:
 // - basicKind modified to return no error and widest kind instead of const
 // - indirect modifed to return value only
-// - gt, lt, le, eq and ne are modified to compare floats to ints/uints,
+// - gt, ge, lt, le, eq and ne are modified to compare floats to ints/uints,
 //   use changed basicKind and not to panic
+// - gt, ge, lt, le return bool and error
 // - eq uses fmt.Sprint as a last resort to compare values of the same type
 
 package govtl
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 )
@@ -43,39 +45,71 @@ func indirect(v reflect.Value) reflect.Value {
 	return v
 }
 
-func lt(v1, v2 reflect.Value) bool {
+var errNaNLeft = errors.New("left side of comparison operation is not a number")
+var errNaNRight = errors.New("right side of comparison operation is not a number")
+
+func lt(v1, v2 reflect.Value) (bool, error) {
 	v1, v2 = indirect(v1), indirect(v2)
+	if !isNumber(v1) {
+		return false, errNaNLeft
+	}
+	if !isNumber(v2) {
+		return false, errNaNRight
+	}
 	k1, k2 := basicKind(v1), basicKind(v2)
 	if k1 != k2 {
 		switch {
 		case k1 == reflect.Int64 && k2 == reflect.Uint64:
-			return v1.Int() < 0 || uint64(v1.Int()) < v2.Uint()
+			return v1.Int() < 0 || uint64(v1.Int()) < v2.Uint(), nil
 		case k1 == reflect.Uint64 && k2 == reflect.Int64:
-			return v2.Int() >= 0 && v1.Uint() < uint64(v2.Int())
+			return v2.Int() >= 0 && v1.Uint() < uint64(v2.Int()), nil
 		case k1 == reflect.Float64 && k2 == reflect.Uint64:
-			return v1.Float() < 0 || v1.Float() < float64(v2.Uint())
+			return v1.Float() < 0 || v1.Float() < float64(v2.Uint()), nil
 		case k1 == reflect.Uint64 && k2 == reflect.Float64:
-			return v2.Float() >= 0 && float64(v1.Uint()) < v2.Float()
+			return v2.Float() >= 0 && float64(v1.Uint()) < v2.Float(), nil
 		case k1 == reflect.Float64 && k2 == reflect.Int64:
-			return v1.Float() < float64(v2.Int())
+			return v1.Float() < float64(v2.Int()), nil
 		case k1 == reflect.Int64 && k2 == reflect.Float64:
-			return float64(v1.Int()) < v2.Float()
+			return float64(v1.Int()) < v2.Float(), nil
 		default:
-			return false
+			return false, nil
 		}
 	}
 	switch k1 {
 	case reflect.Float64:
-		return v1.Float() < v2.Float()
+		return v1.Float() < v2.Float(), nil
 	case reflect.Int64:
-		return v1.Int() < v2.Int()
-	case reflect.String:
-		return v1.String() < v2.String()
+		return v1.Int() < v2.Int(), nil
 	case reflect.Uint64:
-		return v1.Uint() < v2.Uint()
+		return v1.Uint() < v2.Uint(), nil
 	default:
-		return false
+		return false, nil
 	}
+}
+
+func le(v1, v2 reflect.Value) (bool, error) {
+	less, err := lt(v1, v2)
+	if err != nil {
+		return false, err
+	}
+	return less || eq(v1, v2), nil
+}
+
+func gt(v1, v2 reflect.Value) (bool, error) {
+	v1, v2 = indirect(v1), indirect(v2)
+	less, err := le(v1, v2)
+	if err == nil {
+		return !less, nil
+	}
+	return false, err
+}
+
+func ge(v1, v2 reflect.Value) (bool, error) {
+	greater, err := gt(v1, v2)
+	if err != nil {
+		return false, err
+	}
+	return greater || eq(v1, v2), nil
 }
 
 func eq(v1, v2 reflect.Value) bool {
@@ -118,12 +152,3 @@ func eq(v1, v2 reflect.Value) bool {
 }
 
 func ne(v1, v2 reflect.Value) bool { return !eq(v1, v2) }
-func le(v1, v2 reflect.Value) bool { return lt(v1, v2) || eq(v1, v2) }
-func ge(v1, v2 reflect.Value) bool { return gt(v1, v2) || eq(v1, v2) }
-func gt(v1, v2 reflect.Value) bool {
-	v1, v2 = indirect(v1), indirect(v2)
-	if !v1.IsValid() || !v2.IsValid() || !comparable(v1, v2) {
-		return false
-	}
-	return !le(v1, v2)
-}
