@@ -121,7 +121,7 @@ func TestExecuteVtl(t *testing.T) {
 
 func TestExecuteShortCircuit(t *testing.T) {
 	divByZero := assert.ErrorAssertionFunc(func(t assert.TestingT, err error, msg ...interface{}) bool {
-		return assert.EqualError(t, err, "division by zero", msg)
+		return assert.EqualError(t, unposErr(err), "division by zero", msg)
 	})
 	tests := []struct {
 		name      string
@@ -236,6 +236,8 @@ func TestExecuteFuzzCrashes(t *testing.T) {
 			`#if({$p:0})0#end`, "", ""},
 		{"map with undefined var as value inside if",
 			`#foreach($m in[0])#if({'':$p})0#end#end`, "", ""},
+		{"map equals with nil value", `#set($p={8:0})#foreach($i in[0])$p.equals({8:$p.p})#end`, "false", ""},
+		{"map equals with nil key", `#set($p={8:0})#foreach($i in[0])$p.equals({$p.p:0})#end`, "false", ""},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -246,7 +248,7 @@ func TestExecuteFuzzCrashes(t *testing.T) {
 				if test.expectErr == "" {
 					assert.NoError(t, err)
 				} else {
-					assert.EqualError(t, err, test.expectErr)
+					assert.EqualError(t, unposErr(err), test.expectErr)
 				}
 				assert.Equal(t, test.expect, b.String())
 			}
@@ -328,7 +330,7 @@ func TestExecuteSet_LHS(t *testing.T) {
 				if test.expectErr == "" {
 					assert.NoError(t, err)
 				} else {
-					assert.EqualError(t, err, test.expectErr)
+					assert.EqualError(t, unposErr(err), test.expectErr)
 				}
 				assert.Equal(t, test.expect, b.String())
 			}
@@ -400,7 +402,7 @@ func TestExecuteSet_RHS(t *testing.T) {
 				if test.expectErr == "" {
 					assert.NoError(t, err)
 				} else {
-					assert.EqualError(t, err, test.expectErr)
+					assert.EqualError(t, unposErr(err), test.expectErr)
 				}
 				assert.Equal(t, test.expect, b.String())
 			}
@@ -529,7 +531,7 @@ func TestExecuteIf_Condition(t *testing.T) {
 				if test.expectErr == "" {
 					assert.NoError(t, err)
 				} else {
-					assert.EqualError(t, err, test.expectErr)
+					assert.EqualError(t, unposErr(err), test.expectErr)
 				}
 				assert.Equal(t, test.expect, b.String())
 			}
@@ -563,7 +565,7 @@ func TestExecuteIf_Body(t *testing.T) {
 				if test.expectErr == "" {
 					assert.NoError(t, err)
 				} else {
-					assert.EqualError(t, err, test.expectErr)
+					assert.EqualError(t, unposErr(err), test.expectErr)
 				}
 				assert.Equal(t, test.expect, b.String())
 			}
@@ -596,7 +598,7 @@ func TestExecuteForeach_Reference(t *testing.T) {
 				if test.expectErr == "" {
 					assert.NoError(t, err)
 				} else {
-					assert.EqualError(t, err, test.expectErr)
+					assert.EqualError(t, unposErr(err), test.expectErr)
 				}
 				assert.Equal(t, test.expect, b.String())
 			}
@@ -677,7 +679,7 @@ func TestExecuteForeach_Argument(t *testing.T) {
 				if test.expectErr == "" {
 					assert.NoError(t, err)
 				} else {
-					assert.EqualError(t, err, test.expectErr)
+					assert.EqualError(t, unposErr(err), test.expectErr)
 				}
 				assert.Equal(t, test.expect, b.String())
 			}
@@ -726,10 +728,104 @@ hasNext: false
 				if test.expectErr == "" {
 					assert.NoError(t, err)
 				} else {
-					assert.EqualError(t, err, test.expectErr)
+					assert.EqualError(t, unposErr(err), test.expectErr)
 				}
 				assert.Equal(t, test.expect, b.String())
 			}
 		})
 	}
+}
+
+func TestExpressions(t *testing.T) {
+	tests := []struct {
+		tmpl   string
+		expect string
+	}{
+		{`1+2`, "3"},
+		{`1+2+3`, "6"},
+		{`1-2`, "-1"},
+		{`1-2-3`, "-4"},
+		{`2*3`, "6"},
+		{`2*3*4`, "24"},
+		{`4/2`, "2"},
+		{`3/2`, "1"},
+		{`3/2.0`, "1.5"},
+		{`6/(((3)))/2`, "1"},
+		{`-6/3/2`, "-1"},
+		{`3*(2.0/4)`, "1.5"},
+		{`1+1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+1.0/15)/14)/13)/12)/11)/10)/9)/8)/7)/6)/5)/4)/3)/2`, "2.7182818284589945"},
+		{`3-1.0/(4-2.0/(5-3.0/(6-4.0/(7-5.0/(8-6.0/(9-7.0/(10-8.0/(11-9.0/(12-10.0/(13-11.0/(14-12.0/(15-13.0/(16-14.0/(17-15.0))))))))))))))`, "2.7182818284589945"},
+		{`-(2)`, "-2"},
+		{` 3   -1  `, "2"},
+		{` 3  -  2.0 `, "1.0"},
+		{`15.0+ 2`, "17.0"},
+		{`11 +2.0`, "13.0"},
+		{`2 *4`, "8"},
+		{`5.0005 + 0.0095`, "5.01"},
+		{`1--1`, "2"},
+		{`1---1`, "0"},
+		{`2*-4`, "-8"},
+		{`2./-4`, "-0.5"},
+		{`(3+3/3)*(5-5)`, "0"},
+		{`-0+1`, "1"},
+		{`3%2`, "1"},
+		{`-3%2`, "-1"},
+		{`-3%-2`, "-1"},
+		{`3%-2`, "1"},
+		{`2+6-7%4*6/3`, "2"},
+		{`true or true and false`, "true"},
+		{`(true or true) and false`, "false"},
+		{`true or (true and false)`, "true"},
+		{`false and true or true`, "true"},
+		{`(false and true) or true`, "true"},
+		{`false and (true or true)`, "false"},
+		{`3<4.0 && true`, "true"},
+		{`1 && "string"`, "true"},
+		{`0 && "string"`, "false"},
+		{`"" and 1`, "false"},
+		{`1 + "a"`, "1a"},
+		{`"a" + 1`, "a1"},
+		{`1.0 + "a"`, "1.0a"},
+		{`"a" + 1.0`, "a1.0"},
+	}
+	for _, test := range tests {
+		t.Run(test.tmpl, func(t *testing.T) {
+			tmpl, err := Parse(`#set($x = `+test.tmpl+`)$x`, "", "")
+			var b bytes.Buffer
+			if assert.NoError(t, err) {
+				err := tmpl.Execute(&b, nil)
+				assert.NoError(t, err)
+				assert.Equal(t, test.expect, b.String())
+			}
+		})
+	}
+}
+
+func TestExpressionFailures(t *testing.T) {
+	tests := []struct {
+		tmpl      string
+		expect    string
+		expectErr string
+	}{
+		{`"" < 1`, "", "left side of comparison operation is not a number"},
+		{`1 < ""`, "", "right side of comparison operation is not a number"},
+	}
+	for _, test := range tests {
+		t.Run(test.tmpl, func(t *testing.T) {
+			tmpl, err := Parse(`#set($x = `+test.tmpl+`)$x`, "", "")
+			var b bytes.Buffer
+			if assert.NoError(t, err) {
+				err := tmpl.Execute(&b, nil)
+				assert.EqualError(t, unposErr(err), test.expectErr)
+				assert.Equal(t, test.expect, b.String())
+			}
+		})
+	}
+}
+
+func unposErr(err error) error {
+	if poser, ok := err.(posError); ok {
+		return poser.error
+	}
+	return err
 }

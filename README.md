@@ -16,12 +16,12 @@ These are deliberate decisions to make syntax less confusing
 5. [Escaping](https://velocity.apache.org/engine/devel/user-guide.html#getting-literal) `$` and `#`
 
    There is no difference in behaviour when escaping defined or undefined variable - it always works as if variable was defined. Escaping works consistently for variables and directives. If `$` or `#` is escaped go-vtl will never try to parse what is left as variable or directive.
-7. [Alternate values](https://velocity.apache.org/engine/devel/user-guide.html#alternate-values) not supported (yet)
+6. [Alternate values](https://velocity.apache.org/engine/devel/user-guide.html#alternate-values) not supported (yet)
 
-8. Consistent usage of comma and space
+7. Consistent usage of comma and space
 
    Any arguments should be separated by comma, be it method call, include, macro signature or macro call
-9. Maps are iterated in sorted key order
-10. [Math](https://velocity.apache.org/engine/devel/configuration.html#math) is always strict
+8. Maps are iterated in sorted key order
+9. [Math](https://velocity.apache.org/engine/devel/configuration.html#math) is always strict
 
    If any evaluated arith expression contains nil, NaN or division by zero error is returned

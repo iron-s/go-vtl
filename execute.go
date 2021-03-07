@@ -27,6 +27,14 @@ type undefinedError struct {
 type nilError struct {
 	error
 }
+type posError struct {
+	error
+	Pos
+}
+
+func (p posError) Error() string {
+	return fmt.Sprintf("%v at line %d", p.error, p.Pos.line)
+}
 
 func (t *Template) Execute(w io.Writer, val map[string]interface{}) error {
 	ctx := NewContext()
@@ -59,11 +67,24 @@ func wrapTypes(v reflect.Value) reflect.Value {
 	}
 }
 
+func (t *Template) error(err error) error {
+	if err == nil {
+		return nil
+	}
+	if poser, ok := err.(posError); ok {
+		return poser
+	}
+	return posError{err, t.pos}
+}
+
 func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 	if t.maxCallDepth >= 0 && ctx.callDepth > t.maxCallDepth {
-		return true, errors.New("call depth exceeded")
+		return true, t.error(errors.New("call depth exceeded"))
 	}
 	for _, expr := range list {
+		if poser, ok := expr.(PositionedNode); ok {
+			t.pos = poser.Position()
+		}
 		switch n := expr.(type) {
 		case TextNode:
 			w.Write([]byte(n))
@@ -75,13 +96,13 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			if n.Cond == nil {
 				stop, err = t._execute(w, n.Items, ctx)
 				if stop {
-					return true, err
+					return true, t.error(err)
 				}
 				break
 			}
 			cond, err := t.eval(n.Cond, ctx, true)
 			if err != nil && !errors.As(err, &undefinedError{}) && !errors.As(err, &nilError{}) {
-				return true, err
+				return true, t.error(err)
 			}
 			if isTrue(cond) {
 				stop, err = t._execute(w, n.Items, ctx)
@@ -89,20 +110,20 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 				stop, err = t._execute(w, []Node{n.Else}, ctx)
 			}
 			if stop {
-				return true, err
+				return true, t.error(err)
 			}
 		case *SetNode:
 			val, err := t.eval(n.Expr, ctx, false)
 			if errors.As(err, &nilError{}) {
 			} else if err != nil {
-				return false, err
+				return false, t.error(err)
 			}
 			if len(n.Var.Items) == 0 {
 				depth := ctx.Push(n.Var.Name, val)
 				defer ctx.Pop(depth, n.Var.Name)
 			} else if val.IsValid() {
 				if err := t.setVar(n.Var, val, ctx); err != nil {
-					return false, err
+					return false, t.error(err)
 				}
 			}
 		case *OpNode:
@@ -110,14 +131,14 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 		case *VarNode:
 			v, err := t.evalVar(n, ctx)
 			if err != nil && !(n.Silent && errors.As(err, &nilError{})) {
-				return false, err
+				return false, t.error(err)
 			}
 			if v.IsValid() {
 				b := bufPool.Get().(*bytes.Buffer)
 				b.Reset()
 				err := t.vtlPrint(b, v, nil)
 				if err != nil {
-					return true, err
+					return true, t.error(err)
 				}
 				b.WriteTo(w)
 				bufPool.Put(b)
@@ -129,15 +150,15 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 		case *MacroCall:
 			m, ok := t.macros[n.Name]
 			if !ok {
-				return false, fmt.Errorf("undefined macro '%s' call", n.Name)
+				return false, t.error(fmt.Errorf("undefined macro '%s' call", n.Name))
 			}
 			if len(n.Vals) < len(m.Assign) {
-				return false, fmt.Errorf("variable $%s has not been set", m.Assign[len(n.Vals)].Name)
+				return false, t.error(fmt.Errorf("variable $%s has not been set", m.Assign[len(n.Vals)].Name))
 			}
 			for i := range m.Assign {
 				v, err := t.eval(n.Vals[i], ctx, false)
 				if err != nil {
-					return true, err
+					return true, t.error(err)
 				}
 				depth := ctx.Push(m.Assign[i].Name, v)
 				defer ctx.Pop(depth, m.Assign[i].Name)
@@ -146,14 +167,14 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			stop, err := t._execute(w, m.Items, ctx)
 			ctx.callDepth--
 			if err != nil {
-				return true, err
+				return true, t.error(err)
 			} else if stop {
 				return false, nil
 			}
 		case *ForeachNode:
 			iter, err := t.eval(n.Iter, ctx, false)
 			if err != nil {
-				return true, err
+				return true, t.error(err)
 			}
 			if !iter.IsValid() {
 				break
@@ -169,25 +190,25 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			case collIteratorType, mapIteratorType:
 				f.it = iter.Interface().(Iterator)
 			default:
-				return true, fmt.Errorf("cannot iterate over %s", getKind(iter))
+				return true, t.error(fmt.Errorf("cannot iterate over %s", getKind(iter)))
 			}
 			empty := true
 			for f.it.HasNext() {
 				f.i++
 				if t.maxIterations >= 0 && f.Count() > t.maxIterations {
-					return true, errors.New("number of iterations exceeded")
+					return true, t.error(errors.New("number of iterations exceeded"))
 				}
 				empty = false
 				ctx.Set(vdepth, n.Var.Name, reflect.ValueOf(f.it.Next()))
 				_, err := t._execute(w, n.Items, ctx)
 				if err != nil {
-					return true, err
+					return true, t.error(err)
 				}
 			}
 			if empty && n.Else != nil {
 				_, err := t._execute(w, n.Else, ctx)
 				if err != nil {
-					return true, err
+					return true, t.error(err)
 				}
 			}
 			ctx.Pop(vdepth, n.Var.Name)
@@ -200,7 +221,7 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			for _, v := range n.Names {
 				name, err := t.eval(v, ctx, false)
 				if err != nil {
-					return true, err
+					return true, t.error(err)
 				}
 				var file string
 				switch {
@@ -209,29 +230,29 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 				case name.IsValid() && name.Type().Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem()):
 					file = fmt.Sprintf("%v", name.Interface())
 				default:
-					return false, errors.New("invalid include argument")
+					return false, t.error(errors.New("invalid include argument"))
 				}
 
 				data, err := ioutil.ReadFile(filepath.Join(t.root, file))
 				if err != nil {
-					return true, err
+					return true, t.error(err)
 				}
 				w.Write(data)
 			}
 		case *ParseNode:
 			name, err := t.eval(n.Name, ctx, false)
 			if err != nil {
-				return true, err
+				return true, t.error(err)
 			}
 			tmpl, err := ParseFile(filepath.Join(t.root, name.String()), t.root, t.lib)
 			if err != nil {
-				return true, err
+				return true, t.error(err)
 			}
 			ctx.callDepth++
 			stop, err := tmpl._execute(w, tmpl.tree, ctx)
 			ctx.callDepth--
 			if stop {
-				return true, err
+				return true, t.error(err)
 			}
 		default:
 			log.Printf("unexpected %T, %[1]v", n)

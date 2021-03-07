@@ -973,10 +973,9 @@ func iTypeConvEQ(a, b interface{}) bool {
 }
 
 func rTypeConvEQ(a, b reflect.Value) bool {
-	if a == Nil || b == Nil {
-		return a == b
+	wa, wb := wrapTypes(a), wrapTypes(b)
+	if wa.IsValid() && wb.IsValid() {
+		return reflect.DeepEqual(wa.Interface(), wb.Interface())
 	}
-	ia := wrapTypes(a).Interface()
-	ib := wrapTypes(b).Interface()
-	return reflect.DeepEqual(ia, ib)
+	return wa == wb
 }
