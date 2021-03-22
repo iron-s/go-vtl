@@ -238,6 +238,12 @@ func TestExecuteFuzzCrashes(t *testing.T) {
 			`#foreach($m in[0])#if({'':$p})0#end#end`, "", ""},
 		{"map equals with nil value", `#set($p={8:0})#foreach($i in[0])$p.equals({8:$p.p})#end`, "false", ""},
 		{"map equals with nil key", `#set($p={8:0})#foreach($i in[0])$p.equals({$p.p:0})#end`, "false", ""},
+		{"map with the name of previous var",
+			`#set($e="")#set($p='')#set($p={0:00,'':$p})#foreach($i in$p)#foreach($i in$p)$p.KeySet().RetainAll([])#end#end`, "truefalse", ""},
+		{"set on empty value",
+			`#set($p={})#set($p={'':$p.r})#if(1)$p.Values().ToArray()#end`, "[null]", ""},
+		{"interator next",
+			`#foreach($m in[0])#if(1)#set($p={})$p.Values().Iterator().Next()#end#end`, "", ""},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -937,7 +937,8 @@ func TestKeyView_Iterator(t *testing.T) {
 			it := view.Iterator()
 			var got []interface{}
 			for it.HasNext() {
-				got = append(got, it.Next())
+				v, _ := it.Next()
+				got = append(got, v)
 			}
 			assert.Equal(t, tt.want, got)
 		})
@@ -1191,7 +1192,8 @@ func TestValView_Iterator(t *testing.T) {
 			it := view.Iterator()
 			var got []interface{}
 			for it.HasNext() {
-				got = append(got, it.Next())
+				v, _ := it.Next()
+				got = append(got, v)
 			}
 			assert.Equal(t, tt.want, got)
 		})
@@ -1452,7 +1454,8 @@ func TestEntryView_Iterator(t *testing.T) {
 			it := view.Iterator()
 			var got []interface{}
 			for it.HasNext() {
-				got = append(got, it.Next())
+				v, _ := it.Next()
+				got = append(got, v)
 			}
 			assert.Equal(t, tt.want, got)
 		})
@@ -2363,42 +2366,51 @@ func TestCollectionIterator_Next(t *testing.T) {
 		i int
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		want   interface{}
+		name    string
+		fields  fields
+		want    []interface{}
+		wantErr []error
 	}{
-		{"slice from the beginning",
-			fields{&Slice{[]interface{}{1, 2, 3}}, 0},
-			1},
-		{"slice middle",
-			fields{&Slice{[]interface{}{1, 2, 3}}, 1},
-			2},
-		{"slice last",
-			fields{&Slice{[]interface{}{1, 2, 3}}, 2},
-			3},
-		{"slice after last",
-			fields{&Slice{[]interface{}{1, 2, 3}}, 3},
-			nil},
-		{"range from the beginning",
-			fields{NewRange(1, 3), 0},
-			1},
-		{"range middle",
-			fields{NewRange(1, 3), 1},
-			2},
-		{"range last",
-			fields{NewRange(1, 3), 2},
-			3},
-		{"range after last",
-			fields{NewRange(1, 3), 3},
-			nil},
+		{"nil",
+			fields{&Slice{[]int(nil)}, 0},
+			[]interface{}{nil, nil},
+			[]error{errIteratorOutOfRange, errIteratorOutOfRange}},
+		{"single",
+			fields{&Slice{[]interface{}{1}}, 0},
+			[]interface{}{1, nil, nil},
+			[]error{nil, errIteratorOutOfRange, errIteratorOutOfRange}},
+		{"two",
+			fields{&Slice{[]interface{}{1, 2}}, 0},
+			[]interface{}{1, 2, nil, nil},
+			[]error{nil, nil, errIteratorOutOfRange, errIteratorOutOfRange}},
+		{"five",
+			fields{&Slice{[]interface{}{1, 2, 3, 4, 5}}, 0},
+			[]interface{}{1, 2, 3, 4, 5, nil, nil},
+			[]error{nil, nil, nil, nil, nil, errIteratorOutOfRange, errIteratorOutOfRange}},
+		{"range single",
+			fields{NewRange(1, 1), 0},
+			[]interface{}{1, nil, nil},
+			[]error{nil, errIteratorOutOfRange, errIteratorOutOfRange}},
+		{"range two",
+			fields{NewRange(1, 2), 0},
+			[]interface{}{1, 2, nil, nil},
+			[]error{nil, nil, errIteratorOutOfRange, errIteratorOutOfRange}},
+		{"range five",
+			fields{NewRange(1, 5), 0},
+			[]interface{}{1, 2, 3, 4, 5, nil, nil},
+			[]error{nil, nil, nil, nil, nil, errIteratorOutOfRange, errIteratorOutOfRange}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &CollectionIterator{
+			it := &CollectionIterator{
 				s: tt.fields.s,
 				i: tt.fields.i,
 			}
-			assert.Equal(t, tt.want, i.Next())
+			for i := range tt.want {
+				v, err := it.Next()
+				assert.Equal(t, tt.want[i], v, "elt %d", i)
+				assert.Equal(t, tt.wantErr[i], err, "err %d", i)
+			}
 		})
 	}
 }
@@ -2411,40 +2423,40 @@ func TestCollectionIterator_HasNext(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   bool
+		want   []bool
 	}{
-		{"slice in the beginning",
-			fields{&Slice{[]interface{}{1, 2, 3}}, 0},
-			true},
-		{"slice middle",
-			fields{&Slice{[]interface{}{1, 2, 3}}, 1},
-			true},
-		{"slice last",
-			fields{&Slice{[]interface{}{1, 2, 3}}, 2},
-			true},
-		{"slice after last",
-			fields{&Slice{[]interface{}{1, 2, 3}}, 3},
-			false},
-		{"range in the beginning",
-			fields{NewRange(1, 3), 0},
-			true},
-		{"range middle",
-			fields{NewRange(1, 3), 1},
-			true},
-		{"range last",
-			fields{NewRange(1, 3), 2},
-			true},
-		{"range after last",
-			fields{NewRange(1, 3), 3},
-			false},
+		{"nil",
+			fields{&Slice{[]int(nil)}, 0},
+			[]bool{false, false}},
+		{"single",
+			fields{&Slice{[]interface{}{1}}, 0},
+			[]bool{true, false, false}},
+		{"two",
+			fields{&Slice{[]interface{}{1, 2}}, 0},
+			[]bool{true, true, false, false}},
+		{"five",
+			fields{&Slice{[]interface{}{1, 2, 3, 4, 5}}, 0},
+			[]bool{true, true, true, true, true, false, false}},
+		{"range single",
+			fields{NewRange(1, 1), 0},
+			[]bool{true, false, false}},
+		{"range two",
+			fields{NewRange(1, 2), 0},
+			[]bool{true, true, false, false}},
+		{"range five",
+			fields{NewRange(1, 5), 0},
+			[]bool{true, true, true, true, true, false, false}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &CollectionIterator{
+			it := &CollectionIterator{
 				s: tt.fields.s,
 				i: tt.fields.i,
 			}
-			assert.Equal(t, tt.want, i.HasNext())
+			for i := range tt.want {
+				assert.Equal(t, tt.want[i], it.HasNext())
+				it.Next()
+			}
 		})
 	}
 }
@@ -2460,19 +2472,23 @@ func TestCollectionIterator_Remove(t *testing.T) {
 		assertion assert.ErrorAssertionFunc
 		wantErr   error
 		want      interface{}
+		wantI     int
 	}{
 		{"can't remove from range",
 			fields{&Range{1, 3, 1}, 1},
-			assert.Error, errUnsupported, &Range{1, 3, 1}},
+			assert.Error, errUnsupported, &Range{1, 3, 1}, 1},
 		{"remove from the middle of a slice",
 			fields{&Slice{[]int{1, 2, 3}}, 2},
-			assert.NoError, nil, &Slice{[]int{1, 3}}},
+			assert.NoError, nil, &Slice{[]int{1, 3}}, 1},
 		{"remove from the end of a slice",
 			fields{&Slice{[]int{1, 2, 3}}, 3},
-			assert.NoError, nil, &Slice{[]int{1, 2}}},
+			assert.NoError, nil, &Slice{[]int{1, 2}}, 2},
 		{"remove from the start of a slice",
 			fields{&Slice{[]int{1, 2, 3}}, 1},
-			assert.NoError, nil, &Slice{[]int{2, 3}}},
+			assert.NoError, nil, &Slice{[]int{2, 3}}, 0},
+		{"remove from the unitialized slice",
+			fields{&Slice{[]int{1, 2, 3}}, 0},
+			assert.Error, errIteratorInvalidState, &Slice{[]int{1, 2, 3}}, 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2484,6 +2500,7 @@ func TestCollectionIterator_Remove(t *testing.T) {
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, it.s)
 			assert.Equal(t, tt.wantErr, err)
+			assert.Equal(t, tt.wantI, it.i)
 		})
 	}
 }
@@ -3822,16 +3839,59 @@ func TestNewMapIterator(t *testing.T) {
 		m      *Map
 		mapper func(m, k reflect.Value) interface{}
 	}
+	var (
+		mapNil       = map[string]int(nil)
+		mapStringInt = map[string]int{"1": 1, "2": 2, "10": 10}
+		mapIntInt    = map[int]int{1: 1, 2: 2, 10: 10}
+		mapByteInt   = map[byte]int{1: 1, 2: 2, 10: 10}
+		mapUintInt   = map[uint]int{1: 1, 2: 2, 10: 10}
+		mapFloatInt  = map[float32]int{1.0: 1, 2.0: 2, 10.0: 10}
+		mapBoolInt   = map[bool]int{true: 1, false: 2}
+	)
+	val := reflect.ValueOf
 	tests := []struct {
 		name string
 		args args
 		want *MapIterator
 	}{
-		// TODO: Add test cases.
+		{"nil", args{&Map{mapNil}, nil},
+			&MapIterator{mapper: nil, i: 0,
+				mM: val(mapNil),
+				k:  []reflect.Value{}}},
+		{"map[string]int", args{&Map{mapStringInt}, nil},
+			&MapIterator{mapper: nil, i: 0,
+				mM: val(mapStringInt),
+				k:  []reflect.Value{val("1"), val("10"), val("2")}}},
+		{"map[int]int", args{&Map{mapIntInt}, nil},
+			&MapIterator{mapper: nil, i: 0,
+				mM: val(mapIntInt),
+				k:  []reflect.Value{val(int(1)), val(int(2)), val(int(10))}}},
+		{"map[byte]int", args{&Map{mapByteInt}, nil},
+			&MapIterator{mapper: nil, i: 0,
+				mM: val(mapByteInt),
+				k:  []reflect.Value{val(byte(1)), val(byte(2)), val(byte(10))}}},
+		{"map[uint]int", args{&Map{mapUintInt}, nil},
+			&MapIterator{mapper: nil, i: 0,
+				mM: val(mapUintInt),
+				k:  []reflect.Value{val(uint(1)), val(uint(2)), val(uint(10))}}},
+		{"map[float32]int", args{&Map{mapFloatInt}, nil},
+			&MapIterator{mapper: nil, i: 0,
+				mM: val(mapFloatInt),
+				k:  []reflect.Value{val(float32(1.0)), val(float32(2.0)), val(float32(10.0))}}},
+		{"map[bool]int", args{&Map{mapBoolInt}, nil},
+			&MapIterator{mapper: nil, i: 0,
+				mM: val(mapBoolInt),
+				k:  []reflect.Value{val(false), val(true)}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, NewMapIterator(tt.args.m, tt.args.mapper))
+			it := NewMapIterator(tt.args.m, tt.args.mapper)
+			assert.Equal(t, tt.want.mM, it.mM, "map")
+			if assert.Equal(t, len(tt.want.k), len(it.k), "keys len") {
+				for i := 0; i < len(tt.want.k); i++ {
+					assert.Equal(t, tt.want.k[i].Interface(), it.k[i].Interface(), "key %d", i)
+				}
+			}
 		})
 	}
 }
@@ -3843,12 +3903,25 @@ func TestMapIterator_HasNext(t *testing.T) {
 		k      []reflect.Value
 		i      int
 	}
+	val := reflect.ValueOf
+	kM := func(m, k reflect.Value) interface{} { return k.Interface() }
 	tests := []struct {
 		name   string
 		fields fields
-		want   bool
+		want   []bool
 	}{
-		// TODO: Add test cases.
+		{"nil", fields{val(map[int]int(nil)), kM,
+			[]reflect.Value{}, 0},
+			[]bool{false, false}},
+		{"single", fields{val(map[int]int{1: 1}), kM,
+			[]reflect.Value{val(1)}, 0},
+			[]bool{true, false, false}},
+		{"two", fields{val(map[int]int{1: 1, 2: 2}), kM,
+			[]reflect.Value{val(1), val(2)}, 0},
+			[]bool{true, true, false, false}},
+		{"five", fields{val(map[int]int{1: 1, 2: 2, 3: 3, 4: 4, 5: 5}), kM,
+			[]reflect.Value{val(1), val(2), val(3), val(4), val(5)}, 0},
+			[]bool{true, true, true, true, true, false, false}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -3858,7 +3931,10 @@ func TestMapIterator_HasNext(t *testing.T) {
 				k:      tt.fields.k,
 				i:      tt.fields.i,
 			}
-			assert.Equal(t, tt.want, it.HasNext())
+			for i := range tt.want {
+				assert.Equal(t, tt.want[i], it.HasNext())
+				it.Next()
+			}
 		})
 	}
 }
@@ -3870,12 +3946,34 @@ func TestMapIterator_Next(t *testing.T) {
 		k      []reflect.Value
 		i      int
 	}
+	type expect struct {
+		v   interface{}
+		err error
+	}
+	val := reflect.ValueOf
+	vM := func(m, k reflect.Value) interface{} { return m.MapIndex(k).Interface() }
 	tests := []struct {
-		name   string
-		fields fields
-		want   interface{}
+		name    string
+		fields  fields
+		want    []interface{}
+		wantErr []error
 	}{
-		// TODO: Add test cases.
+		{"nil", fields{val(map[int]int(nil)), vM,
+			[]reflect.Value{}, 0},
+			[]interface{}{nil, nil},
+			[]error{errIteratorOutOfRange, errIteratorOutOfRange}},
+		{"single", fields{val(map[int]int{1: 1}), vM,
+			[]reflect.Value{val(1)}, 0},
+			[]interface{}{1, nil, nil},
+			[]error{nil, errIteratorOutOfRange, errIteratorOutOfRange}},
+		{"two", fields{val(map[int]int{1: 1, 2: 2}), vM,
+			[]reflect.Value{val(1), val(2)}, 0},
+			[]interface{}{1, 2, nil, nil},
+			[]error{nil, nil, errIteratorOutOfRange, errIteratorOutOfRange}},
+		{"five", fields{val(map[int]int{1: 1, 2: 2, 3: 3, 4: 4, 5: 5}), vM,
+			[]reflect.Value{val(1), val(2), val(3), val(4), val(5)}, 0},
+			[]interface{}{1, 2, 3, 4, 5, nil, nil},
+			[]error{nil, nil, nil, nil, nil, errIteratorOutOfRange, errIteratorOutOfRange}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -3885,7 +3983,11 @@ func TestMapIterator_Next(t *testing.T) {
 				k:      tt.fields.k,
 				i:      tt.fields.i,
 			}
-			assert.Equal(t, tt.want, it.Next())
+			for i := range tt.want {
+				v, err := it.Next()
+				assert.Equal(t, tt.want[i], v)
+				assert.Equal(t, tt.wantErr[i], err)
+			}
 		})
 	}
 }

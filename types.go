@@ -296,7 +296,11 @@ func (view *ValView) Contains(val interface{}) bool {
 func (view *ValView) Iterator() Iterator {
 	return NewMapIterator(view.m,
 		func(m, k reflect.Value) interface{} {
-			return m.MapIndex(k).Interface()
+			v := m.MapIndex(k)
+			if v == Nil {
+				return nil
+			}
+			return v.Interface()
 		})
 }
 
@@ -555,9 +559,10 @@ func (s *Slice) ToArray() (*Slice, error) {
 }
 
 var errIteratorInvalidState = errors.New("next hasn't yet been called on iterator")
+var errIteratorOutOfRange = errors.New("iterator out of range")
 
 type Iterator interface {
-	Next() interface{}
+	Next() (interface{}, error)
 	HasNext() bool
 	Remove() error
 }
@@ -581,13 +586,13 @@ func NewIterator(v interface{}) Iterator {
 
 func (it *CollectionIterator) kind() string { return "iterator" }
 
-func (it *CollectionIterator) Next() interface{} {
-	if it.i < it.s.Size() {
-		it.i++
-		r, _ := it.s.Get(it.i - 1)
-		return r
+func (it *CollectionIterator) Next() (interface{}, error) {
+	if it.i >= it.s.Size() {
+		return nil, errIteratorOutOfRange
 	}
-	return nil
+	it.i++
+	r, _ := it.s.Get(it.i - 1)
+	return r, nil
 }
 
 func (it *CollectionIterator) HasNext() bool { return it.i < it.s.Size() }
@@ -626,7 +631,8 @@ func NewMapIterator(m *Map, mapper func(m, k reflect.Value) interface{}) *MapIte
 		case reflect.Float64:
 			return keys[i].Float() < keys[j].Float()
 		case reflect.Bool:
-			return keys[i].Bool() && !keys[j].Bool()
+			// false < true
+			return keys[j].Bool() && !keys[i].Bool()
 		default:
 			return true
 		}
@@ -634,9 +640,12 @@ func NewMapIterator(m *Map, mapper func(m, k reflect.Value) interface{}) *MapIte
 	return &MapIterator{mM: mM, k: keys, mapper: mapper}
 }
 func (it *MapIterator) HasNext() bool { return it.i < len(it.k) }
-func (it *MapIterator) Next() interface{} {
+func (it *MapIterator) Next() (interface{}, error) {
+	if it.i >= len(it.k) {
+		return nil, errIteratorOutOfRange
+	}
 	it.i++
-	return it.mapper(it.mM, it.k[it.i-1])
+	return it.mapper(it.mM, it.k[it.i-1]), nil
 }
 func (it *MapIterator) Remove() error {
 	if it.i == 0 {
@@ -706,7 +715,8 @@ func equals(c Collection, v interface{}) (bool, error) {
 func retainAll(it Iterator, c Collection) (bool, error) {
 	var changed bool
 	for it.HasNext() {
-		if !c.Contains(it.Next()) {
+		v, _ := it.Next()
+		if !c.Contains(v) {
 			it.Remove()
 			changed = true
 		}
@@ -717,7 +727,7 @@ func retainAll(it Iterator, c Collection) (bool, error) {
 func removeAll(it Iterator, c Collection) (bool, error) {
 	var changed bool
 	for it.HasNext() {
-		v := it.Next()
+		v, _ := it.Next()
 		if c.Contains(v) {
 			it.Remove()
 			changed = true
@@ -962,7 +972,12 @@ func convertType(v reflect.Value, t reflect.Type) (reflect.Value, error) {
 func toArray(it Iterator, s reflect.Value) (*Slice, error) {
 	var i int
 	for it.HasNext() {
-		s.Index(i).Set(reflect.ValueOf(it.Next()))
+		v, _ := it.Next()
+		val := reflect.ValueOf(v)
+		if val == Nil {
+			val = reflect.Zero(s.Type().Elem())
+		}
+		s.Index(i).Set(val)
 		i++
 	}
 	return &Slice{s.Interface()}, nil

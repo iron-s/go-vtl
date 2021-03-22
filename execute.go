@@ -199,7 +199,8 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 					return true, t.error(errors.New("number of iterations exceeded"))
 				}
 				empty = false
-				ctx.Set(vdepth, n.Var.Name, reflect.ValueOf(f.it.Next()))
+				v, _ := f.it.Next()
+				ctx.Set(vdepth, n.Var.Name, reflect.ValueOf(v))
 				_, err := t._execute(w, n.Items, ctx)
 				if err != nil {
 					return true, t.error(err)
@@ -761,7 +762,8 @@ func (t *Template) vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) er
 					b.WriteString(", ")
 				}
 				first = false
-				entry := it.Next().([2]reflect.Value)
+				e, _ := it.Next()
+				entry := e.([2]reflect.Value)
 				k, v := wrapTypes(entry[0]), wrapTypes(entry[1])
 				err := t.vtlPrint(b, k, path)
 				if err != nil {
@@ -786,7 +788,8 @@ func (t *Template) vtlPrint(b *bytes.Buffer, v reflect.Value, path []uintptr) er
 			it := v.Interface().(Iterator)
 			b.WriteByte('[')
 			for it.HasNext() {
-				err := t.vtlPrint(b, wrapTypes(reflect.ValueOf(it.Next())), path)
+				v, _ := it.Next()
+				err := t.vtlPrint(b, wrapTypes(reflect.ValueOf(v)), path)
 				if err != nil {
 					return err
 				}
