@@ -10,7 +10,7 @@ These are deliberate decisions to make syntax less confusing
 3. String interpolation
 
    Only [references](https://velocity.apache.org/engine/devel/user-guide.html#references) will be interpolated in double-quoted strings, not directives or comments
-4. [Varaibles](https://velocity.apache.org/engine/devel/user-guide.html#variables)
+4. [Variables](https://velocity.apache.org/engine/devel/user-guide.html#variables)
 
    There is no option to enable hyphen in variables
 5. [Escaping](https://velocity.apache.org/engine/devel/user-guide.html#getting-literal) `$` and `#`
@@ -25,3 +25,5 @@ These are deliberate decisions to make syntax less confusing
 9. [Math](https://velocity.apache.org/engine/devel/configuration.html#math) is always strict
 
    If any evaluated arith expression contains nil, NaN or division by zero error is returned
+10. Types are supported on a best-effort basis, which means most of the Map, Collection and String and Iterator methods are implemented.
+11. Iterator allows concurrent updates and can lead to weird results if used incorrectly - subject to future improvement.

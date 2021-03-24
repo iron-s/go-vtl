@@ -568,8 +568,9 @@ type Iterator interface {
 }
 
 type CollectionIterator struct {
-	s Collection
-	i int
+	s    Collection
+	i    int
+	last int
 }
 
 func NewIterator(v interface{}) Iterator {
@@ -591,6 +592,7 @@ func (it *CollectionIterator) Next() (interface{}, error) {
 		return nil, errIteratorOutOfRange
 	}
 	it.i++
+	it.last = it.i
 	r, _ := it.s.Get(it.i - 1)
 	return r, nil
 }
@@ -598,7 +600,7 @@ func (it *CollectionIterator) Next() (interface{}, error) {
 func (it *CollectionIterator) HasNext() bool { return it.i < it.s.Size() }
 
 func (it *CollectionIterator) Remove() error {
-	if it.i == 0 {
+	if it.last == 0 {
 		return errIteratorInvalidState
 	}
 	err := it.s.removeAt(it.i - 1)
@@ -606,14 +608,15 @@ func (it *CollectionIterator) Remove() error {
 		return err
 	}
 	it.i--
+	it.last = 0
 	return nil
 }
 
 type MapIterator struct {
-	mM     reflect.Value
-	mapper func(m, k reflect.Value) interface{}
-	k      []reflect.Value
-	i      int
+	mM      reflect.Value
+	mapper  func(m, k reflect.Value) interface{}
+	k       []reflect.Value
+	i, last int
 }
 
 func NewMapIterator(m *Map, mapper func(m, k reflect.Value) interface{}) *MapIterator {
@@ -645,12 +648,14 @@ func (it *MapIterator) Next() (interface{}, error) {
 		return nil, errIteratorOutOfRange
 	}
 	it.i++
+	it.last = it.i
 	return it.mapper(it.mM, it.k[it.i-1]), nil
 }
 func (it *MapIterator) Remove() error {
-	if it.i == 0 {
+	if it.last == 0 {
 		return errIteratorInvalidState
 	}
+	it.last = 0
 	it.mM.SetMapIndex(it.k[it.i-1], Nil)
 	return nil
 }
@@ -983,10 +988,14 @@ func toArray(it Iterator, s reflect.Value) (*Slice, error) {
 	return &Slice{s.Interface()}, nil
 }
 
+// iTypeConvEQ compares interface values trying to convert them to the same underlying type. See
+// rTypeConvEQ
 func iTypeConvEQ(a, b interface{}) bool {
 	return rTypeConvEQ(reflect.ValueOf(a), reflect.ValueOf(b))
 }
 
+// rTypeConvEQ compares reflect values, trying to convert them to the same underlying type. If
+// values are both valid, compares deeply, otherwise does regular go comparison
 func rTypeConvEQ(a, b reflect.Value) bool {
 	wa, wb := wrapTypes(a), wrapTypes(b)
 	if wa.IsValid() && wb.IsValid() {

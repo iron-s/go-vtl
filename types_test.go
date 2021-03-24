@@ -2342,16 +2342,16 @@ func TestNewIterator(t *testing.T) {
 	}{
 		{"creates iterator from go slice",
 			args{[]interface{}{1, 2, 3}},
-			&CollectionIterator{&Slice{[]interface{}{1, 2, 3}}, 0}},
+			&CollectionIterator{s: &Slice{[]interface{}{1, 2, 3}}}},
 		{"creates iterator from vtl slice",
 			args{&Slice{[]interface{}{4, 5, 6}}},
-			&CollectionIterator{&Slice{[]interface{}{4, 5, 6}}, 0}},
+			&CollectionIterator{s: &Slice{[]interface{}{4, 5, 6}}}},
 		{"creates iterator from scalar",
 			args{1},
-			&CollectionIterator{&Slice{[]int{1}}, 0}},
+			&CollectionIterator{s: &Slice{[]int{1}}}},
 		{"creates iterator from map as scalar",
 			args{map[string]interface{}{"1": 2, "3": 4, "5": 6}},
-			&CollectionIterator{&Slice{[]*Map{{map[string]interface{}{"1": 2, "3": 4, "5": 6}}}}, 0}},
+			&CollectionIterator{s: &Slice{[]*Map{{map[string]interface{}{"1": 2, "3": 4, "5": 6}}}}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2463,8 +2463,7 @@ func TestCollectionIterator_HasNext(t *testing.T) {
 
 func TestCollectionIterator_Remove(t *testing.T) {
 	type fields struct {
-		s Collection
-		i int
+		it *CollectionIterator
 	}
 	tests := []struct {
 		name      string
@@ -2473,34 +2472,33 @@ func TestCollectionIterator_Remove(t *testing.T) {
 		wantErr   error
 		want      interface{}
 		wantI     int
+		wantLast  int
 	}{
 		{"can't remove from range",
-			fields{&Range{1, 3, 1}, 1},
-			assert.Error, errUnsupported, &Range{1, 3, 1}, 1},
+			fields{&CollectionIterator{&Range{1, 3, 1}, 1, 1}},
+			assert.Error, errUnsupported, &Range{1, 3, 1}, 1, 1},
 		{"remove from the middle of a slice",
-			fields{&Slice{[]int{1, 2, 3}}, 2},
-			assert.NoError, nil, &Slice{[]int{1, 3}}, 1},
+			fields{&CollectionIterator{&Slice{[]int{1, 2, 3}}, 2, 2}},
+			assert.NoError, nil, &Slice{[]int{1, 3}}, 1, 0},
 		{"remove from the end of a slice",
-			fields{&Slice{[]int{1, 2, 3}}, 3},
-			assert.NoError, nil, &Slice{[]int{1, 2}}, 2},
+			fields{&CollectionIterator{&Slice{[]int{1, 2, 3}}, 3, 3}},
+			assert.NoError, nil, &Slice{[]int{1, 2}}, 2, 0},
 		{"remove from the start of a slice",
-			fields{&Slice{[]int{1, 2, 3}}, 1},
-			assert.NoError, nil, &Slice{[]int{2, 3}}, 0},
+			fields{&CollectionIterator{&Slice{[]int{1, 2, 3}}, 1, 1}},
+			assert.NoError, nil, &Slice{[]int{2, 3}}, 0, 0},
 		{"remove from the unitialized slice",
-			fields{&Slice{[]int{1, 2, 3}}, 0},
-			assert.Error, errIteratorInvalidState, &Slice{[]int{1, 2, 3}}, 0},
+			fields{&CollectionIterator{&Slice{[]int{1, 2, 3}}, 0, 0}},
+			assert.Error, errIteratorInvalidState, &Slice{[]int{1, 2, 3}}, 0, 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			it := &CollectionIterator{
-				s: tt.fields.s,
-				i: tt.fields.i,
-			}
+			it := tt.fields.it
 			err := it.Remove()
 			tt.assertion(t, err)
-			assert.Equal(t, tt.want, it.s)
-			assert.Equal(t, tt.wantErr, err)
-			assert.Equal(t, tt.wantI, it.i)
+			assert.Equal(t, tt.want, it.s, "collection")
+			assert.Equal(t, tt.wantErr, err, "err")
+			assert.Equal(t, tt.wantI, it.i, "i")
+			assert.Equal(t, tt.wantLast, it.last, "last")
 		})
 	}
 }
@@ -3578,7 +3576,7 @@ func TestRange_Iterator(t *testing.T) {
 		fields fields
 		want   Iterator
 	}{
-		{"just a range", fields{-5, 2, 1}, &CollectionIterator{&Range{-5, 2, 1}, 0}},
+		{"just a range", fields{-5, 2, 1}, &CollectionIterator{s: &Range{-5, 2, 1}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -3855,31 +3853,31 @@ func TestNewMapIterator(t *testing.T) {
 		want *MapIterator
 	}{
 		{"nil", args{&Map{mapNil}, nil},
-			&MapIterator{mapper: nil, i: 0,
+			&MapIterator{mapper: nil, i: 0, last: 0,
 				mM: val(mapNil),
 				k:  []reflect.Value{}}},
 		{"map[string]int", args{&Map{mapStringInt}, nil},
-			&MapIterator{mapper: nil, i: 0,
+			&MapIterator{mapper: nil, i: 0, last: 0,
 				mM: val(mapStringInt),
 				k:  []reflect.Value{val("1"), val("10"), val("2")}}},
 		{"map[int]int", args{&Map{mapIntInt}, nil},
-			&MapIterator{mapper: nil, i: 0,
+			&MapIterator{mapper: nil, i: 0, last: 0,
 				mM: val(mapIntInt),
 				k:  []reflect.Value{val(int(1)), val(int(2)), val(int(10))}}},
 		{"map[byte]int", args{&Map{mapByteInt}, nil},
-			&MapIterator{mapper: nil, i: 0,
+			&MapIterator{mapper: nil, i: 0, last: 0,
 				mM: val(mapByteInt),
 				k:  []reflect.Value{val(byte(1)), val(byte(2)), val(byte(10))}}},
 		{"map[uint]int", args{&Map{mapUintInt}, nil},
-			&MapIterator{mapper: nil, i: 0,
+			&MapIterator{mapper: nil, i: 0, last: 0,
 				mM: val(mapUintInt),
 				k:  []reflect.Value{val(uint(1)), val(uint(2)), val(uint(10))}}},
 		{"map[float32]int", args{&Map{mapFloatInt}, nil},
-			&MapIterator{mapper: nil, i: 0,
+			&MapIterator{mapper: nil, i: 0, last: 0,
 				mM: val(mapFloatInt),
 				k:  []reflect.Value{val(float32(1.0)), val(float32(2.0)), val(float32(10.0))}}},
 		{"map[bool]int", args{&Map{mapBoolInt}, nil},
-			&MapIterator{mapper: nil, i: 0,
+			&MapIterator{mapper: nil, i: 0, last: 0,
 				mM: val(mapBoolInt),
 				k:  []reflect.Value{val(false), val(true)}}},
 	}
@@ -3887,6 +3885,8 @@ func TestNewMapIterator(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			it := NewMapIterator(tt.args.m, tt.args.mapper)
 			assert.Equal(t, tt.want.mM, it.mM, "map")
+			assert.Equal(t, tt.want.i, it.i, "i")
+			assert.Equal(t, tt.want.last, it.last, "map")
 			if assert.Equal(t, len(tt.want.k), len(it.k), "keys len") {
 				for i := 0; i < len(tt.want.k); i++ {
 					assert.Equal(t, tt.want.k[i].Interface(), it.k[i].Interface(), "key %d", i)
@@ -3946,10 +3946,6 @@ func TestMapIterator_Next(t *testing.T) {
 		k      []reflect.Value
 		i      int
 	}
-	type expect struct {
-		v   interface{}
-		err error
-	}
 	val := reflect.ValueOf
 	vM := func(m, k reflect.Value) interface{} { return m.MapIndex(k).Interface() }
 	tests := []struct {
@@ -3994,17 +3990,35 @@ func TestMapIterator_Next(t *testing.T) {
 
 func TestMapIterator_Remove(t *testing.T) {
 	type fields struct {
-		mM     reflect.Value
-		mapper func(m, k reflect.Value) interface{}
-		k      []reflect.Value
-		i      int
+		mM      reflect.Value
+		mapper  func(m, k reflect.Value) interface{}
+		k       []reflect.Value
+		i, last int
 	}
+	val := reflect.ValueOf
+	vM := func(m, k reflect.Value) interface{} { return m.MapIndex(k).Interface() }
 	tests := []struct {
-		name      string
-		fields    fields
-		assertion assert.ErrorAssertionFunc
+		name     string
+		fields   fields
+		wantErr  error
+		wantM    interface{}
+		wantI    int
+		wantLast int
 	}{
-		// TODO: Add test cases.
+		{"nil map", fields{val(map[int]int(nil)), vM,
+			[]reflect.Value{}, 0, 0}, errIteratorInvalidState, map[int]int(nil), 0, 0},
+		{"uninitialized iterator", fields{val(map[int]int{1: 1}), vM,
+			[]reflect.Value{val(1)}, 0, 0}, errIteratorInvalidState, map[int]int{1: 1}, 0, 0},
+		{"iterator after remove", fields{val(map[int]int{2: 2}), vM,
+			[]reflect.Value{val(1), val(2)}, 1, 0}, errIteratorInvalidState, map[int]int{2: 2}, 1, 0},
+		{"single", fields{val(map[int]int{1: 1}), vM,
+			[]reflect.Value{val(1)}, 1, 1}, nil, map[int]int{}, 1, 0},
+		{"first", fields{val(map[int]int{1: 1, 2: 2, 3: 3}), vM,
+			[]reflect.Value{val(1), val(2), val(3)}, 1, 1}, nil, map[int]int{2: 2, 3: 3}, 1, 0},
+		{"middle", fields{val(map[int]int{1: 1, 2: 2, 3: 3}), vM,
+			[]reflect.Value{val(1), val(2), val(3)}, 2, 2}, nil, map[int]int{1: 1, 3: 3}, 2, 0},
+		{"last", fields{val(map[int]int{1: 1, 2: 2, 3: 3}), vM,
+			[]reflect.Value{val(1), val(2), val(3)}, 3, 3}, nil, map[int]int{1: 1, 2: 2}, 3, 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -4013,8 +4027,12 @@ func TestMapIterator_Remove(t *testing.T) {
 				mapper: tt.fields.mapper,
 				k:      tt.fields.k,
 				i:      tt.fields.i,
+				last:   tt.fields.last,
 			}
-			tt.assertion(t, it.Remove())
+			assert.Equal(t, tt.wantErr, it.Remove())
+			assert.Equal(t, tt.wantM, it.mM.Interface())
+			assert.Equal(t, tt.wantI, it.i, "i")
+			assert.Equal(t, tt.wantLast, it.last, "last")
 		})
 	}
 }
