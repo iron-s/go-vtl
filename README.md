@@ -21,7 +21,10 @@ These are deliberate decisions to make syntax less confusing
 7. Consistent usage of comma and space
 
    Any arguments should be separated by comma, be it method call, include, macro signature or macro call
-8. Maps are iterated in sorted key order
+8. Maps
+
+   - Have string keys, which means you can't have `int 1` and `string "1"` as map keys
+   - Are iterated in sorted key order
 9. [Math](https://velocity.apache.org/engine/devel/configuration.html#math) is always strict
 
    If any evaluated arith expression contains nil, NaN or division by zero error is returned
