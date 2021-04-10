@@ -85,10 +85,12 @@ func (m *Map) GetOrDefault(key interface{}, deflt interface{}) interface{} {
 	mM := reflect.ValueOf(m.m)
 	k := reflect.ValueOf(key)
 	switch {
-	case k.Type().AssignableTo(mM.Type().Key()):
+	case k.IsValid() && k.Type().AssignableTo(mM.Type().Key()):
 		k = k.Convert(mM.Type().Key())
-	case mM.Type().Key() != k.Type() && mM.Type().Key().Kind() == reflect.String:
+	case k.IsValid() && mM.Type().Key() != k.Type() && mM.Type().Key().Kind() == reflect.String:
 		k = reflect.ValueOf(fmt.Sprint(key))
+	case k == Nil:
+		k = reflect.Zero(mM.Type().Key())
 	}
 	v := mM.MapIndex(k)
 	if v == Nil {

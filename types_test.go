@@ -41,7 +41,7 @@ func TestMap_Clear(t *testing.T) {
 
 func TestMap_ContainsKey(t *testing.T) {
 	type fields struct {
-		m map[string]interface{}
+		m interface{}
 	}
 	type args struct {
 		key interface{}
@@ -56,15 +56,23 @@ func TestMap_ContainsKey(t *testing.T) {
 			fields{m: map[string]interface{}{"some": "field"}},
 			args{key: "some"},
 			true},
+		{"nil key exists",
+			fields{m: map[interface{}]interface{}{nil: "field"}},
+			args{key: nil},
+			true},
 		{"no key in map exists",
 			fields{m: map[string]interface{}{"some": "field"}},
 			args{key: "other"},
+			false},
+		{"no nil key in map exists",
+			fields{m: map[string]interface{}{"some": "field"}},
+			args{key: nil},
 			false},
 		{"key of incompatible type",
 			fields{m: map[string]interface{}{"some": "field"}},
 			args{key: 1},
 			false},
-		{"key of composite",
+		{"key of composite type",
 			fields{m: map[string]interface{}{"some": "field"}},
 			args{key: map[string]interface{}{}},
 			false},
@@ -181,6 +189,16 @@ func TestMap_Equals(t *testing.T) {
 			args{&Map{emptyMap()}},
 			false,
 			assert.NoError},
+		{"different comparable content",
+			fields{map[string]interface{}{"a": 1, "and": "string"}},
+			args{&Map{map[string]interface{}{"a": 1, "and": "other"}}},
+			false,
+			assert.NoError},
+		{"different non-comparable content",
+			fields{map[string]interface{}{"a": 1, "and": []string{"string"}}},
+			args{&Map{map[string]interface{}{"a": 1, "and": []string{"other"}}}},
+			false,
+			assert.NoError},
 		{"same comparable content",
 			fields{map[string]interface{}{"a": 1, "and": "string"}},
 			args{&Map{map[string]interface{}{"a": 1, "and": "string"}}},
@@ -229,6 +247,10 @@ func TestMap_Get(t *testing.T) {
 			fields{map[string]interface{}{"1": 2}},
 			args{"1"},
 			2},
+		{"nil value",
+			fields{map[string]interface{}{"1": nil}},
+			args{"1"},
+			nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -242,7 +264,7 @@ func TestMap_Get(t *testing.T) {
 
 func TestMap_GetOrDefault(t *testing.T) {
 	type fields struct {
-		m map[string]interface{}
+		m interface{}
 	}
 	type args struct {
 		key   interface{}
@@ -265,6 +287,22 @@ func TestMap_GetOrDefault(t *testing.T) {
 		{"present key",
 			fields{map[string]interface{}{"1": 2}},
 			args{"1", 4},
+			2},
+		{"convertible key",
+			fields{map[string]interface{}{"1": 2}},
+			args{1, 4},
+			2},
+		{"assignable key exists",
+			fields{map[interface{}]interface{}{"1": 2}},
+			args{"1", 4},
+			2},
+		{"assignable key exists",
+			fields{map[interface{}]interface{}{"1": 2}},
+			args{1, 4},
+			4},
+		{"nil key exists",
+			fields{map[interface{}]interface{}{nil: 2}},
+			args{nil, 4},
 			2},
 	}
 	for _, tt := range tests {
@@ -333,11 +371,12 @@ func TestMap_KeySet(t *testing.T) {
 
 func TestMap_Put(t *testing.T) {
 	type fields struct {
-		m map[string]interface{}
+		m interface{}
 	}
 	m := emptyMap()
+	msi := map[string]int{}
 	type args struct {
-		key   string
+		key   interface{}
 		value interface{}
 	}
 	tests := []struct {
@@ -345,21 +384,30 @@ func TestMap_Put(t *testing.T) {
 		fields    fields
 		args      args
 		want      interface{}
+		wantV     interface{}
 		assertion assert.ErrorAssertionFunc
-		wantErr   error
+		wantErr   string
 	}{
 		{"works on empty map",
 			fields{m},
 			args{"k", 1},
-			nil, assert.NoError, nil},
+			nil, 1, assert.NoError, ""},
 		{"returns replaced value",
 			fields{m},
 			args{"k", 2},
-			1, assert.NoError, nil},
+			1, 2, assert.NoError, ""},
 		{"and adds another",
 			fields{m},
 			args{"other", "key"},
-			nil, assert.NoError, nil},
+			nil, "key", assert.NoError, ""},
+		{"wrong key type",
+			fields{m},
+			args{1.0, "key"},
+			nil, nil, assert.Error, "cannot convert key float64 to string"},
+		{"wrong value type",
+			fields{msi},
+			args{"other", "string"},
+			nil, nil, assert.Error, "cannot convert value string to int"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -368,9 +416,9 @@ func TestMap_Put(t *testing.T) {
 			}
 			got, err := m.Put(tt.args.key, tt.args.value)
 			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.args.value, m.Get(tt.args.key))
-			if tt.assertion(t, err) {
-				assert.Equal(t, tt.wantErr, err)
+			assert.Equal(t, tt.wantV, m.Get(tt.args.key))
+			if tt.assertion(t, err) && tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr, "err")
 			}
 		})
 	}
@@ -378,23 +426,34 @@ func TestMap_Put(t *testing.T) {
 
 func TestMap_PutAll(t *testing.T) {
 	type fields struct {
-		m map[string]interface{}
+		m interface{}
 	}
 	type args struct {
 		v interface{}
 	}
 	m := emptyMap()
+	msi := map[string]int{}
 	tests := []struct {
 		name      string
 		fields    fields
 		args      args
-		want      map[string]interface{}
+		want      interface{}
 		assertion assert.ErrorAssertionFunc
 	}{
 		{"expects map",
 			fields{emptyMap()},
 			args{[]int{1}},
 			map[string]interface{}{},
+			assert.Error},
+		{"wrong key type",
+			fields{m},
+			args{&Map{map[float32]interface{}{1.0: "b", 2.0: 2}}},
+			map[string]interface{}{},
+			assert.Error},
+		{"wrong value type",
+			fields{msi},
+			args{&Map{map[string]string{"a": "string", "c": "other"}}},
+			map[string]int{},
 			assert.Error},
 		{"works on empty map",
 			fields{m},
@@ -1219,6 +1278,9 @@ func TestValView_ToArray(t *testing.T) {
 		{"multiple values in order",
 			fields{&Map{map[string]int{"b": 1, "a": 2}}},
 			&Slice{[]int{2, 1}}, assert.NoError},
+		{"nil values should be supported",
+			fields{&Map{map[string]interface{}{"b": 1, "a": nil}}},
+			&Slice{[]interface{}{nil, 1}}, assert.NoError},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1933,6 +1995,11 @@ func TestSlice_Get(t *testing.T) {
 			args{0},
 			1,
 			assert.NoError},
+		{"works with nil value",
+			fields{[]interface{}{nil, "2"}},
+			args{0},
+			nil,
+			assert.NoError},
 		{"index is length-1",
 			fields{[]interface{}{1, "2"}},
 			args{1},
@@ -2311,6 +2378,9 @@ func TestSlice_ToArray(t *testing.T) {
 		{"works with empty",
 			fields{[]interface{}{}},
 			&Slice{[]interface{}{}}},
+		{"works with nil values",
+			fields{[]interface{}{1, nil, 2}},
+			&Slice{[]interface{}{1, nil, 2}}},
 		{"returns copy",
 			fields{[]interface{}{1, "2", []int{3}}},
 			&Slice{[]interface{}{1, "2", []int{3}}}},
