@@ -66,7 +66,6 @@ func Parse(vtl, root, lib string) (*Template, error) {
 	}
 	ast := l.result
 	gobble(ast, false)
-	// spew.Dump(ast)
 	return &Template{root, lib, ast, macros, make(map[reflect.Type][]methodIdx), sync.Mutex{}, DefaultMaxCallDepth, DefaultMaxIterations, DefaultMaxArrayRenderSize, Pos{}}, nil
 }
 

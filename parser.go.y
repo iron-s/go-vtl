@@ -239,12 +239,20 @@ primary:        STRING
                 { $$ = &OpNode{Val: $2} }
         |       FLOAT
                 {
-                    f, _ := strconv.ParseFloat($1.literal, 64)
+                    f, err := strconv.ParseFloat($1.literal, 64)
+                    if err != nil {
+                        yylex.(*Lexer).Error(err.Error())
+                        return yyError
+                    }
                     $$ = &OpNode{Val: f, Pos: Pos{$1.line}}
                 }
         |       INT
                 {
-                    i, _ := strconv.ParseInt($1.literal, 10, 64)
+                    i, err := strconv.ParseInt($1.literal, 10, 64)
+                    if err != nil {
+                        yylex.(*Lexer).Error(err.Error())
+                        return yyError
+                    }
                     $$ = &OpNode{Val: i, Pos: Pos{$1.line}}
                 }
         |       BOOLEAN

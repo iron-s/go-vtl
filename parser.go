@@ -144,8 +144,8 @@ var (
 		57394: 69, // iterable (1x)
 		57395: 70, // kvpairs (1x)
 		57397: 71, // literal (1x)
-		57399: 72, // method (1x)
-		57347: 73, // METHOD (1x)
+		57347: 72, // METHOD (1x)
+		57399: 73, // method (1x)
 		57401: 74, // range (1x)
 		57405: 75, // vtl (1x)
 		57378: 76, // $default (0x)
@@ -227,8 +227,8 @@ var (
 		"iterable",
 		"kvpairs",
 		"literal",
-		"method",
 		"METHOD",
+		"method",
 		"range",
 		"vtl",
 		"$default",
@@ -276,8 +276,8 @@ var (
 		33: {21, 4},
 		34: {21, 3},
 		35: {21, 5},
-		36: {72, 3},
-		37: {72, 4},
+		36: {73, 3},
+		37: {73, 4},
 		38: {58, 1},
 		39: {58, 3},
 		40: {58, 4},
@@ -551,7 +551,7 @@ var (
 		{5: 116, 39: 118, 51: 117},
 		// 25
 		{56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 22: 56, 56, 56, 26: 56, 56, 56, 30: 56, 56, 56, 56, 38: 56, 46: 56, 53: 56},
-		{52: 162, 72: 163, 161},
+		{52: 162, 72: 161, 163},
 		{108, 3: 121, 19: 131, 21: 123, 25: 125, 29: 130, 34: 134, 132, 133, 124, 40: 120, 122, 43: 127, 129, 128, 47: 126, 119},
 		{4: 160, 20: 145},
 		{1: 25, 25, 149, 25, 25, 20: 25, 22: 25, 24: 25, 26: 25, 30: 152, 150, 148, 151, 38: 158},
@@ -1225,12 +1225,20 @@ yynewstate:
 		}
 	case 70:
 		{
-			f, _ := strconv.ParseFloat(yyS[yypt-0].t.literal, 64)
+			f, err := strconv.ParseFloat(yyS[yypt-0].t.literal, 64)
+			if err != nil {
+				yylex.(*Lexer).Error(err.Error())
+				return yyError
+			}
 			yyVAL.n = &OpNode{Val: f, Pos: Pos{yyS[yypt-0].t.line}}
 		}
 	case 71:
 		{
-			i, _ := strconv.ParseInt(yyS[yypt-0].t.literal, 10, 64)
+			i, err := strconv.ParseInt(yyS[yypt-0].t.literal, 10, 64)
+			if err != nil {
+				yylex.(*Lexer).Error(err.Error())
+				return yyError
+			}
 			yyVAL.n = &OpNode{Val: i, Pos: Pos{yyS[yypt-0].t.line}}
 		}
 	case 72:
