@@ -3,6 +3,7 @@ package govtl
 import (
 	"errors"
 	"fmt"
+	"math"
 	"reflect"
 	"regexp"
 	"sort"
@@ -267,7 +268,7 @@ func (view *KeyView) Remove(k interface{}) bool {
 }
 
 func (view *KeyView) RemoveAll(v interface{}) (bool, error) {
-	vv, ok := v.(*Slice)
+	vv, ok := v.(Collection)
 	if !ok {
 		return false, errArrayExpected
 	}
@@ -275,7 +276,7 @@ func (view *KeyView) RemoveAll(v interface{}) (bool, error) {
 }
 
 func (view *KeyView) RetainAll(v interface{}) (bool, error) {
-	vv, ok := v.(*Slice)
+	vv, ok := v.(Collection)
 	if !ok {
 		return false, errArrayExpected
 	}
@@ -324,7 +325,7 @@ func (view *ValView) Remove(val interface{}) bool {
 }
 
 func (view *ValView) RemoveAll(v interface{}) (bool, error) {
-	vv, ok := v.(*Slice)
+	vv, ok := v.(Collection)
 	if !ok {
 		return false, errArrayExpected
 	}
@@ -332,7 +333,7 @@ func (view *ValView) RemoveAll(v interface{}) (bool, error) {
 }
 
 func (view *ValView) RetainAll(v interface{}) (bool, error) {
-	vv, ok := v.(*Slice)
+	vv, ok := v.(Collection)
 	if !ok {
 		return false, errArrayExpected
 	}
@@ -379,7 +380,7 @@ func (view *EntryView) Remove(val *MapEntry) bool {
 }
 
 func (view *EntryView) RemoveAll(v interface{}) (bool, error) {
-	vv, ok := v.(*Slice)
+	vv, ok := v.(Collection)
 	if !ok {
 		return false, errArrayExpected
 	}
@@ -387,7 +388,7 @@ func (view *EntryView) RemoveAll(v interface{}) (bool, error) {
 }
 
 func (view *EntryView) RetainAll(v interface{}) (bool, error) {
-	vv, ok := v.(*Slice)
+	vv, ok := v.(Collection)
 	if !ok {
 		return false, errArrayExpected
 	}
@@ -407,9 +408,16 @@ type Slice struct {
 	s interface{}
 }
 
+func (s *Slice) checkNil() {
+	if s.s == nil {
+		s.s = []interface{}(nil)
+	}
+}
+
 func (s *Slice) kind() string { return "slice" }
 
 func (s *Slice) Add(v interface{}) (bool, error) {
+	s.checkNil()
 	sS := reflect.ValueOf(s.s)
 	vv, err := convertType(reflect.ValueOf(v), sS.Type().Elem())
 	if err != nil {
@@ -420,11 +428,17 @@ func (s *Slice) Add(v interface{}) (bool, error) {
 }
 
 func (s *Slice) AddAll(v interface{}) (bool, error) {
-	vv, ok := v.(*Slice)
+	vv, ok := v.(Collection)
 	if !ok {
 		return false, errArrayExpected
 	}
-	s.s = reflect.AppendSlice(reflect.ValueOf(s.s), reflect.ValueOf(vv.s)).Interface()
+	arr, err := vv.ToArray()
+	if err != nil {
+		return false, err
+	}
+	s.checkNil()
+	// FIXME check how to handle different type here
+	s.s = reflect.AppendSlice(reflect.ValueOf(s.s), reflect.ValueOf(arr.s)).Interface()
 	return true, nil
 }
 
@@ -433,19 +447,17 @@ func (s *Slice) Clear() error {
 	if sS.IsValid() && sS.Kind() == reflect.Slice {
 		s.s = reflect.Zero(sS.Type()).Interface()
 	} else {
-		s.s = reflect.ValueOf([]interface{}(nil)).Interface()
+		s.s = []interface{}(nil)
 	}
 	return nil
 }
 
 func (s *Slice) Contains(v interface{}) bool {
+	s.checkNil()
 	sS := reflect.ValueOf(s.s)
 	comparer := iTypeConvEQ
 	// special case - if this is slice of MapEntry we should use Equals method
 	vv := reflect.ValueOf(v)
-	for vv.Kind() == reflect.Interface {
-		vv = vv.Elem()
-	}
 	if vv.IsValid() && vv.Type() == entryType {
 		comparer = func(x, y interface{}) bool {
 			xe, xok := x.(*MapEntry)
@@ -466,14 +478,17 @@ func (s *Slice) Contains(v interface{}) bool {
 }
 
 func (s *Slice) ContainsAll(v interface{}) (bool, error) {
+	s.checkNil()
 	return containsAll(s, v)
 }
 
 func (s *Slice) Equals(v interface{}) (bool, error) {
+	s.checkNil()
 	return equals(s, v)
 }
 
 func (s *Slice) Get(i int) (interface{}, error) {
+	s.checkNil()
 	sS := reflect.ValueOf(s.s)
 	if i >= 0 && i < sS.Len() {
 		return sS.Index(i).Interface(), nil
@@ -481,15 +496,16 @@ func (s *Slice) Get(i int) (interface{}, error) {
 	return nil, fmt.Errorf("index out of range %d with length %d", i, sS.Len())
 }
 
-func (s *Slice) IsEmpty() bool { return reflect.ValueOf(s.s).Len() == 0 }
+func (s *Slice) IsEmpty() bool {
+	s.checkNil()
+	return reflect.ValueOf(s.s).Len() == 0
+}
 
 func (s *Slice) Iterator() Iterator { return &CollectionIterator{s: s} }
 
 func (s *Slice) Remove(v interface{}) (bool, error) {
+	s.checkNil()
 	sS := reflect.ValueOf(s.s)
-	if !sS.IsValid() {
-		return false, nil
-	}
 	for i := 0; i < sS.Len(); i++ {
 		if rTypeConvEQ(sS.Index(i), reflect.ValueOf(v)) {
 			s.s = reflect.AppendSlice(sS.Slice(0, i), sS.Slice(i+1, sS.Len())).Interface()
@@ -500,10 +516,8 @@ func (s *Slice) Remove(v interface{}) (bool, error) {
 }
 
 func (s *Slice) removeAt(i int) error {
+	s.checkNil()
 	sS := reflect.ValueOf(s.s)
-	if !sS.IsValid() {
-		return fmt.Errorf("index out of range %d with length %d", i, 0)
-	}
 	if i < 0 || i >= sS.Len() {
 		return fmt.Errorf("index out of range %d with length %d", i, sS.Len())
 	}
@@ -512,6 +526,7 @@ func (s *Slice) removeAt(i int) error {
 }
 
 func (s *Slice) RemoveAll(v interface{}) (bool, error) {
+	s.checkNil()
 	vv, ok := v.(Collection)
 	if !ok {
 		return false, errArrayExpected
@@ -520,7 +535,8 @@ func (s *Slice) RemoveAll(v interface{}) (bool, error) {
 }
 
 func (s *Slice) RetainAll(v interface{}) (bool, error) {
-	vv, ok := v.(*Slice)
+	s.checkNil()
+	vv, ok := v.(Collection)
 	if !ok {
 		return false, errArrayExpected
 	}
@@ -528,33 +544,33 @@ func (s *Slice) RetainAll(v interface{}) (bool, error) {
 }
 
 func (s *Slice) Set(i int, v interface{}) (interface{}, error) {
+	s.checkNil()
 	sS := reflect.ValueOf(s.s)
-	if i >= 0 && i < sS.Len() {
-		r := sS.Index(i).Interface()
-		vv := reflect.ValueOf(v)
-		elemT := sS.Type().Elem()
-		switch {
-		case vv.Type().AssignableTo(elemT):
-		case vv.Type().ConvertibleTo(elemT):
-			vv = vv.Convert(elemT)
-		default:
-			return nil, fmt.Errorf("cannot convert %s to %s", getKind(vv), getKind(elemT))
-		}
-		sS.Index(i).Set(vv)
-		return r, nil
+	if i < 0 || i >= sS.Len() {
+		return nil, fmt.Errorf("index out of range %d with length %d", i, sS.Len())
 	}
-	return nil, fmt.Errorf("index out of range %d with length %d", i, sS.Len())
+	r := sS.Index(i).Interface()
+	vv := reflect.ValueOf(v)
+	elemT := sS.Type().Elem()
+	switch {
+	case vv.Type().AssignableTo(elemT):
+	case vv.Type().ConvertibleTo(elemT):
+		vv = vv.Convert(elemT)
+	default:
+		return nil, fmt.Errorf("cannot convert %s to %s", getKind(vv), getKind(elemT))
+	}
+	sS.Index(i).Set(vv)
+	return r, nil
 }
 
 func (s *Slice) Size() int {
+	s.checkNil()
 	return reflect.ValueOf(s.s).Len()
 }
 
 func (s *Slice) ToArray() (*Slice, error) {
+	s.checkNil()
 	sS := reflect.ValueOf(s.s)
-	if sS.IsNil() {
-		return &Slice{[]interface{}(nil)}, nil
-	}
 	ss := reflect.MakeSlice(sS.Type(), sS.Len(), sS.Len())
 	reflect.Copy(ss, sS)
 	return &Slice{ss.Interface()}, nil
@@ -871,12 +887,32 @@ type Range struct {
 
 func (r *Range) kind() string { return "range" }
 
-func NewRange(start, end int) *Range {
+var errRangeOverflow = fmt.Errorf("range exceeds maximum length of %d", math.MaxInt64)
+func NewRange(start, end int) (*Range, error) {
+	var (
+		l uint64
+		a, b = start, end
+	)
+	if a <= 0 && b <= 0 {
+		a, b = -a, -b
+	}
+	if a < b {
+		a, b = b, a
+	}
+	switch {
+	case a < 0 && end >= 0:
+		l = uint64(-a) + uint64(b)
+	case a > b:
+		l = uint64(a) - uint64(b)
+	}
+	if l > math.MaxInt64-1 {
+		return nil, errRangeOverflow
+	}
 	r := &Range{start, end, 1}
 	if start > end {
 		r.diff = -1
 	}
-	return r
+	return r, nil
 }
 
 func (r *Range) Add(v interface{}) (bool, error)    { return false, errUnsupported }
@@ -884,9 +920,12 @@ func (r *Range) AddAll(v interface{}) (bool, error) { return false, errUnsupport
 func (r *Range) Clear() error                       { return errUnsupported }
 
 func (r *Range) Contains(v interface{}) bool {
-	switch v.(type) {
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32:
-		vv := int(reflect.ValueOf(v).Int())
+	switch n := v.(type) {
+	case int, int8, int16, int32, int64:
+		vv := int(reflect.ValueOf(n).Int())
+		return r.start <= vv && vv <= r.end
+	case uint, uint8, uint16, uint32:
+		vv := int(reflect.ValueOf(n).Uint())
 		return r.start <= vv && vv <= r.end
 	}
 	return false

@@ -654,15 +654,19 @@ var funcs = map[string]interface{}{
 			v2 = reflect.ValueOf(i)
 		}
 		if !isNumber(v1) || !isNumber(v2) {
-			return reflect.Value{}, errors.New("NaN")
+			return Nil, errors.New("NaN")
 		}
 		if overflowsInt64(v1) {
-			return reflect.Value{}, errors.New("start overflows int64")
+			return Nil, errors.New("start overflows int64")
 		}
 		if overflowsInt64(v2) {
-			return reflect.Value{}, errors.New("end overflows int64")
+			return Nil, errors.New("end overflows int64")
 		}
-		return reflect.ValueOf(NewRange(toInt(v1), toInt(v2))), nil
+		r, err := NewRange(toInt(v1), toInt(v2))
+		if err != nil {
+			return Nil, err
+		}
+		return reflect.ValueOf(r), nil
 	},
 }
 

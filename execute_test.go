@@ -202,7 +202,7 @@ func TestExecuteFuzzCrashes(t *testing.T) {
 		{"cyclic reference",
 			`#set($p={})#set($p.p=$p)$p.p`, "", "cycle detected"},
 		{"include range",
-			`#include([[[[0e..0]]]])`, "", "invalid include argument"},
+			`#include([[[[0..0]]]])`, "", "invalid include argument"},
 		{"use $foreach as #foreach reference inside first foreach",
 			`#foreach($foreach in [0])$foreach#end`, "0", ""},
 		{"use $foreach as #foreach reference inside second foreach",
@@ -244,6 +244,8 @@ func TestExecuteFuzzCrashes(t *testing.T) {
 			`#set($p={})#set($p={'':$p.r})#if(1)$p.Values().ToArray()#end`, "[null]", ""},
 		{"interator next",
 			`#foreach($m in[0])#if(1)#set($p={})$p.Values().Iterator().Next()#end#end`, "", ""},
+		{"remove from byte slice",
+			`#foreach($m in[0])#if(1)#set($r='0')$r.Bytes.RemoveAll([0..0])#end#end`, "false", ""},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
