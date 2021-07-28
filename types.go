@@ -432,13 +432,22 @@ func (s *Slice) AddAll(v interface{}) (bool, error) {
 	if !ok {
 		return false, errArrayExpected
 	}
-	arr, err := vv.ToArray()
-	if err != nil {
-		return false, err
-	}
 	s.checkNil()
-	// FIXME check how to handle different type here
-	s.s = reflect.AppendSlice(reflect.ValueOf(s.s), reflect.ValueOf(arr.s)).Interface()
+	it := vv.Iterator()
+	sS := reflect.ValueOf(s.s)
+	sT := sS.Type().Elem()
+	for it.HasNext() {
+		n, err := it.Next()
+		if err != nil {
+			return false, err
+		}
+		nv, err := convertType(reflect.ValueOf(n), sT)
+		if err != nil {
+			return false, fmt.Errorf("cannot convert element %w", err)
+		}
+		sS = reflect.Append(sS, nv)
+	}
+	s.s = sS.Interface()
 	return true, nil
 }
 
