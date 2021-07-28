@@ -1107,7 +1107,7 @@ func TestKeyView_RemoveAll(t *testing.T) {
 			assert.NoError,
 			map[string]interface{}{"k": 1}},
 		{"removes range from slice and map",
-			fields{&Map{map[int]interface{}{1: 1, 5: "value", 3: 1.0, 2:[]int{1}}}},
+			fields{&Map{map[int]interface{}{1: 1, 5: "value", 3: 1.0, 2: []int{1}}}},
 			args{&Range{1, 3, 1}},
 			true,
 			assert.NoError,
@@ -1172,11 +1172,11 @@ func TestKeyView_RetainAll(t *testing.T) {
 			assert.NoError,
 			map[string]interface{}{"key": "value"}},
 		{"retains range in slice and map",
-			fields{&Map{map[int]interface{}{1: 1, 5: "value", 3: 1.0, 2:[]int{1}}}},
+			fields{&Map{map[int]interface{}{1: 1, 5: "value", 3: 1.0, 2: []int{1}}}},
 			args{&Range{1, 3, 1}},
 			true,
 			assert.NoError,
-			map[int]interface{}{1:1, 3: 1.0, 2: []int{1}}},
+			map[int]interface{}{1: 1, 3: 1.0, 2: []int{1}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1857,7 +1857,7 @@ func TestSlice_AddAll(t *testing.T) {
 			[]interface{}{1, "2", []int{3}}},
 		{"cannot add large range",
 			fields{[]interface{}{1}},
-			args{&Range{1, 1024*1024+1, 1}},
+			args{&Range{1, 1024*1024 + 1, 1}},
 			false,
 			assert.Error,
 			[]interface{}{1}},

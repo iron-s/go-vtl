@@ -888,9 +888,10 @@ type Range struct {
 func (r *Range) kind() string { return "range" }
 
 var errRangeOverflow = fmt.Errorf("range exceeds maximum length of %d", math.MaxInt64)
+
 func NewRange(start, end int) (*Range, error) {
 	var (
-		l uint64
+		l    uint64
 		a, b = start, end
 	)
 	if a <= 0 && b <= 0 {
@@ -900,9 +901,9 @@ func NewRange(start, end int) (*Range, error) {
 		a, b = b, a
 	}
 	switch {
-	case a < 0 && end >= 0:
-		l = uint64(-a) + uint64(b)
-	case a > b:
+	case a >= 0 && b < 0:
+		l = uint64(a) + uint64(-b)
+	default:
 		l = uint64(a) - uint64(b)
 	}
 	if l > math.MaxInt64-1 {
