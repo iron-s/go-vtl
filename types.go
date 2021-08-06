@@ -432,6 +432,9 @@ func (s *Slice) AddAll(v interface{}) (bool, error) {
 	if !ok {
 		return false, errArrayExpected
 	}
+	if err := checkSize(vv); err != nil {
+		return false, err
+	}
 	s.checkNil()
 	it := vv.Iterator()
 	sS := reflect.ValueOf(s.s)
