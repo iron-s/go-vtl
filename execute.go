@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"math"
 	"path/filepath"
 	"reflect"
@@ -127,7 +126,7 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 				}
 			}
 		case *OpNode:
-			log.Println("op node should be handled elsewere")
+			panic("op node should be handled elsewere")
 		case *VarNode:
 			v, err := t.evalVar(n, ctx)
 			if err != nil && !(n.Silent && errors.As(err, &nilError{})) {
@@ -256,7 +255,7 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 				return true, t.error(err)
 			}
 		default:
-			log.Printf("unexpected %T, %[1]v", n)
+			panic(fmt.Sprintf("unexpected %T, %[1]v", n))
 		}
 	}
 	return false, nil
@@ -460,7 +459,6 @@ func (t *Template) eval(e *OpNode, ctx Ctx, undefOk bool) (reflect.Value, error)
 		}
 		return reflect.ValueOf(&Slice{vv}), nil
 	default:
-		log.Printf("unsupported type %T: %v", val, val)
 		return wrapTypes(reflect.ValueOf(val)), nil
 	}
 	return reflect.Value{}, nil
