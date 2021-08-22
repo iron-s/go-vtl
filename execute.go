@@ -76,7 +76,7 @@ func (t *Template) error(err error) error {
 	return posError{err, t.pos}
 }
 
-func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
+func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (shouldStop bool, err error) {
 	if t.maxCallDepth >= 0 && ctx.callDepth > t.maxCallDepth {
 		return true, t.error(errors.New("call depth exceeded"))
 	}
@@ -254,6 +254,8 @@ func (t *Template) _execute(w io.Writer, list []Node, ctx Ctx) (bool, error) {
 			if stop {
 				return true, t.error(err)
 			}
+		case *EvalNode:
+			return true, t.error(errors.New("eval is not supported"))
 		default:
 			panic(fmt.Sprintf("unexpected %T, %[1]v", n))
 		}
